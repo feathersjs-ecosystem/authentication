@@ -13,7 +13,7 @@ If you are using the default options, setting up JWT auth for your Feathers app 
 var feathers = require('feathers');
 var hooks = require('feathers-hooks');
 var bodyParser = require('body-parser');
-var feathersAuth = require('feathers-authentication');
+var feathersAuth = require('feathers-authentication').default;
 var mongooseService = require('feathers-mongoose');
 
 var app = feathers()
@@ -83,7 +83,7 @@ var passport = require('passport');
 var hooks = require('feathers-hooks');
 var memory = require('feathers-memory');
 var bodyParser = require('body-parser');
-var feathersAuth = require('feathers-authentication');
+var feathersAuth = require('feathers-authentication').default;
 var hashPassword = feathersAuth.hashPassword;
 
 // Initialize the application
