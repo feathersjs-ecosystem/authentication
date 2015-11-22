@@ -87,7 +87,6 @@ var memory = require('feathers-memory');
 var bodyParser = require('body-parser');
 var feathersAuth = require('feathers-authentication').default;
 var authHooks = require('feathers-authentication').hooks;
-var hashPassword = feathersAuth.hashPassword;
 
 // Initialize the application
 var app = feathers()
