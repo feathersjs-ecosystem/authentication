@@ -3,7 +3,7 @@ var request = require('request');
 var io = require('socket.io-client');
 var createApplication = require('./server-fixtures');
 
-describe('REST API authentication', function() {
+describe('Socket.io authentication', function() {
   var server;
   var app;
   var username = 'feathers';
