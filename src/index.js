@@ -1,10 +1,11 @@
-import makeDebug from 'debug';
+import hooks from './hooks/index';
+import bcrypt from 'bcrypt';
 import _ from 'lodash';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import passportLocal from 'passport-local';
+
 var LocalStrategy = passportLocal.Strategy;
-import bcrypt from 'bcrypt';
 
 var defaults = {
   userEndpoint: '/api/users',
@@ -18,7 +19,6 @@ var defaults = {
   },
   passport: passport,
 };
-const debug = makeDebug('feathers-authentication');
 
 export default function(config) {
   var settings = _.merge(defaults, config);
@@ -238,6 +238,6 @@ function getDefaultStrategy(app, settings){
   });
 }
 
-import hooks from './hooks/index';
+
 // Make the password hashing hook available separately.
 export {hooks};
