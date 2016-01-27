@@ -26,59 +26,51 @@ Please refer to the [Authentication documentation](http://docs.feathersjs.com/au
 Here's an example of a Feathers server that uses `feathers-authentication` for local auth.  It includes a `users` service that uses `feathers-mongoose`.  *Note that it does NOT implement any authorization.*
 
 ```js
-/* * * Import Feathers and Plugins * * */
-var feathers = require('feathers');
-var hooks = require('feathers-hooks');
-var bodyParser = require('body-parser');
-var feathersAuth = require('feathers-authentication').default;
-var authHooks = require('feathers-authentication').hooks;
+import feathers from 'feathers';
+import hooks from 'feathers-hooks';
+import bodyParser from 'body-parser';
+import authentication from 'feathers-authentication';
+import { hooks as authHooks } from 'feathers-authentication';
+import mongoose from 'mongoose';
+import service from 'feathers-mongoose';
 
-/* * * Prepare the Mongoose service * * */
-var mongooseService = require('feathers-mongoose');
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var UserSchema = new Schema({
+const port = 3030;
+const Schema = mongoose.Schema;
+const UserSchema = new Schema({
   username: {type: String, required: true, unique: true},
   password: {type: String, required: true },
   createdAt: {type: Date, 'default': Date.now},
   updatedAt: {type: Date, 'default': Date.now}
 });
-var UserModel = mongoose.model('User', UserSchema);
+let UserModel = mongoose.model('User', UserSchema);
 
-/* * * Connect the MongoDB Server * * */
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost:27017/feathers');
 
 /* * * Initialize the App and Plugins * * */
-var app = feathers()
+let app = feathers()
   .configure(feathers.rest())
   .configure(feathers.socketio())
   .configure(hooks())
   .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: true }))
-
   // Configure feathers-authentication
   .configure(feathersAuth({
     secret: 'feathers-rocks'
   }));
 
-/* * * Setup the User Service and hashPassword Hook * * */
-app.use('/api/users', new mongooseService('user', UserModel))
-var service = app.service('/api/users');
-service.before({
+app.use('/users', new service('user', {Model: UserModel}))
+
+let userService = app.service('/users');
+userService.before({
   create: [authHooks.hashPassword('password')]
 });
 
-/* * * Start the Server * * */
-var port = 3030;
-var server = app.listen(port);
+let server = app.listen(port);
 server.on('listening', function() {
-  console.log(`Feathers application started on localhost:3030);
+  console.log(`Feathers application started on localhost:${port}`);
 });
 ```
-
-
-
 
 ## Changelog
 
