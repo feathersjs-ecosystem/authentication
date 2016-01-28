@@ -47,7 +47,6 @@ let UserModel = mongoose.model('User', UserSchema);
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost:27017/feathers');
 
-/* * * Initialize the App and Plugins * * */
 let app = feathers()
   .configure(feathers.rest())
   .configure(feathers.socketio())
@@ -55,8 +54,18 @@ let app = feathers()
   .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: true }))
   // Configure feathers-authentication
-  .configure(feathersAuth({
-    secret: 'feathers-rocks'
+  .configure(authentication({
+    toke: {
+      secret: 'feathers-rocks'
+    },
+    twitter: {
+      consumerKey: '',
+      consumerSecret: ''
+    },
+    facebook: {
+      clientID: '',
+      clientSecret: ''
+    }
   }));
 
 app.use('/users', new service('user', {Model: UserModel}))
