@@ -35,7 +35,7 @@ export default function(options = {}) {
         var token = req.headers.authorization.split(' ')[1];
         console.log('Got an Authorization token', token);
         // TODO: Move token verification into its own middleware. See line ~44.
-        jwt.verify(token, settings.secret, function(err, data) {
+        jwt.verify(token, options.token.secret, function(err, data) {
           if (err) {
             // Return a 401 Unauthorized if the token has expired.
             if (err.name === 'TokenExpiredError') {
@@ -67,7 +67,7 @@ export default function(options = {}) {
         if (!token) {
           return callback(null, true);
         }
-        jwt.verify(token, settings.secret, function(err, data) {
+        jwt.verify(token, options.token.secret, function(err, data) {
           if (err) {
             return callback(err);
           }

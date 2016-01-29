@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
+import { passRequestObject } from '../../middleware';
 
 const defaults = {
   userEndpoint: '/users',
@@ -59,16 +60,13 @@ export class Service {
       .catch(done);
   }
 
+  // POST /auth/local
   create(data, params) {
-    // console.log('Logging in', data);
     const options = this.options;
 
-    // // TODO(EK): Validate username and password, then generate a JWT and return it
-    return new Promise(function(resolve, reject){
-      console.log('Promising');
-    
+    // Validate username and password, then generate a JWT and return it
+    return new Promise(function(resolve, reject){    
       let middleware = passport.authenticate('local', { session: false }, function(error, user) {
-        console.log('RESPONSE', error, user);
         if (error) {
           return reject(error);
         }
@@ -81,10 +79,10 @@ export class Service {
         // Login was successful. Generate and send token.
         user = !user.toJSON ? user : user.toJSON();
 
-        // it should be moved to an after hook
+        // remove the user password field so we don't expose it in the response.
         delete user[options.passwordField];
           
-        // call this.app.service('/auth/token').create()
+        // TODO (EK): call this.app.service('/auth/token').create() instead
         const token = jwt.sign(user, options.secret, options);
 
         return resolve({
@@ -98,36 +96,26 @@ export class Service {
   }
 
   setup(app) {
+    // attach the app object to the service context
+    // so that we can call other services
     this.app = app;
-    console.log('Setting up local auth service');
   }
 }
 
 export default function(options){
   options = Object.assign(options, defaults);
 
-  console.log('configuring local auth service with options', options);
-
   return function() {
     const app = this;
 
-    // Usually this is a big no no but passport requires the 
-    // request object to inspect req.body and req.query
-    let passRequest = function(req, res, next) {
-      req.feathers.req = req;
-      next();
-    }
-
     // Initialize our service with any options it requires
-    app.use('/auth/local', passRequest, new Service(options));
+    app.use('/auth/local', passRequestObject, new Service(options));
 
     // Get our initialize service to that we can bind hooks
     const localService = app.service('/auth/local');
 
     // Set up our before hooks
-    // localService.before({
-    //   find: []
-    // });
+    // localService.before(hooks.before);
 
     // Set up our after hooks
     // localService.after(hooks.after);
