@@ -55,9 +55,11 @@ let app = feathers()
   .use(bodyParser.urlencoded({ extended: true }))
   // Configure feathers-authentication
   .configure(authentication({
-    toke: {
+    token: {
       secret: 'feathers-rocks'
     },
+    local: {
+    }
     twitter: {
       consumerKey: '',
       consumerSecret: ''
