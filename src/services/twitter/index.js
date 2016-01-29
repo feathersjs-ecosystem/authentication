@@ -12,12 +12,8 @@ export class Service {
     this.options = options;
   }
 
-  find(params) {
-    return Promise.resolve([]);
-  }
-
   get(id, params) {
-    if (id !== 'reverse') {
+    if (id == 'reverse') {
       return new Promise.reject(new errors.NotFound());
     }
     
@@ -29,10 +25,12 @@ export class Service {
       },
       form: { x_auth_mode: 'reverse_auth' }
     }
-    var self = this;
+
+    console.log('TWITTER OPTIONS', options);
 
     return new Promise(function(resolve, reject){
       request.post(options, function (error, response, body) {
+        console.log(error, response, body);
         if (error) {
           return reject(error);
         }
@@ -53,7 +51,7 @@ export class Service {
     // TODO(EK): Authenticate via twitter, then generate a JWT and return it
     return new Promise(function(resolve, reject){
       console.log('Promising');
-      passport.authenticate('twitter-token', function(error, user) {
+      var middleware = passport.authenticate('twitter-token', function(error, user, req) {
         console.log('RESPONSE', error, user);
         if (error) {
           return reject(error);
@@ -63,6 +61,9 @@ export class Service {
         if (!user) {
           return reject(new errors.NotAuthenticated(options.loginError));
         }
+
+        // find or create user
+        // app.service('/users').
 
         // Login was successful. Generate and send token.
         user = !user.toJSON ? user : user.toJSON();
@@ -75,19 +76,9 @@ export class Service {
           data: user
         });
       });
+
+      middleware({ query: params.query });
     });
-  }
-
-  update(id, data, params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
-
-  patch(id, data, params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
-
-  remove(id, params) {
-    return Promise.reject(new errors.NotImplemented());
   }
 }
 
@@ -98,8 +89,44 @@ export default function(options){
   return function() {
     const app = this;
 
+    // TODO (EK): Only register this middleware for the POST /auth/twitter
+    // method. Either that or it should be a hook.
+    let middlware = function(req, res, next) {
+      if (req.method === 'GET') {
+        return next();
+      }
+
+      passport.authenticate('twitter-token', { session: false }, function(error, user) {
+        console.log('RESPONSE', error, user);
+        if (error) {
+          return next(error);
+        }
+
+        // Login failed.
+        if (!user) {
+          return next(new errors.NotAuthenticated(options.loginError));
+        }
+
+        // Login was successful. Generate and send token.
+        user = !user.toJSON ? user : user.toJSON();
+        delete user.password;
+
+        app.service('/auth/token').create(user, { internal: true }).then(token => {
+          const data = Object.assign(token, { data: user});
+          res.json(data);
+        })
+        .catch(error => {
+          next(error);  
+        });
+      })(req, res);
+    }
+
     // Initialize our service with any options it requires
     app.use('/auth/twitter', new Service(options));
+
+    // Initialize our service with any options it requires
+    // app.use('/auth/twitter', new Service(options));
+
 
     // Get our initialize service to that we can bind hooks
     const twitterService = app.service('/auth/twitter');

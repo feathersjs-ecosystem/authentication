@@ -12,14 +12,13 @@ export class Service {
   }
 
   find(params) {
-    return Promise.reject(new errors.NotImplemented());
+    return this.get(null, params).then(token => {
+      return [ token ];
+    });
   }
 
+  // GET /auth/token/refresh
   get(id, params) {
-    if (id !== 'refresh') {
-      throw new errors.NotFound();
-    }
-    
     // Our before hook determined that we had a valid token
     // so let's enerate a new token and return it.
     const token = jwt.sign(params.data, this.options.secret, this.options);
@@ -38,19 +37,6 @@ export class Service {
       token: token,
       data: params.data
     });
-  }
-
-  update(id, data, params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
-
-  patch(id, data, params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
-
-  remove(id, params) {
-    // TODO (EK): Maybe use this method to revoke tokens??
-    return Promise.reject(new errors.NotImplemented());
   }
 }
 

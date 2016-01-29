@@ -27,6 +27,8 @@ export default function(options = {}) {
       app.configure(twitter(options.twitter));
     }
 
+    // Everything below this should be cleaned up
+
     // Make the Passport user available for REST services.
     app.use(function(req, res, next) {
       if (req.headers.authorization) {
@@ -77,8 +79,13 @@ export default function(options = {}) {
       // Socket.io middleware
       if (io) {
         console.log('intializing SocketIO middleware');
+        // app.service('/auth/token').on('created', function(data) {
+        //   socket.feathers.token = data;
+        // });
+        
         io.use(function (socket, next) {
-
+          socket.feathers.req = socket.request;
+          
           // If there's a token in place, decode it and set up the feathers.user
           checkToken(socket.handshake.query.token, socket, function(err, data){
             if(err) {

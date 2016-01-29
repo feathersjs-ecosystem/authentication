@@ -19,56 +19,82 @@ export class Service {
     this.options = options;
   }
 
-  find(params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
+  checkCredentials(username, password, done) {
+    const params = {
+      internal: true,
+      query: {
+        [this.options.usernameField]: username
+      }
+    };
 
-  get(id, params) {
-    return Promise.reject(new errors.NotImplemented());
+    // Look up the user
+    this.app.service(this.options.userEndpoint)
+      .find(params)
+      .then(users => {
+        // Paginated services return the array of results in the data attribute.
+        let user = users[0] || users.data[0];
+
+        // Handle bad username.
+        if (!user) {
+          return done(null, false);
+        }
+
+        return user;
+      })
+      .then(user => {
+        // Check password
+        bcrypt.compare(password, user[this.options.passwordField], function(error, result) {
+          // Handle 500 server error.
+          if (error) {
+            return done(error);
+          }
+          // Successful login.
+          if (result) {
+            return done(null, user);
+          }
+          // Handle bad password.
+          return done(null, false);
+        });
+      })
+      .catch(done);
   }
 
   create(data, params) {
-    console.log('Logging in', data);
+    // console.log('Logging in', data);
     const options = this.options;
-    // TODO(EK): Validate username and password, then generate a JWT and return it
-    // passport.authenticate('local', { session: false }, function(error, user) {
-    //   console.log('RESPONSE', error, user);
-    //   if (error) {
-    //     return reject(error);
-    //   }
 
-    //   // Login failed.
-    //   if (!user) {
-    //     return reject(new errors.NotAuthenticated(options.loginError));
-    //   }
+    // // TODO(EK): Validate username and password, then generate a JWT and return it
+    return new Promise(function(resolve, reject){
+      console.log('Promising');
+    
+      let middleware = passport.authenticate('local', { session: false }, function(error, user) {
+        console.log('RESPONSE', error, user);
+        if (error) {
+          return reject(error);
+        }
 
-    //   // Login was successful. Generate and send token.
-    //   user = !user.toJSON ? user : user.toJSON();
-    //   delete user.password;
+        // Login failed.
+        if (!user) {
+          return reject(new errors.NotAuthenticated(options.loginError));
+        }
 
-    //   const token = jwt.sign(user, options.secret, options);
+        // Login was successful. Generate and send token.
+        user = !user.toJSON ? user : user.toJSON();
 
-    //   return resolve({
-    //     token: token,
-    //     data: user
-    //   });
-    // });
-    // return new Promise(function(resolve, reject){
-    //   console.log('Promising');
-      
-    // });
-  }
+        // it should be moved to an after hook
+        delete user[options.passwordField];
+          
+        // call this.app.service('/auth/token').create()
+        const token = jwt.sign(user, options.secret, options);
 
-  update(id, data, params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
+        return resolve({
+          token: token,
+          data: user
+        });
+      });
 
-  patch(id, data, params) {
-    return Promise.reject(new errors.NotImplemented());
-  }
-
-  remove(id, params) {
-    return Promise.reject(new errors.NotImplemented());
+      middleware(params.req);
+    });
   }
 
   setup(app) {
@@ -85,79 +111,19 @@ export default function(options){
   return function() {
     const app = this;
 
-    let middlware = function(req, res, next) {
-      passport.authenticate('local', { session: false }, function(error, user) {
-        console.log('RESPONSE', error, user);
-        if (error) {
-          return next(error);
-        }
-
-        // Login failed.
-        if (!user) {
-          return next(new errors.NotAuthenticated(options.loginError));
-        }
-
-        // Login was successful. Generate and send token.
-        user = !user.toJSON ? user : user.toJSON();
-        delete user.password;
-
-        app.service('/auth/token').create(user, { internal: true }).then(token => {
-          const data = Object.assign(token, { data: user});
-          res.json(data);
-        })
-        .catch(error => {
-          next(error);  
-        });
-      })(req, res);
+    // Usually this is a big no no but passport requires the 
+    // request object to inspect req.body and req.query
+    let passRequest = function(req, res, next) {
+      req.feathers.req = req;
+      next();
     }
 
     // Initialize our service with any options it requires
-    app.use('/auth/local', middlware, new Service(options));
+    app.use('/auth/local', passRequest, new Service(options));
 
     // Get our initialize service to that we can bind hooks
     const localService = app.service('/auth/local');
 
-    let emailHandler = function(username, password, done) {
-      const params = {
-        internal: true,
-        query: {}
-      };
-      params.query[options.usernameField] = username;
-
-      // Look up the user
-      app.service(options.userEndpoint)
-        .find(params)
-        .then(users => {
-          // Paginated services return the array of results in the data attribute.
-          let user = users[0] || users.data[0];
-
-          // Handle bad username.
-          if (!user) {
-            return done(null, false);
-          }
-
-          return user;
-        })
-        .then(user => {
-          // Check password
-          bcrypt.compare(password, user[options.passwordField], function(error, res) {
-            // Handle 500 server error.
-            if (error) {
-              return done(error);
-            }
-            // Successful login.
-            if (res) {
-              return done(null, user);
-            }
-            // Handle bad password.
-            return done(null, false);
-          });
-        })
-        .catch(error => {
-          // Handle any 500 server errors.
-          return done(error);
-        });
-    };
     // Set up our before hooks
     // localService.before({
     //   find: []
@@ -167,6 +133,6 @@ export default function(options){
     // localService.after(hooks.after);
     
     // Register our local auth strategy and get it to use the passport callback function
-    passport.use(new Strategy(options, emailHandler));
+    passport.use(new Strategy(options, localService.checkCredentials.bind(localService)));
   }
 }
