@@ -21,73 +21,85 @@ export let exposeAuthenticatedUser = function(options = {}) {
   };
 }
 
-export let setupSocketAuthentication = function(options = {}) {
-  let middleware;
-  let app = options.app;
+export let setupSocketIOAuthentication = function(app) {
+  return function(socket, next) {
+    socket.feathers.req = socket.request;
 
-  if (!options.secret) {
-    throw new Error('You must provide a token secret');
-  }
+    // NOTE (EK): This middleware runs more than once. Setting up this listener
+    // multiple times is probably no good.
+    socket.on('authenticate', function(data) {
+      console.log('authenticating', data);
+      
+      // Authenticate the user using token strategy
+      if (data.token) {
+        app.service('/auth/token').find(data, {}).then(data => {
+          delete data.password;
 
-  if (!options.provider) {
-    throw new Error('You must pass a socket provider. This could be "socketio", or "primus".');
-  }
-
-  switch(options.provider.toLowerCase()) {
-    case 'socketio':
-      middleware = function(socket, next) {
-        socket.feathers.req = socket.request;
-
-        console.log('running socket.io middleware');
-
-        // NOTE (EK): This middleware runs more than once. Setting up this listener
-        // multiple times is probably no good.
-        socket.on('authenticate', function(data) {
-          console.log('authenticating', data);
-          
-          // Authenticate the user using token strategy
-          if (data.token) {
-            // jwt.verify(data.token, options.secret, function(error, data) {
-            //   if (error) {
-            //     return next(error);
-            //   }
-              
-            //   delete data.password;
-
-            //   socket.feathers.user = data;
-            //   socket.emit('authenticated', data);
-
-            //   next(null, data);
-            // });
-            app.service('/auth/token').find(data, {}).then(function(data){
-              delete data.password;
-
-              socket.feathers.user = data;
-              socket.emit('authenticated', data);
-
-              next(null, data);
-            }).catch(next);
-          }
-          // Authenticate the user using local auth strategy
-          else {
-            app.service('auth/local').create(data, {}).then(function(data) {
-              delete data.password;
-
-              socket.feathers.user = data;
-              socket.emit('authenticated', data);
-
-              next(null, data);
-            }).catch(next);
-          }
+          socket.feathers.user = data;
+          socket.emit('authenticated', data);
+        }).catch(error => {
+          socket.emit('error', error);
         });
-      };
-      break;
-    case 'primus':
-      middleware = function(req, done) {
-        verifyToken(req.handshake.query.token, options.secret, req, done);
-      };
-      break;
-  }
+      }
+      // Authenticate the user using local auth strategy
+      else {
+        let params = {
+          req: socket.request
+        };
 
-  return middleware;
+        params.req.body = data;
+
+        app.service('auth/local').create(data, params).then(data => {
+          console.log('Local Auth Data', data);
+          delete data.password;
+
+          socket.feathers.user = data;
+          socket.emit('authenticated', data);
+        }).catch(error => {
+          socket.emit('error', error);
+        });
+      }
+    });
+    
+    next();
+  };
+};
+
+export let setupPrimusAuthentication = function(app) {
+  return function(req, done) {
+    // socket.feathers.req = req;
+
+    // // NOTE (EK): This middleware runs more than once. Setting up this listener
+    // // multiple times is probably no good.
+    // socket.on('authenticate', function(data) {
+    //   console.log('authenticating', data);
+      
+    //   // Authenticate the user using token strategy
+    //   if (data.token) {
+    //     app.service('/auth/token').find(data, {}).then(data => {
+    //       delete data.password;
+
+    //       socket.feathers.user = data;
+    //       socket.emit('authenticated', data);
+    //     }).catch(error => {
+    //       socket.emit('error', error);
+    //     });
+    //   }
+    //   // Authenticate the user using local auth strategy
+    //   else {
+    //     app.service('auth/local').create(data, {}).then(data => {
+    //       delete data.password;
+
+    //       socket.feathers.user = data;
+    //       socket.emit('authenticated', data);
+
+    //       return next(null, data);
+    //     }).catch(error => {
+    //       socket.emit('error', error);
+    //     });
+    //   }
+    // });
+    
+    done();
+  };
 };

@@ -51,13 +51,8 @@ export default function(options = {}) {
       // Socket.io middleware
       if (io) {
         console.log('registering SocketIO authentication middleware');
-        let params = {
-          app: this,
-          secret: options.token.secret,
-          provider: 'socketio'
-        };
 
-        io.use( middleware.setupSocketAuthentication(params) );
+        io.use( middleware.setupSocketIOAuthentication(app) );
         // app.service('/auth/token').on('created', function(data) {
         //   socket.feathers.token = data;
         // });
@@ -66,7 +61,7 @@ export default function(options = {}) {
       // Primus middleware
       if (primus) {
         console.log('registering Primus authentication middleware');
-        primus.authorize( middleware.setupSocketAuthentication({ secret: options.token.secret, provider: 'primus' }) );
+        primus.authorize( middleware.setupPrimusAuthentication({ secret: options.token.secret, provider: 'primus' }) );
       }
 
       return result;
