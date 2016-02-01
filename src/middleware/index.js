@@ -26,11 +26,18 @@ export let setupSocketIOAuthentication = function(app) {
     socket.on('authenticate', function(data) {      
       // Authenticate the user using token strategy
       if (data.token) {
-        app.service('/auth/token').find(data, {}).then(data => {
+        let params = {
+          query: {
+            token: data.token
+          }
+        };
+
+        app.service('/auth/token').find(params).then(data => {
           socket.feathers.user = data;
           socket.emit('authenticated', data);
         }).catch(error => {
           socket.emit('error', error);
+          throw error;
         });
       }
       // Authenticate the user using local auth strategy
@@ -48,6 +55,7 @@ export let setupSocketIOAuthentication = function(app) {
           socket.emit('authenticated', data);
         }).catch(error => {
           socket.emit('error', error);
+          throw error;
         });
       }
     });

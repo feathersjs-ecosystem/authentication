@@ -21,7 +21,10 @@ export default function(secret){
           return reject(new errors.NotAuthenticated(error));
         }
         
-        hook.params.data = data;
+
+        hook.params.data = Object.assign({ token }, data);
+        delete hook.params.data.iat;
+
         resolve(hook);
       });
     });

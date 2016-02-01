@@ -11,14 +11,20 @@ export class Service {
     this.options = options;
   }
 
+  // GET /auth/token
   // This is sort of a dummy route that we are using just to verify
-  // that our token is correct by running our verifyToken hook.
+  // that our token is correct by running our verifyToken hook. It
+  // doesn't refresh our token it just returns our existing one with
+  // our user data.
   find(params) {
-    console.log('FINDING TOKEN', params);
-
-
     if (params.data && params.data.token) {
-      return Promise.resolve(params.data);
+      const token = params.data.token;
+      delete params.data.token;
+
+      return Promise.resolve({
+        token: token,
+        data: params.data
+      });
     }
 
     return Promise.reject(new errors.GeneralError('Something weird happened'));
