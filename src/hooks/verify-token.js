@@ -2,9 +2,8 @@ import jwt from 'jsonwebtoken';
 import errors from 'feathers-errors';
 
 /**
- * Replaces a password located at the provided `passwordField` with a hash
- * of the password.
- * @param  {String} passwordField  The field containing the password.
+ * Verifies that a JWT token is valid
+ * @param  {String} secret - The JWT secret
  */
 export default function(secret){
   return function(hook) {

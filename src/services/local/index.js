@@ -1,10 +1,9 @@
 import hooks from '../../hooks';
 import errors from 'feathers-errors';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import { passRequestObject } from '../../middleware';
+import { exposeRequestObject } from '../../middleware';
 
 const defaults = {
   userEndpoint: '/users',
@@ -63,6 +62,7 @@ export class Service {
   // POST /auth/local
   create(data, params) {
     const options = this.options;
+    let app = this.app;
 
     // Validate username and password, then generate a JWT and return it
     return new Promise(function(resolve, reject){    
@@ -81,13 +81,15 @@ export class Service {
 
         // remove the user password field so we don't expose it in the response.
         delete user[options.passwordField];
-          
-        // TODO (EK): call this.app.service('/auth/token').create() instead
-        const token = jwt.sign(user, options.secret, options);
 
-        return resolve({
-          token: token,
-          data: user
+        // Get a new token from the Auth token service
+        return app.service('/auth/token').create(user, { internal: true }).then(data => {
+          return resolve({
+            token: data.token,
+            data: user
+          });
+        }).catch(error => {
+          return reject(error);
         });
       });
 
@@ -109,7 +111,7 @@ export default function(options){
     const app = this;
 
     // Initialize our service with any options it requires
-    app.use('/auth/local', passRequestObject, new Service(options));
+    app.use('/auth/local', exposeRequestObject, new Service(options));
 
     // Get our initialize service to that we can bind hooks
     const localService = app.service('/auth/local');

@@ -11,10 +11,17 @@ export class Service {
     this.options = options;
   }
 
+  // This is sort of a dummy route that we are using just to verify
+  // that our token is correct by running our verifyToken hook.
   find(params) {
-    return this.get(null, params).then(token => {
-      return [ token ];
-    });
+    console.log('FINDING TOKEN', params);
+
+
+    if (params.data && params.data.token) {
+      return Promise.resolve(params.data);
+    }
+
+    return Promise.reject(new errors.GeneralError('Something weird happened'));
   }
 
   // GET /auth/token/refresh
@@ -29,13 +36,12 @@ export class Service {
   }
 
   create(data, params) {
-    // Our before hook determined that we had a valid token
-    // so let's enerate a new token and return it.
+    // Our before hook determined that we had a valid token or that this
+    // was internally called so let's generate a new token and return it.
     const token = jwt.sign(params.data, this.options.secret, this.options);
 
     return Promise.resolve({
-      token: token,
-      data: params.data
+      token: token
     });
   }
 }
@@ -56,6 +62,7 @@ export default function(options){
     tokenService.before({
       // TODO (EK): Prevent external calls to create. Should be internal only
       create: [hooks.verifyToken(options.secret)],
+      find: [hooks.verifyToken(options.secret)],
       get: [hooks.verifyToken(options.secret)]
     });
 

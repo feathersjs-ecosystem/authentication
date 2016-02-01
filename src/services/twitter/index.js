@@ -2,7 +2,7 @@ import errors from 'feathers-errors';
 import passport from 'passport';
 import request from 'request';
 import Strategy from 'passport-twitter-token';
-import { passRequestObject } from '../../middleware';
+import { exposeRequestObject } from '../../middleware';
 
 const defaults = {
   userEndpoint: '/users'
@@ -129,7 +129,7 @@ export default function(options){
     const app = this;
 
     // Initialize our service with any options it requires
-    app.use('/auth/twitter', passRequestObject, new Service(options));
+    app.use('/auth/twitter', exposeRequestObject, new Service(options));
 
     // Get our initialize service to that we can bind hooks
     const twitterService = app.service('/auth/twitter');

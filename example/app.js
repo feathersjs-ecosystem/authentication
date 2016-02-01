@@ -20,7 +20,7 @@ var app = feathers()
       secret: 'feathers-rocks'
     },
     local: {
-      secret: 'feathers-rocks'
+      
     }
   }))
   // Initialize a user service
