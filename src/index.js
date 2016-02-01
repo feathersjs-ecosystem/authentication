@@ -38,16 +38,6 @@ export default function(options = {}) {
       let io = this.io;
       let primus = this.primus;
 
-      // TODO (EK):
-      // 1. Set up middleware to map 'authenticate' event for websockets to
-      // either app.service('/auth/local').create() or app.service('/auth/token').create()
-      // 
-      // 2. Normalize token for verifyToken hook. Check header, query, body, params, etc.
-      // 
-      // 3. Run verifyToken hook
-      // 
-      // 3. Expose user object in req.feathers.user
-
       // Socket.io middleware
       if (io) {
         console.log('registering SocketIO authentication middleware');
