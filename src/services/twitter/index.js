@@ -98,8 +98,8 @@ export class Service {
         }
 
         // Login was successful. Generate and send token.
-        user = !user.toJSON ? user : user.toJSON();
-        delete user.password;
+        user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+        delete user[options.passwordField];
 
         // TODO (EK): call this.app.service('/auth/token').create() instead
         const token = jwt.sign(user, options.secret, options);

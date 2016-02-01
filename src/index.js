@@ -61,7 +61,7 @@ export default function(options = {}) {
       // Primus middleware
       if (primus) {
         console.log('registering Primus authentication middleware');
-        primus.authorize( middleware.setupPrimusAuthentication({ secret: options.token.secret, provider: 'primus' }) );
+        primus.authorize( middleware.setupPrimusAuthentication(app) );
       }
 
       return result;

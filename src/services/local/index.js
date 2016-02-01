@@ -77,7 +77,7 @@ export class Service {
         }
 
         // Login was successful. Generate and send token.
-        user = !user.toJSON ? user : user.toJSON();
+        user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
 
         // remove the user password field so we don't expose it in the response.
         delete user[options.passwordField];
