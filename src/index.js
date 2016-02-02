@@ -3,6 +3,7 @@ import hooks from './hooks';
 import token from './services/token';
 import local from './services/local';
 import twitter from './services/twitter';
+import github from './services/github';
 import * as middleware from './middleware';
 
 export default function(options = {}) {
@@ -26,6 +27,10 @@ export default function(options = {}) {
       app.configure(twitter(options.twitter));
     }
 
+    if (options.github) {
+      app.configure(github(options.github));
+    }
+
     // Make the Passport user available for REST services.
     if (app.rest) {
       console.log('registering REST authentication middleware');
@@ -41,11 +46,7 @@ export default function(options = {}) {
       // Socket.io middleware
       if (io) {
         console.log('registering SocketIO authentication middleware');
-
         io.use( middleware.setupSocketIOAuthentication(app) );
-        // app.service('/auth/token').on('created', function(data) {
-        //   socket.feathers.token = data;
-        // });
       }
 
       // Primus middleware

@@ -11,6 +11,12 @@ export let exposeRequestObject = function(req, res, next) {
   next();
 }
 
+export let exposeConnectMiddleware = function(req, res, next) {
+  req.feathers.req = req;
+  req.feathers.res = res;
+  next();
+}
+
 // Make the authenticated passport user also available for services
 export let exposeAuthenticatedUser = function(options = {}) {
   return function(req, res, next) {
