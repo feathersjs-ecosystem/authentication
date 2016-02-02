@@ -40,8 +40,6 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
     // for Passport. This is normally a big no no.
     socket.feathers.req = socket.request;
 
-    socket.on('error', errorHandler);
-
     // NOTE (EK): This middleware runs more than once. Setting up this listener
     // multiple times is probably no good.
     socket.on('authenticate', function(data) {
