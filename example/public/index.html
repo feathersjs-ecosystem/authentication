@@ -69,19 +69,13 @@
   
   <pre id="messages"></pre>
 
+  <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
   <script src="socket.io/socket.io.js" type="text/javascript"></script>
   <script type="text/javascript">
-    // Normally, you would get this from /login or if you stored it in localStorage, from there.
-    var token;
-    var user;
-    var email = 'admin@feathersjs.com';
-    var password = 'admin';
-    //= 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFkbWluQGZlYXRoZXJzanMuY29tIiwiaWQiOjAsImlhdCI6MTQ1NDA5MzI0NH0.6aDm7KF2MWnlNNBiQfdCXRczWN7LOhBWLP_NIj0xy6o';
-    var socket = io('http://localhost:3030', {
-      // query: 'token=' + token,
+    var host = 'http://localhost:3030';
+    var socket = io(host, {
       transport: ['websockets']
     });
-    var messageList = document.getElementById('messages');
 
     socket.on('error', function(error) {
       console.error(error);
@@ -91,27 +85,91 @@
       console.log('Socket connected');
 
       socket.on('authenticated', function (data) {
-        console.log('We are authenticated', data);
+        alert('You successfully authenticated over socket.io. Your new JWT is:\n\n' + data.token);
+        console.log('Authenticated via socket', data);
         // Now that we are authenticated, fetch something that
         // requires a logged in user. Maybe we don't have to send the token
         // each time.
         // TODO (EK): Should just store the token in local storage;
-        token = data.token;
-        user = data.user;
-        socket.emit('messages::find', {token: token}, function(error, messages) {
-          messages.forEach(function(message){
-            messageList.innerHTML += message.text + '<br/>';
-          });
+        
+        // socket.emit('messages::find', {token: token}, function(error, messages) {
+        //   console.log(messages);
+        //   messages.forEach(function(message){
+        //     messageList.innerHTML += message.text + '<br/>';
+        //   });
+        // });
+      });
+    });
+
+    (function ($) {
+      $.fn.serializeForm = function () {
+        var o = {};
+        var a = this.serializeArray();
+        $.each(a, function () {
+          if (o[this.name]) {
+            if (!o[this.name].push) {
+              o[this.name] = [o[this.name]];
+            }
+            o[this.name].push(this.value || '');
+          } else {
+            o[this.name] = this.value || '';
+          }
+        });
+        return o;
+      };
+    })(jQuery);
+
+    $(document).on('ready', function(){
+      $('#email-password-rest-button').on('click', function(ev){
+        ev.preventDefault();
+
+        $.ajax({
+          type: "POST",
+          url: host + '/auth/local',
+          data: $(ev.target).closest('form').serialize(),
+          success: function(data) {
+            console.log('Authenticated via email/password over rest', data);
+            alert('You successfully authenticated using email and password over REST. Your new JWT is:\n\n' + data.token);
+          },
+          error: function(error) {
+            console.error(error);
+          }
         });
       });
 
-      // Attempt to auth with the server using our token.
-      // NOTE (EK): Is there a potential security risk here? Anyone listening to
-      // "authenticate" could see the token?
-      // socket.emit('authenticate', {token: token});
-      socket.emit('authenticate', {email: email, password: password});
+      $('#token-rest-button').on('click', function(ev){
+        ev.preventDefault();
+
+        $.ajax({
+          type: "POST",
+          url: host + '/auth/token',
+          data: $(ev.target).closest('form').serialize(),
+          success: function(data) {
+            console.log('Authenticated via token over rest', data);
+            alert('You successfully authenticated using JWT over REST. Your new JWT is:\n\n' + data.token);
+          },
+          error: function(error) {
+            console.error(error);
+          }
+        });
+      });
+
+      $('#email-password-socket-button').on('click', function(ev){
+        ev.preventDefault();
+
+        var data = $(ev.target).closest('form').serializeForm();
+
+        socket.emit('authenticate', data);
+      });
+
+      $('#token-socket-button').on('click', function(ev){
+        ev.preventDefault();
+
+        var data = $(ev.target).closest('form').serializeForm();
+
+        socket.emit('authenticate', data);
+      });
     });
-    
   </script>
 </body>
 </html>
