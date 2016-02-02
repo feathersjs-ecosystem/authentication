@@ -26,7 +26,7 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
     const authTimeout = setTimeout(() => { socket.disconnect('unauthorized') }, options.timeout || FIVE_SECONDS);
 
     let errorHandler = function(error) {
-      socket.emit('error', error, function(){
+      socket.emit('unauthorized', error, function(){
         socket.disconnect('unauthorized');
       });
 

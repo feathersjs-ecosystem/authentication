@@ -77,7 +77,8 @@
       transport: ['websockets']
     });
 
-    socket.on('error', function(error) {
+    socket.on('unauthorized', function(error) {
+      alert('Your socket authentication request failed.');
       console.error(error);
     });
 
@@ -128,7 +129,7 @@
           url: host + '/auth/local',
           data: $(ev.target).closest('form').serialize(),
           success: function(data) {
-            console.log('Authenticated via email/password over rest', data);
+            console.log('Authenticated via email/password over REST', data);
             alert('You successfully authenticated using email and password over REST. Your new JWT is:\n\n' + data.token);
           },
           error: function(error) {
@@ -145,7 +146,7 @@
           url: host + '/auth/token',
           data: $(ev.target).closest('form').serialize(),
           success: function(data) {
-            console.log('Authenticated via token over rest', data);
+            console.log('Authenticated via token over REST', data);
             alert('You successfully authenticated using JWT over REST. Your new JWT is:\n\n' + data.token);
           },
           error: function(error) {
