@@ -10,7 +10,7 @@ export default function(options = {}) {
 
   return function() {
     const app = this;
-    let oldSetup = app.setup;
+    let _super = app.setup;
     
     app.use(passport.initialize());
 
@@ -29,14 +29,14 @@ export default function(options = {}) {
     // Make the Passport user available for REST services.
     if (app.rest) {
       console.log('registering REST authentication middleware');
-      app.use( middleware.exposeAuthenticatedUser({ provider: 'rest'}) );
+      app.use( middleware.exposeAuthenticatedUser() );
     }
 
 
     app.setup = function() {
-      var result = oldSetup.apply(this, arguments);
-      let io = this.io;
-      let primus = this.primus;
+      var result = _super.apply(this, arguments);
+      let io = app.io;
+      let primus = app.primus;
 
       // Socket.io middleware
       if (io) {
