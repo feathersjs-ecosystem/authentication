@@ -88,9 +88,7 @@ export class Service {
             token: data.token,
             data: user
           });
-        }).catch(error => {
-          return reject(error);
-        });
+        }).catch(reject);
       });
 
       middleware(params.req);
