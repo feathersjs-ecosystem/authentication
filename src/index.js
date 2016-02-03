@@ -4,6 +4,7 @@ import token from './services/token';
 import local from './services/local';
 import twitter from './services/twitter';
 import github from './services/github';
+import facebook from './services/facebook';
 import * as middleware from './middleware';
 
 export default function(options = {}) {
@@ -29,6 +30,10 @@ export default function(options = {}) {
 
     if (options.github) {
       app.configure(github(options.github));
+    }
+
+    if (options.facebook) {
+      app.configure(facebook(options.facebook));
     }
 
     // Make the Passport user available for REST services.
