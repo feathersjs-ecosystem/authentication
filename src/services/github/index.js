@@ -7,7 +7,7 @@ const defaults = {
   passwordField: 'password',
   userEndpoint: '/users',
   passReqToCallback: true,
-  callbackUrl: "http://127.0.0.1:3030/auth/github/callback"
+  callbackURL: "http://localhost:3030/auth/github/callback"
 }
 
 export class Service {
@@ -31,14 +31,11 @@ export class Service {
     app.service(options.userEndpoint)
       .find(params)
       .then(users => {
-        console.log('users', users);
         // Paginated services return the array of results in the data attribute.
         let user = users[0] || users.data && users.data[0];
 
-        console.log('user', user);
         // If user found return them
         if (user) {
-          console.log('user found!', user);
           return done(null, user);
         }
 
@@ -49,7 +46,7 @@ export class Service {
 
         let data = Object.assign({
           githubId: profile.id,
-          githubToken: accessToken,
+          githubAccessToken: accessToken,
           github: profile._json
         });
         
@@ -63,9 +60,7 @@ export class Service {
   find(params) {    
     // Authenticate via github. This will redirect you to authorize
     // the application.
-    return new Promise(function(resolve, reject){
-      passport.authenticate('github', { session: false })(params.req, params.res);
-    });
+    return passport.authenticate('github', { session: false })(params.req, params.res);
   }
 
   // For GET /auth/github/callback
@@ -93,7 +88,7 @@ export class Service {
         user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
         delete user[options.passwordField];
 
-        // Get a new token from the Auth token service and send it back to the client.
+        // Get a new JWT from the Auth token service and send it back to the client.
         return app.service('/auth/token').create(user, { internal: true }).then(data => {
           return resolve({
             token: data.token,
@@ -108,15 +103,12 @@ export class Service {
 
   // POST /auth/github
   create(data, params) {
-    console.log('Logging in via github', data);
+    // TODO (EK): This should be for token based auth
     const options = this.options;
     
     // Authenticate via github, then generate a JWT and return it
     return new Promise(function(resolve, reject){
-      console.log('Promising');
-
       let middleware = passport.authenticate('github-token', { session: false }, function(error, user) {
-        console.log('RESPONSE', error, user);
         if (error) {
           return reject(error);
         }
