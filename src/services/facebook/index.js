@@ -7,7 +7,7 @@ const defaults = {
   passwordField: 'password',
   userEndpoint: '/users',
   passReqToCallback: true,
-  callbackURL: "http://127.0.0.1:3030/auth/facebook/callback"
+  callbackURL: "http://localhost:3030/auth/facebook/callback"
 }
 
 export class Service {
