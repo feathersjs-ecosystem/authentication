@@ -79,6 +79,7 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
   };
 };
 
+// TODO (EK): DRY this up along with the code in setupSocketIOAuthentication
 export let setupPrimusAuthentication = function(app, options = {}) {
   return function(socket) {
     // Set a timeout for the socket to establish a secure connection within.
