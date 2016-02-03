@@ -161,6 +161,33 @@
     </section>
 
     <section>
+      <h3>Basic email/password authentication via primus</h3>
+      <form action="/auth/local" method="post">
+        <fieldset>
+          <label>Email</label>
+          <input type="text" name="email" value="admin@feathersjs.com"/>
+        </fieldset>
+        <fieldset>
+          <label>Password</label>
+          <input type="password" name="password" value="admin"/>
+        </fieldset>
+        <button id="email-password-primus-button">Login</button>
+      </form>
+    </section>
+
+    <section>
+      <h3>Token based authentication via primus</h3>
+      <form action="/auth/token" method="post">
+        <fieldset>
+          <label>Token</label>
+          <input type="text" name="token" value=""/>
+        </fieldset>
+
+        <button id="token-primus-button">Login</button>
+      </form>
+    </section>
+
+    <section>
       <h3>Authenticate via Github</h3>
       <a href="/auth/github" class="button">Login with Github</a>
     </section>
@@ -180,36 +207,9 @@
 
   <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
   <script src="socket.io/socket.io.js" type="text/javascript"></script>
+  <script type="text/javascript" src="primus/primus.js"></script>
   <script type="text/javascript">
     var host = 'http://localhost:3030';
-    var socket = io(host, {
-      transport: ['websockets']
-    });
-
-    socket.on('unauthorized', function(error) {
-      alert('Your socket authentication request failed.');
-      console.error(error);
-    });
-
-    socket.on('connect', function() {
-      console.log('Socket connected');
-
-      socket.on('authenticated', function (data) {
-        alert('You successfully authenticated over socket.io. Your new JWT is:\n\n' + data.token);
-        console.log('Authenticated via socket', data);
-        // Now that we are authenticated, fetch something that
-        // requires a logged in user. Maybe we don't have to send the token
-        // each time.
-        // TODO (EK): Should just store the token in local storage;
-        
-        // socket.emit('messages::find', {token: token}, function(error, messages) {
-        //   console.log(messages);
-        //   messages.forEach(function(message){
-        //     messageList.innerHTML += message.text + '<br/>';
-        //   });
-        // });
-      });
-    });
 
     (function ($) {
       $.fn.serializeForm = function () {
@@ -266,18 +266,110 @@
 
       $('#email-password-socket-button').on('click', function(ev){
         ev.preventDefault();
-
         var data = $(ev.target).closest('form').serializeForm();
+        var socket = io(host, {
+          transport: ['websockets']
+        });
 
-        socket.emit('authenticate', data);
+        socket.on('unauthorized', function(error) {
+          alert('Your socket authentication request failed.');
+          console.error(error);
+        });
+
+        socket.on('disconnect', function(error) {
+          console.error('Socket disconnected', error);
+        });
+
+        socket.on('connect', function() {
+          console.log('Socket connected');
+
+          socket.on('authenticated', function (response) {
+            alert('You successfully authenticated over socket.io with email and password. Your new JWT is:\n\n' + response.token);
+            console.log('Authenticated with email and password via socket', response);
+          });
+
+          socket.emit('authenticate', data);
+        });
       });
 
       $('#token-socket-button').on('click', function(ev){
         ev.preventDefault();
-
         var data = $(ev.target).closest('form').serializeForm();
+        var socket = io(host, {
+          transport: ['websockets']
+        });
 
-        socket.emit('authenticate', data);
+        socket.on('unauthorized', function(error) {
+          alert('Your socket authentication request failed.');
+          console.error(error);
+        });
+
+        socket.on('disconnect', function(error) {
+          console.error('Socket disconnected', error);
+        });
+
+        socket.on('connect', function() {
+          console.log('Socket connected');
+
+          socket.on('authenticated', function (response) {
+            alert('You successfully authenticated over socket.io with JWT. Your new JWT is:\n\n' + response.token);
+            console.log('Authenticated with JWT via socket', response);
+          });
+
+          socket.emit('authenticate', data);
+        });
+      });
+
+      $('#email-password-primus-button').on('click', function(ev){
+        ev.preventDefault();
+        var data = $(ev.target).closest('form').serializeForm();
+        var primus = new Primus(host);
+
+        primus.on('unauthorized', function(error) {
+          alert('Your primus authentication request failed.');
+          console.error(error);
+        });
+
+        primus.on('close', function(error) {
+          console.error('Primus disconnected', error);
+        });
+
+        primus.on('open', function() {
+          console.log('Primus connected');
+
+          primus.on('authenticated', function (data) {
+            alert('You successfully authenticated over primus with email and password. Your new JWT is:\n\n' + data.token);
+            console.log('Authenticated with email and password via primus', data);
+          });
+
+          primus.send('authenticate', data);
+        });
+      });
+
+      $('#token-primus-button').on('click', function(ev){
+        ev.preventDefault();
+        var data = $(ev.target).closest('form').serializeForm();
+        var primus = new Primus(host);
+
+        primus.on('unauthorized', function(error) {
+          alert('Your primus authentication request failed.');
+          console.error(error);
+        });
+
+        primus.on('close', function(error) {
+          console.error('Primus disconnected', error);
+        });
+
+        primus.on('open', function() {
+          console.log('Primus connected');
+
+          primus.on('authenticated', function (data) {
+            alert('You successfully authenticated over primus with JWT. Your new JWT is:\n\n' + data.token);
+            console.log('Authenticated with JWT via primus', data);
+          });
+
+          primus.send('authenticate', data);
+        });
       });
     });
   </script>

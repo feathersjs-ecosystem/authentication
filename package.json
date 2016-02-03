@@ -57,6 +57,7 @@
     "feathers": "2.0.0-pre.4",
     "feathers-hooks": "^1.0.0-pre.4",
     "feathers-memory": "^0.5.3",
+    "feathers-primus": "^1.2.1",
     "feathers-rest": "^1.1.1",
     "feathers-socketio": "^1.2.0",
     "jshint": "^2.8.0",

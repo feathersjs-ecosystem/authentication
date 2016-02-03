@@ -44,20 +44,18 @@ export default function(options = {}) {
 
 
     app.setup = function() {
-      var result = _super.apply(this, arguments);
-      let io = app.io;
-      let primus = app.primus;
+      let result = _super.apply(this, arguments);
 
       // Socket.io middleware
-      if (io) {
-        console.log('registering SocketIO authentication middleware');
-        io.use( middleware.setupSocketIOAuthentication(app) );
+      if (app.io) {
+        console.log('registering Socket.io authentication middleware');
+        app.io.on('connection', middleware.setupSocketIOAuthentication(app));
       }
 
       // Primus middleware
-      if (primus) {
+      if (app.primus) {
         console.log('registering Primus authentication middleware');
-        primus.authorize( middleware.setupPrimusAuthentication(app) );
+        app.primus.on('connection', middleware.setupPrimusAuthentication(app));
       }
 
       return result;
