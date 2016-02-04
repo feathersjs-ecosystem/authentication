@@ -1,3 +1,4 @@
+import path from 'path';
 import passport from 'passport';
 import hooks from './hooks';
 import token from './services/token';
@@ -68,6 +69,10 @@ export default function(providers) {
 
       return result;
     };
+
+    app.get(authOptions.successRedirect, function(req, res, next){
+      res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
+    });
   };
 }
 
