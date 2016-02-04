@@ -1,13 +1,16 @@
 import errors from 'feathers-errors';
 import passport from 'passport';
-import Strategy from 'passport-github';
 import { exposeConnectMiddleware } from '../../middleware';
+import { successfulLogin } from '../../middleware';
 
 const defaults = {
+  successRedirect: '/auth/success',
   passwordField: 'password',
   userEndpoint: '/users',
+  tokenEndpoint: '/auth/token',
   passReqToCallback: true,
-  callbackURL: "http://localhost:3030/auth/github/callback"
+  callbackSuffix: "callback",
+  permissions: {}
 }
 
 export class Service {
@@ -21,13 +24,14 @@ export class Service {
     const params = {
       internal: true,
       query: {
-        githubId: profile.id
+        // facebookId: profile.id
+        [`${options.provider}Id`]: profile.id
       }
     };
 
     // console.log('Authenticating', accessToken, refreshToken, profile);
 
-    // Find or create the user since they could have signed up via github.
+    // Find or create the user since they could have signed up via facebook.
     app.service(options.userEndpoint)
       .find(params)
       .then(users => {
@@ -41,13 +45,14 @@ export class Service {
 
         // No user found so we need to create one.
         // 
-        // TODO (EK): This is where we should look at
-        // req.user and see if we can consolidate profiles.
+        // TODO (EK): This is where we should look at req.user and see if we
+        // can consolidate profiles. We might want to give the developer a hook
+        // so that they can control the consolidation strategy.
+        profile._json.accessToken = accessToken;
 
         let data = Object.assign({
-          githubId: profile.id,
-          githubAccessToken: accessToken,
-          github: profile._json
+          [`${options.provider}Id`]: profile.id,
+          [`${options.provider}`]: profile._json
         });
         
         return app.service(options.userEndpoint).create(data, { internal: true }).then(user => {
@@ -56,32 +61,34 @@ export class Service {
       }).catch(done);
   }
 
-  // GET /auth/github
+  // GET /auth/facebook
   find(params) {    
-    // Authenticate via github. This will redirect you to authorize
-    // the application.
-    return passport.authenticate('github', { session: false })(params.req, params.res);
+    // Authenticate via your provider. This will redirect you to authorize the application.
+    const authOptions = Object.assign({session: false}, this.options.permissions);
+    return passport.authenticate(this.options.provider, authOptions)(params.req, params.res);
   }
 
-  // For GET /auth/github/callback
+  // For GET /auth/facebook/callback
   get(id, params) {
+    const options = this.options;
+    const authOptions = Object.assign({session: false}, options.permissions);
+    let app = this.app;
+    
+    // TODO (EK): Make this configurable
     if (id !== 'callback') {
       return Promise.reject(new errors.NotFound());
     }
 
-    const options = this.options;
-    let app = this.app;
-
     return new Promise(function(resolve, reject){
     
-      let middleware = passport.authenticate('github', { session: false }, function(error, user) {
+      let middleware = passport.authenticate(options.provider, authOptions, function(error, user) {
         if (error) {
           return reject(error);
         }
 
         // Login failed.
         if (!user) {
-          return reject(new errors.NotAuthenticated(options.loginError));
+          return reject(new errors.NotAuthenticated(`An error occurred logging in with ${options.provider}`));
         }
 
         // Login was successful. Clean up the user object for the response.
@@ -89,7 +96,7 @@ export class Service {
         delete user[options.passwordField];
 
         // Get a new JWT from the Auth token service and send it back to the client.
-        return app.service('/auth/token').create(user, { internal: true }).then(data => {
+        return app.service(options.tokenEndpoint).create(user, { internal: true }).then(data => {
           return resolve({
             token: data.token,
             data: user
@@ -101,14 +108,14 @@ export class Service {
     });
   }
 
-  // POST /auth/github
+  // POST /auth/facebook /auth/facebook::
   create(data, params) {
     // TODO (EK): This should be for token based auth
     const options = this.options;
     
-    // Authenticate via github, then generate a JWT and return it
+    // Authenticate via facebook, then generate a JWT and return it
     return new Promise(function(resolve, reject){
-      let middleware = passport.authenticate('github-token', { session: false }, function(error, user) {
+      let middleware = passport.authenticate('facebook-token', { session: false }, function(error, user) {
         if (error) {
           return reject(error);
         }
@@ -143,25 +150,35 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign(options, defaults);
-  console.log('configuring github auth service with options', options);
+  options = Object.assign({}, defaults, options);
+
+  if (!options.provider) {
+    throw new Error('You need to pass a `provider` for your authentication provider');
+  }
+
+  if (!options.endPoint) {
+    throw new Error(`You need to provide an 'endPoint' for your ${options.provider} provider`);
+  }
+
+  if (!options.strategy) {
+    throw new Error(`You need to provide a Passport 'strategy' for your ${options.provider} provider`);
+  }
+
+  console.log(`configuring ${options.provider} OAuth2 service with options`, options);
 
   return function() {
     const app = this;
+    const Strategy = options.strategy;
+
+    options.callbackURL = options.callbackURL || `${options.endPoint}/${options.callbackSuffix}`;
 
     // Initialize our service with any options it requires
-    app.use('/auth/github', exposeConnectMiddleware, new Service(options));
+    app.use(options.endPoint, exposeConnectMiddleware, new Service(options), successfulLogin(options));
 
-    // Get our initialize service to that we can bind hooks
-    const githubService = app.service('/auth/github');
-
-    // Set up our before hooks
-    // githubService.before(hooks.before);
-
-    // Set up our after hooks
-    // githubService.after(hooks.after);
+    // Get our initialized service
+    const service = app.service(options.endPoint);
     
-    // Register our github auth strategy and get it to use the passport callback function
-    passport.use(new Strategy(options, githubService.oauthCallback.bind(githubService)));
+    // Register our Passport auth strategy and get it to use our passport callback function
+    passport.use(new Strategy(options, service.oauthCallback.bind(service)));
   };
 }

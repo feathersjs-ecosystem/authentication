@@ -2,43 +2,51 @@ import passport from 'passport';
 import hooks from './hooks';
 import token from './services/token';
 import local from './services/local';
-import twitter from './services/twitter';
-import github from './services/github';
-import facebook from './services/facebook';
+import oauth2 from './services/oauth2';
 import * as middleware from './middleware';
 
-export default function(options = {}) {
-  console.log('configuring authentication plugin with options', options);
+const PROVIDERS = {
+  token,
+  local
+};
 
+export default function(providers) {
   return function() {
     const app = this;
     let _super = app.setup;
+    const authOptions = Object.assign({ successRedirect: '/auth/success' }, providers.local, providers.token);
     
     app.use(passport.initialize());
 
-    if (options.token) {
-      app.configure(token(options.token));
-    }
+    // Merge all of our options and configure the appropriate service
+    Object.keys(providers).forEach(function (key) {
+      // Check to see if the key is a local or token provider
+      let provider = PROVIDERS[key];
+      let providerOptions = providers[key];
 
-    if (options.local) {
-      app.configure(local(options.local));
-    }
+      // If it's not one of our own providers then determine whether it is oauth1 or oauth2
+      if (!provider) {
+        // Check to see if it is an oauth2 provider
+        if (providerOptions.clientID && providerOptions.clientSecret) {
+          provider = oauth2
+        } 
+        // Check to see if it is an oauth1 provider
+        else if (providerOptions.consumerKey && providerOptions.consumerSecret){
+          throw new Error(`Sorry we don't support OAuth1 providers right now. Try using a ${key} OAuth2 provider.`);
+        }
+        else if (!provider) {
+          throw new Error(`Invalid ${key} provider configuration.\nYou need to provide your 'clientID' and 'clientSecret' if using an OAuth2 provider or your 'consumerKey' and 'consumerSecret' if using an OAuth1 provider.`);
+        }
+      }
 
-    if (options.twitter) {
-      app.configure(twitter(options.twitter));
-    }
+      const options = Object.assign({ provider: key, endPoint: `/auth/${key}` }, providerOptions, authOptions);
 
-    if (options.github) {
-      app.configure(github(options.github));
-    }
-
-    if (options.facebook) {
-      app.configure(facebook(options.facebook));
-    }
+      app.configure( provider(options) );
+    });
 
     // Make the Passport user available for REST services.
     if (app.rest) {
-      console.log('registering REST authentication middleware');
+      // console.log('registering REST authentication middleware');
       app.use( middleware.exposeAuthenticatedUser() );
     }
 
@@ -48,14 +56,14 @@ export default function(options = {}) {
 
       // Socket.io middleware
       if (app.io) {
-        console.log('registering Socket.io authentication middleware');
-        app.io.on('connection', middleware.setupSocketIOAuthentication(app));
+        // console.log('registering Socket.io authentication middleware');
+        app.io.on('connection', middleware.setupSocketIOAuthentication(app, authOptions));
       }
 
       // Primus middleware
       if (app.primus) {
-        console.log('registering Primus authentication middleware');
-        app.primus.on('connection', middleware.setupPrimusAuthentication(app));
+        // console.log('registering Primus authentication middleware');
+        app.primus.on('connection', middleware.setupPrimusAuthentication(app, authOptions));
       }
 
       return result;
