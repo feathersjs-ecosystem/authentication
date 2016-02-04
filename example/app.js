@@ -1,15 +1,23 @@
 var feathers = require('feathers');
 var rest = require('feathers-rest');
 var socketio = require('feathers-socketio');
+var primus = require('feathers-primus');
 var hooks = require('feathers-hooks');
 var memory = require('feathers-memory');
 var bodyParser = require('body-parser');
 var authentication = require('../lib/index').default;
 var authHooks = require('../lib/index').hooks;
 
+// Passport Auth Strategies
+var FacebookStrategy = require('passport-facebook').Strategy;
+var GithubStrategy = require('passport-github').Strategy;
+
 // Initialize the application
 var app = feathers()
   .configure(rest())
+  .configure(primus({
+    transformer: 'websockets'
+  }))
   .configure(socketio())
   .configure(hooks())
   // Needed for parsing bodies (login)
@@ -33,6 +41,10 @@ var messageService = app.service('/messages');
 messageService.create({text: 'A million people walk into a Silicon Valley bar'}, {}, function(){});
 messageService.create({text: 'Nobody buys anything'}, {}, function(){});
 messageService.create({text: 'Bar declared massive success'}, {}, function(){});
+
+messageService.before({
+  all: authHooks.requireAuth()
+})
 
 var userService = app.service('/users');
 
