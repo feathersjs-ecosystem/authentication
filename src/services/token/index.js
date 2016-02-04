@@ -2,8 +2,10 @@ import jwt from 'jsonwebtoken';
 import hooks from '../../hooks';
 import errors from 'feathers-errors';
 
+const TEN_HOURS = 36000;
 const defaults = {
-  expiresIn: 36000, // seconds to expiration. Default is 10 hours.
+  tokenEndpoint: '/auth/token',
+  expiresIn: TEN_HOURS,
 };
 
 export class Service {
@@ -53,13 +55,14 @@ export class Service {
 }
 
 export default function(options){
+  options = Object.assign({}, defaults, options);
   console.log('configuring token auth service with options', options);
 
   return function() {
     const app = this;
 
     // Initialize our service with any options it requires
-    app.use('/auth/token', new Service(options));
+    app.use(options.tokenEndpoint, new Service(options));
 
     // Get our initialize service to that we can bind hooks
     const tokenService = app.service('/auth/token');

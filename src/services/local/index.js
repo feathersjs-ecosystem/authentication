@@ -4,14 +4,15 @@ import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
 import { exposeRequestObject } from '../../middleware';
+import { successfulLogin } from '../../middleware';
 
 const defaults = {
   userEndpoint: '/users',
   usernameField: 'email',
   passwordField: 'password',
   userProperty: passport._userProperty || 'user',
-  localAuthEndpoint: '/auth/local',
-  loginError: 'Invalid login.'
+  localEndpoint: '/auth/local',
+  tokenEndpoint: '/auth/token'
 };
 
 export class Service {
@@ -73,7 +74,7 @@ export class Service {
 
         // Login failed.
         if (!user) {
-          return reject(new errors.NotAuthenticated(options.loginError));
+          return reject(new errors.NotAuthenticated('Invalid login.'));
         }
 
         // Login was successful. Generate and send token.
@@ -83,7 +84,7 @@ export class Service {
         delete user[options.passwordField];
 
         // Get a new token from the Auth token service
-        return app.service('/auth/token').create(user, { internal: true }).then(data => {
+        return app.service(options.tokenEndpoint).create(user, { internal: true }).then(data => {
           return resolve({
             token: data.token,
             data: user
@@ -103,16 +104,17 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign(options, defaults);
+  options = Object.assign({}, defaults, options);
+  console.log('configuring local auth service with options', options);
 
   return function() {
     const app = this;
 
     // Initialize our service with any options it requires
-    app.use('/auth/local', exposeRequestObject, new Service(options));
+    app.use(options.localEndpoint, exposeRequestObject, new Service(options), successfulLogin(options));
 
     // Get our initialize service to that we can bind hooks
-    const localService = app.service('/auth/local');
+    const localService = app.service(options.localEndpoint);
 
     // Set up our before hooks
     // localService.before(hooks.before);
