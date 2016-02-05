@@ -8,7 +8,7 @@
  */
 export default function restrictToSelf(idProp = '_id') {
   return function(hook){
-    if (hook.params.user) {
+    if (hook.params.user && hook.params.provider) {
       hook.params.query[idProp] = hook.params.user[idProp];
     } else {
       throw new Error('Could not find the user\'s id for the restrictToSelf hook.');

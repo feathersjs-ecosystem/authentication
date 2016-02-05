@@ -15,7 +15,7 @@ export default function setUserId(sourceProp = '_id', destProp = 'userId'){
       obj[destProp] = hook.params.user[sourceProp];
     }
 
-    if (hook.params.user) {
+    if (hook.params.user && hook.params.provider) {
 
       // Handle arrays.
       if (Array.isArray(hook.data)) {

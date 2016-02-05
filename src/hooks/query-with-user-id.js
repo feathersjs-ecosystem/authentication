@@ -5,7 +5,7 @@
  */
 export default function queryWithUserId(id = '_id', idOnResource = 'userId') {
   return function(hook) {
-    if (hook.params.user) {
+    if (hook.params.user && hook.params.provider) {
       hook.params.query[idOnResource] = hook.params.user[id];
     } else {
       throw new Error('There is no user logged in.');

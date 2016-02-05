@@ -7,7 +7,7 @@
  */
 export default function requireAdminToSetAdmin(adminField = 'admin'){
   return function(hook){
-    if (hook.params.user && !hook.params.user[adminField]) {
+    if (hook.params.user && !hook.params.user[adminField] && hook.params.provider) {
       delete hook.data[adminField];
     }
   };
