@@ -43,7 +43,11 @@ messageService.create({text: 'Nobody buys anything'}, {}, function(){});
 messageService.create({text: 'Bar declared massive success'}, {}, function(){});
 
 messageService.before({
-  all: authHooks.requireAuth()
+  all: [
+    authHooks.verifyToken({secret: 'feathers-rocks'}),
+    authHooks.populateUser(),
+    authHooks.requireAuth()
+  ]
 })
 
 var userService = app.service('/users');
