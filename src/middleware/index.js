@@ -1,12 +1,14 @@
+import Debug from 'debug';
 import errors from 'feathers-errors';
 
+const debug = Debug('feathers-authentication:middleware');
 const FIVE_SECONDS = 5000;
 const TEN_HOURS = 36000;
 const defaults = {
   timeout: FIVE_SECONDS,
   tokenEndpoint: '/auth/token',
   localEndpoint: '/auth/local'
-}
+};
 
 // Usually this is a big no no but passport requires the 
 // request object to inspect req.body and req.query so we
@@ -15,15 +17,46 @@ export let exposeConnectMiddleware = function(req, res, next) {
   req.feathers.req = req;
   req.feathers.res = res;
   next();
-}
+};
 
 // Make the authenticated passport user also available for REST services
-export let exposeAuthenticatedUser = function(options = {}) {
+// export let exposeAuthenticatedUser = function(options = {}) {
+//   return function(req, res, next) {
+//     req.feathers.user = req.user;
+//     next();
+//   };
+// };
+
+// Make the authenticated passport user also available for REST services
+export let normalizeAuthToken = function(options = { header: 'authorization'}) {
   return function(req, res, next) {
-    req.feathers.user = req.user;
+    let token = req.headers[options.header];
+
+    console.log('HEADERS', req.headers, token);
+    
+    // Check the header for the token (preferred method)
+    if (token) {
+      // if the value contains "bearer" or "Bearer" then cut that part out
+      if ( /bearer/i.test(token) ) {
+        token = token.split(' ')[1];
+      }
+    }
+    // Check the body next if we don't have a token
+    else if (req.body.token) {
+      token = req.body.token;
+    }
+    // Finally, check the query string. (worst method)
+    else if (req.query.token) {
+      token = req.query.token; 
+    }
+
+    // Tack it on to our feathers object so that it is passed to services
+    req.feathers.token = token;
+
+    console.log('FEATHERS', req.feathers);
     next();
   };
-}
+};
 
 export let successfulLogin = function(options = {}) {
   return function(req, res, next) {
@@ -47,15 +80,17 @@ export let successfulLogin = function(options = {}) {
 
     // Redirect to our success route
     res.redirect(options.successRedirect);
-  }
-}
+  };
+};
 
 export let setupSocketIOAuthentication = function(app, options = {}) {
   options = Object.assign(options, defaults);
+  
+  debug('Setting up Socket.io authentication middleware with options:', options);
 
   return function(socket) {
     // Set a timeout for the socket to establish a secure connection within.
-    const authTimeout = setTimeout(() => { socket.disconnect('unauthorized') }, options.timeout);
+    const authTimeout = setTimeout(() => { socket.disconnect('unauthorized'); }, options.timeout);
 
     let errorHandler = function(error) {
       socket.emit('unauthorized', error, function(){
@@ -79,15 +114,11 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
           return errorHandler(new errors.BadRequest('Invalid token data type.'));
         }
 
-        let params = {
-          query: {
-            token: data.token
-          }
-        };
-
-        app.service(options.tokenEndpoint).find(params).then(data => {
-          socket.feathers.user = data;
-          socket.emit('authenticated', data);
+        // The token gets normalized in hook.params for REST so we'll stay with
+        // convention and pass it as params using sockets.
+        app.service(options.tokenEndpoint).create({}, data).then(response => {
+          socket.feathers.user = response.data;
+          socket.emit('authenticated', response);
         }).catch(errorHandler);
       }
       // Authenticate the user using local auth strategy
@@ -101,9 +132,9 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
 
         params.req.body = data;
 
-        app.service(options.localEndpoint).create(data, params).then(data => {
-          socket.feathers.user = data;
-          socket.emit('authenticated', data);
+        app.service(options.localEndpoint).create(data, params).then(response => {
+          socket.feathers.user = response.data;
+          socket.emit('authenticated', response);
         }).catch(errorHandler);
       }
     });
@@ -114,9 +145,11 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
 export let setupPrimusAuthentication = function(app, options = {}) {
   options = Object.assign(options, defaults);
 
+  debug('Setting up Primus authentication middleware with options:', options);
+
   return function(socket) {
     // Set a timeout for the socket to establish a secure connection within.
-    const authTimeout = setTimeout(() => { socket.end('unauthorized', new errors.NotAuthenticated('Authentication timed out.')) }, options.timeout);
+    const authTimeout = setTimeout(() => { socket.end('unauthorized', new errors.NotAuthenticated('Authentication timed out.')); }, options.timeout);
 
     let errorHandler = function(error) {
       socket.send('unauthorized', error);
@@ -136,15 +169,11 @@ export let setupPrimusAuthentication = function(app, options = {}) {
           return errorHandler(new errors.BadRequest('Invalid token data type.'));
         }
 
-        let params = {
-          query: {
-            token: data.token
-          }
-        };
-
-        app.service(options.tokenEndpoint).find(params).then(data => {
-          socket.request.feathers.user = data;
-          socket.send('authenticated', data);
+        // The token gets normalized in hook.params for REST so we'll stay with
+        // convention and pass it as params using sockets.
+        app.service(options.tokenEndpoint).create({}, data).then(response => {
+          socket.request.feathers.user = response.data;
+          socket.send('authenticated', response);
         }).catch(errorHandler);
       }
       // Authenticate the user using local auth strategy
@@ -158,11 +187,19 @@ export let setupPrimusAuthentication = function(app, options = {}) {
 
         params.req.body = data;
 
-        app.service(options.localEndpoint).create(data, params).then(data => {
-          socket.request.feathers.user = data;
-          socket.send('authenticated', data);
+        app.service(options.localEndpoint).create(data, params).then(response => {
+          socket.request.feathers.user = response.data;
+          socket.send('authenticated', response);
         }).catch(errorHandler);
       }
     });
   };
 };
+
+export default {
+  exposeConnectMiddleware,
+  normalizeAuthToken,
+  successfulLogin,
+  setupSocketIOAuthentication,
+  setupPrimusAuthentication
+}

@@ -1,11 +1,51 @@
+import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import hooks from '../../hooks';
 import errors from 'feathers-errors';
 
+const debug = Debug('feathers-authentication:token');
 const TEN_HOURS = 36000;
 const defaults = {
+  userEndpoint: '/users',
+  passwordField: 'password',
   tokenEndpoint: '/auth/token',
+  issuer: 'feathers',
+  algorithms: ['HS256'],
   expiresIn: TEN_HOURS,
+};
+
+/**
+ * Verifies that a JWT token is valid. This is a private hook.
+ * 
+ * @param  {Object} options - An options object
+ * @param {String} options.secret - The JWT secret
+ */
+let _verifyToken = function(options = {}){
+  const secret = options.secret;
+
+  return function(hook) {
+    return new Promise(function(resolve, reject){
+      if (hook.params.internal) {
+        hook.params.data = hook.data;
+        return resolve(hook);
+      }
+
+      const token = hook.params.token;
+
+      jwt.verify(token, secret, options, function (error, payload) {
+        if (error) {
+          // Return a 401 if the token has expired.
+          return reject(new errors.NotAuthenticated(error));
+        }
+        
+        // Normalize our params with the token in it.
+        hook.data = { id: payload.id };
+        hook.params.data = Object.assign({}, hook.data, payload, { token });
+        hook.params.query = Object.assign({}, hook.params.query, { token });
+        resolve(hook);
+      });
+    });
+  };
 };
 
 export class Service {
@@ -18,45 +58,57 @@ export class Service {
   // that our token is correct by running our verifyToken hook. It
   // doesn't refresh our token it just returns our existing one with
   // our user data.
-  find(params) {
-    if (params.data && params.data.token) {
-      const token = params.data.token;
-      delete params.data.token;
+  // find(params) {
+  //   if (params.data && params.data.token) {
+  //     const token = params.data.token;
+  //     delete params.data.token;
 
-      return Promise.resolve({
-        token: token,
-        data: params.data
-      });
-    }
+  //     return Promise.resolve({
+  //       token: token,
+  //       data: params.data
+  //     });
+  //   }
 
-    return Promise.reject(new errors.GeneralError('Something weird happened'));
-  }
+  //   return Promise.reject(new errors.GeneralError('Something weird happened'));
+  // }
 
   // GET /auth/token/refresh
   get(id, params) {
-    // Our before hook determined that we had a valid token
-    // so let's enerate a new token and return it.
-    const token = jwt.sign(params.data, this.options.secret, this.options);
+    if (id !== 'refresh') {
+      return Promise.reject(new errors.NotFound());
+    }
 
-    return Promise.resolve({
-      token: token
+    const options = this.options;
+    const data = params.data;
+    // Our before hook determined that we had a valid token or that this
+    // was internally called so let's generate a new token with the user
+    // id and return both the ID and the token.
+    return new Promise(function(resolve){
+      jwt.sign(data, options.secret, options, token => {
+        return resolve( Object.assign(data, { token }) );
+      });
     });
   }
 
-  create(data, params) {
+  // POST /auth/token
+  create(data) {
+    const options = this.options;
+    
     // Our before hook determined that we had a valid token or that this
-    // was internally called so let's generate a new token and return it.
-    const token = jwt.sign(params.data, this.options.secret, this.options);
-
-    return Promise.resolve({
-      token: token
+    // was internally called so let's generate a new token with the user
+    // id and return both the ID and the token.
+    return new Promise(function(resolve){
+      jwt.sign(data, options.secret, options, token => {
+        return resolve( Object.assign(data, { token }) );
+      });
     });
   }
 }
 
 export default function(options){
   options = Object.assign({}, defaults, options);
-  console.log('configuring token auth service with options', options);
+  
+  debug('configuring token authentication service with options', options);
 
   return function() {
     const app = this;
@@ -69,13 +121,15 @@ export default function(options){
 
     // Set up our before hooks
     tokenService.before({
-      // TODO (EK): Prevent external calls to create. Should be internal only
-      create: [hooks.verifyToken(options.secret)],
-      find: [hooks.verifyToken(options.secret)],
-      get: [hooks.verifyToken(options.secret)]
+      create: [_verifyToken(options)],
+      find: [_verifyToken(options)],
+      get: [_verifyToken(options)]
     });
 
-    // Set up our after hooks
-    // tokenService.after(hooks.after);
-  }
+    tokenService.after({
+      create: [hooks.populateUser(options)],
+      find: [hooks.populateUser(options)],
+      get: [hooks.populateUser(options)]
+    });
+  };
 }

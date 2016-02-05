@@ -1,17 +1,19 @@
+import Debug from 'debug';
 import errors from 'feathers-errors';
 import passport from 'passport';
 import { exposeConnectMiddleware } from '../../middleware';
 import { successfulLogin } from '../../middleware';
 
+const debug = Debug('feathers-authentication:oauth2');
 const defaults = {
   successRedirect: '/auth/success',
   passwordField: 'password',
   userEndpoint: '/users',
   tokenEndpoint: '/auth/token',
   passReqToCallback: true,
-  callbackSuffix: "callback",
+  callbackSuffix: 'callback',
   permissions: {}
-}
+};
 
 export class Service {
   constructor(options = {}) {
@@ -92,55 +94,55 @@ export class Service {
         }
 
         // Login was successful. Clean up the user object for the response.
-        user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
-        delete user[options.passwordField];
+        // TODO (EK): Maybe the id field should be configurable
+        const payload = {
+          id: user.id !== undefined ? user.id : user._id
+        };
 
-        // Get a new JWT from the Auth token service and send it back to the client.
-        return app.service(options.tokenEndpoint).create(user, { internal: true }).then(data => {
-          return resolve({
-            token: data.token,
-            data: user
-          });
-        }).catch(reject);
+        // Get a new JWT and the associated user from the Auth token service and send it back to the client.
+        return app.service(options.tokenEndpoint)
+                  .create(payload, { internal: true })
+                  .then(resolve)
+                  .catch(reject);
       });
 
       middleware(params.req, params.res);
     });
   }
 
-  // POST /auth/facebook /auth/facebook::
-  create(data, params) {
-    // TODO (EK): This should be for token based auth
-    const options = this.options;
+  // // POST /auth/facebook /auth/facebook::
+  // create(data, params) {
+  //   // TODO (EK): This should be for token based auth
+  //   const options = this.options;
     
-    // Authenticate via facebook, then generate a JWT and return it
-    return new Promise(function(resolve, reject){
-      let middleware = passport.authenticate('facebook-token', { session: false }, function(error, user) {
-        if (error) {
-          return reject(error);
-        }
+  //   // Authenticate via facebook, then generate a JWT and return it
+  //   return new Promise(function(resolve, reject){
+  //     let middleware = passport.authenticate('facebook-token', { session: false }, function(error, user) {
+  //       if (error) {
+  //         return reject(error);
+  //       }
 
-        // Login failed.
-        if (!user) {
-          return reject(new errors.NotAuthenticated(options.loginError));
-        }
+  //       // Login failed.
+  //       if (!user) {
+  //         return reject(new errors.NotAuthenticated(options.loginError));
+  //       }
 
-        // Login was successful. Generate and send token.
-        user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
-        delete user[options.passwordField];
+  //       // Login was successful. Generate and send token.
+  //       user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+  //       delete user[options.passwordField];
 
-        // TODO (EK): call this.app.service('/auth/token').create() instead
-        const token = jwt.sign(user, options.secret, options);
+  //       // TODO (EK): call this.app.service('/auth/token').create() instead
+  //       const token = jwt.sign(user, options.secret, options);
 
-        return resolve({
-          token: token,
-          data: user
-        });
-      });
+  //       return resolve({
+  //         token: token,
+  //         data: user
+  //       });
+  //     });
 
-      middleware(params.req);
-    });
-  }
+  //     middleware(params.req);
+  //   });
+  // }
 
   setup(app) {
     // attach the app object to the service context
@@ -164,13 +166,13 @@ export default function(options){
     throw new Error(`You need to provide a Passport 'strategy' for your ${options.provider} provider`);
   }
 
-  console.log(`configuring ${options.provider} OAuth2 service with options`, options);
+  options.callbackURL = options.callbackURL || `${options.endPoint}/${options.callbackSuffix}`;
+
+  debug(`configuring ${options.provider} OAuth2 service with options`, options);
 
   return function() {
     const app = this;
     const Strategy = options.strategy;
-
-    options.callbackURL = options.callbackURL || `${options.endPoint}/${options.callbackSuffix}`;
 
     // Initialize our service with any options it requires
     app.use(options.endPoint, exposeConnectMiddleware, new Service(options), successfulLogin(options));

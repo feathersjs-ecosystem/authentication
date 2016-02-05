@@ -1,11 +1,12 @@
-import hooks from '../../hooks';
+import Debug from 'debug';
 import errors from 'feathers-errors';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import { exposeRequestObject } from '../../middleware';
+import { exposeConnectMiddleware } from '../../middleware';
 import { successfulLogin } from '../../middleware';
 
+const debug = Debug('feathers-authentication:local');
 const defaults = {
   userEndpoint: '/users',
   usernameField: 'email',
@@ -78,18 +79,16 @@ export class Service {
         }
 
         // Login was successful. Generate and send token.
-        user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+        // TODO (EK): Maybe the id field should be configurable
+        const payload = {
+          id: user.id !== undefined ? user.id : user._id
+        };
 
-        // remove the user password field so we don't expose it in the response.
-        delete user[options.passwordField];
-
-        // Get a new token from the Auth token service
-        return app.service(options.tokenEndpoint).create(user, { internal: true }).then(data => {
-          return resolve({
-            token: data.token,
-            data: user
-          });
-        }).catch(reject);
+        // Get a new JWT and the associated user from the Auth token service and send it back to the client.
+        return app.service(options.tokenEndpoint)
+                  .create(payload, { internal: true })
+                  .then(resolve)
+                  .catch(reject);
       });
 
       middleware(params.req);
@@ -105,24 +104,18 @@ export class Service {
 
 export default function(options){
   options = Object.assign({}, defaults, options);
-  console.log('configuring local auth service with options', options);
+  debug('configuring local authentication service with options', options);
 
   return function() {
     const app = this;
 
     // Initialize our service with any options it requires
-    app.use(options.localEndpoint, exposeRequestObject, new Service(options), successfulLogin(options));
+    app.use(options.localEndpoint, exposeConnectMiddleware, new Service(options), successfulLogin(options));
 
     // Get our initialize service to that we can bind hooks
     const localService = app.service(options.localEndpoint);
-
-    // Set up our before hooks
-    // localService.before(hooks.before);
-
-    // Set up our after hooks
-    // localService.after(hooks.after);
     
     // Register our local auth strategy and get it to use the passport callback function
     passport.use(new Strategy(options, localService.checkCredentials.bind(localService)));
-  }
+  };
 }

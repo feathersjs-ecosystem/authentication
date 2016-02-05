@@ -38,8 +38,6 @@ export default function(settings, username, password, next) {
   let taskService = app.service('/api/tasks');
 
   server.on('listening', () => {
-    console.log('server listening');
-
     async.series([
       function(cb){
         userService.create({username: username, password: password}, {}, cb);

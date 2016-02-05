@@ -1,4 +1,6 @@
+import Debug from 'debug';
 import path from 'path';
+import crypto from 'crypto';
 import passport from 'passport';
 import hooks from './hooks';
 import token from './services/token';
@@ -6,6 +8,7 @@ import local from './services/local';
 import oauth2 from './services/oauth2';
 import * as middleware from './middleware';
 
+const debug = Debug('feathers-authentication:main');
 const PROVIDERS = {
   token,
   local
@@ -15,9 +18,47 @@ export default function(providers) {
   return function() {
     const app = this;
     let _super = app.setup;
+
+    // REST middleware
+    if (app.rest) {
+      debug('registering REST authentication middleware');
+      // Make the Passport user available for REST services.
+      // app.use( middleware.exposeAuthenticatedUser() );
+      // Get the token and expose it to REST services.
+      // TODO (EK): Maybe make header key configurable
+      app.use( middleware.normalizeAuthToken() );
+    }
+
+    // NOTE (EK): Currently we require token based auth so
+    // if the developer didn't provide a config for our token
+    // provider then we'll set up a sane default for them.
+    if (!providers.token) {
+      providers.token = {
+        secret: crypto.randomBytes(64).toString('base64')
+      };
+    }
+
     const authOptions = Object.assign({ successRedirect: '/auth/success' }, providers.local, providers.token);
     
     app.use(passport.initialize());
+
+    app.setup = function() {
+      let result = _super.apply(this, arguments);
+
+      // Socket.io middleware
+      if (app.io) {
+        debug('registering Socket.io authentication middleware');
+        app.io.on('connection', middleware.setupSocketIOAuthentication(app, authOptions));
+      }
+
+      // Primus middleware
+      if (app.primus) {
+        debug('registering Primus authentication middleware');
+        app.primus.on('connection', middleware.setupPrimusAuthentication(app, authOptions));
+      }
+
+      return result;
+    };
 
     // Merge all of our options and configure the appropriate service
     Object.keys(providers).forEach(function (key) {
@@ -29,7 +70,7 @@ export default function(providers) {
       if (!provider) {
         // Check to see if it is an oauth2 provider
         if (providerOptions.clientID && providerOptions.clientSecret) {
-          provider = oauth2
+          provider = oauth2;
         } 
         // Check to see if it is an oauth1 provider
         else if (providerOptions.consumerKey && providerOptions.consumerSecret){
@@ -45,32 +86,7 @@ export default function(providers) {
       app.configure( provider(options) );
     });
 
-    // Make the Passport user available for REST services.
-    if (app.rest) {
-      // console.log('registering REST authentication middleware');
-      app.use( middleware.exposeAuthenticatedUser() );
-    }
-
-
-    app.setup = function() {
-      let result = _super.apply(this, arguments);
-
-      // Socket.io middleware
-      if (app.io) {
-        // console.log('registering Socket.io authentication middleware');
-        app.io.on('connection', middleware.setupSocketIOAuthentication(app, authOptions));
-      }
-
-      // Primus middleware
-      if (app.primus) {
-        // console.log('registering Primus authentication middleware');
-        app.primus.on('connection', middleware.setupPrimusAuthentication(app, authOptions));
-      }
-
-      return result;
-    };
-
-    app.get(authOptions.successRedirect, function(req, res, next){
+    app.get(authOptions.successRedirect, function(req, res){
       res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
     });
   };
