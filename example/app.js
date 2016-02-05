@@ -27,8 +27,20 @@ var app = feathers()
     token: {
       secret: 'feathers-rocks'
     },
-    local: {
-      
+    local: {},
+    facebook: {
+      strategy: FacebookStrategy,
+      "clientID": "your-facebook-client-id",
+      "clientSecret": "your-facebook-client-secret",
+      "permissions": {
+        authType: 'rerequest',
+        "scope": ["public_profile", "email"]
+      }
+    },
+    github: {
+      strategy: GithubStrategy,
+      "clientID": "your-github-client-id",
+      "clientSecret": "your-github-client-secret"
     }
   }))
   // Initialize a user service
