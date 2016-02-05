@@ -3,27 +3,29 @@ import errors from 'feathers-errors';
 
 /**
  * Verifies that a JWT token is valid
- * @param  {String} secret - The JWT secret
+ * 
+ * @param  {Object} options - An options object
+ * @param {String} options.secret - The JWT secret
  */
-export default function(secret){
+export default function(options = {}){
+  const secret = options.secret;
+
   return function(hook) {
+    const token = hook.params.token;
+
+    if (!token) {
+      return Promise.resolve(hook);
+    }
+
     return new Promise(function(resolve, reject){
-      if (hook.params.internal) {
-        hook.params.data = hook.data;
-        return resolve(hook);
-      }
-
-      const token = hook.data ? hook.data.token : hook.params.query.token;
-
-      jwt.verify(token, secret, function (error, data) {
+      jwt.verify(token, secret, options, function (error, payload) {
         if (error) {
-          // Return a 401 if the token has expired.
+          // Return a 401 if the token has expired or is invalid.
           return reject(new errors.NotAuthenticated(error));
         }
         
-
-        hook.params.data = Object.assign({ token }, data);
-        delete hook.params.data.iat;
+        // Attach our decoded token payload to the params
+        hook.params.payload = payload;
 
         resolve(hook);
       });

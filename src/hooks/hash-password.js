@@ -5,19 +5,19 @@ import bcrypt from 'bcrypt';
  * of the password.
  * @param  {String} passwordField  The field containing the password.
  */
-export default function(passwordField = 'password'){
+export default function(options = {passwordField: 'password'}){
   return function(hook) {
-    if (!hook.data || !hook.data[passwordField]) {
+    if (!hook.data || !hook.data[options.passwordField]) {
       return hook;
     }
 
     return new Promise(function(resolve, reject){
       bcrypt.genSalt(10, function(err, salt) {
-        bcrypt.hash(hook.data[passwordField], salt, function(err, hash) {
+        bcrypt.hash(hook.data[options.passwordField], salt, function(err, hash) {
           if (err) {
             reject(err);
           } else {
-            hook.data[passwordField] = hash;
+            hook.data[options.passwordField] = hash;
             resolve(hook);
           }
         });

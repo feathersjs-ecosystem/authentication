@@ -8,10 +8,10 @@
  * before
  * all, find, get, create, update, patch, remove
  */
-export default function setUserId(sourceProp = '_id', destProp = 'userId'){
+export default function setUserId(options = {sourceProp: '_id', destProp: 'userId'}){
   return function(hook) {
     if (hook.params.user) {
-      hook.data[destProp] = hook.params.user[sourceProp];
+      hook.data[options.destProp] = hook.params.user[options.sourceProp];
     } else {
       throw new Error('There is no user logged in.');
     }

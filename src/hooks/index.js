@@ -6,6 +6,7 @@ import restrictToSelf from './restrict-to-self';
 import setUserId from './set-user-id';
 import toLowerCase from './to-lower-case';
 import verifyToken from './verify-token';
+import populateUser from './populate-user';
 
 let hooks = {
   hashPassword,
@@ -15,7 +16,8 @@ let hooks = {
   restrictToSelf,
   setUserId,
   toLowerCase,
-  verifyToken
+  verifyToken,
+  populateUser
 };
 
 export default hooks;

@@ -5,8 +5,6 @@ import feathersAuth from '../src/index';
 import memory from 'feathers-memory';
 import {hooks} from '../src/index';
 
-console.log(require('../lib/index'));
-
 const app = feathers();
 
 app.configure(feathersHooks())
