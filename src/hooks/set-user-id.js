@@ -10,7 +10,7 @@
  */
 export default function setUserId(sourceProp = '_id', destProp = 'userId'){
   return function(hook) {
-      
+
     function setId(obj){
       obj[destProp] = hook.params.user[sourceProp];
     }

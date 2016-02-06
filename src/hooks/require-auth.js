@@ -14,6 +14,6 @@ export default function requireAuth() {
     if (!hook.params.user && hook.params.provider) {
       throw new errors.NotAuthenticated('Please include a valid auth token in the Authorization header.');
     }
-    
+
   };
 }

@@ -9,6 +9,6 @@ export default function queryWithUserId(id = '_id', idOnResource = 'userId') {
     if (hook.params.user) {
       hook.params.query[idOnResource] = hook.params.user[id];
     }
-    
+
   };
 }

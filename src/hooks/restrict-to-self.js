@@ -12,6 +12,6 @@ export default function restrictToSelf(idProp = '_id') {
     if (hook.params.user) {
       hook.params.query[idProp] = hook.params.user[idProp];
     }
-      
+
   };
 }
