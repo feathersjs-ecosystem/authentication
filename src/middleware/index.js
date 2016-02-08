@@ -202,4 +202,4 @@ export default {
   successfulLogin,
   setupSocketIOAuthentication,
   setupPrimusAuthentication
-}
+};
