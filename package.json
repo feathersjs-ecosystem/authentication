@@ -41,12 +41,14 @@
   "directories": {
     "lib": "lib"
   },
+  "browser": {
+    "./lib/index": "./lib/client/index"
+  },
   "dependencies": {
     "bcrypt": "^0.8.5",
     "debug": "^2.2.0",
     "feathers-errors": "^1.1.5",
     "jsonwebtoken": "^5.4.0",
-    "lodash": "^2.4.1",
     "passport": "^0.3.0",
     "passport-local": "^1.0.0"
   },
