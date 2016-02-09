@@ -31,8 +31,6 @@ export let exposeConnectMiddleware = function(req, res, next) {
 export let normalizeAuthToken = function(options = { header: 'authorization'}) {
   return function(req, res, next) {
     let token = req.headers[options.header];
-
-    console.log('HEADERS', req.headers, token);
     
     // Check the header for the token (preferred method)
     if (token) {
@@ -53,7 +51,6 @@ export let normalizeAuthToken = function(options = { header: 'authorization'}) {
     // Tack it on to our feathers object so that it is passed to services
     req.feathers.token = token;
 
-    console.log('FEATHERS', req.feathers);
     next();
   };
 };
