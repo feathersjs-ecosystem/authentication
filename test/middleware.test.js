@@ -15,7 +15,7 @@ const MockResponse = {
 
 const MockNext = function(){};
 
-describe.only('Middleware', () => {
+describe('Middleware', () => {
   describe('Expose connect middleware', () => {
     it('adds the request object to req.feathers', () => {
       middleware.exposeConnectMiddleware(MockRequest, MockResponse, MockNext);
@@ -30,10 +30,10 @@ describe.only('Middleware', () => {
 
   describe('Normalize Auth Token', () => {
     describe('Auth token passed via header', () => {
-      it('grabs the token from the header', () => {
+      it('grabs the token', () => {
         const req = Object.assign({}, MockRequest, {
           headers: {
-            Authorization: 'Bearer my-token'
+            authorization: 'Bearer my-token'
           }
         });
 
@@ -53,26 +53,52 @@ describe.only('Middleware', () => {
       });
     });
 
-    it('grabs the token from the body', () => {
-      const req = Object.assign({}, MockRequest, {
-        body: {
-          token: 'my-token'
-        }
+    describe('Auth token passed via body', () => {
+      it('grabs the token', () => {
+        const req = Object.assign({}, MockRequest, {
+          body: {
+            token: 'my-token'
+          }
+        });
+
+        middleware.normalizeAuthToken()(req, MockResponse, MockNext);
+        assert.deepEqual(req.feathers.token, 'my-token');
       });
 
-      middleware.normalizeAuthToken()(req, MockResponse, MockNext);
-      assert.deepEqual(req.feathers.token, 'my-token');
+      it('deletes the token from the body', () => {
+        const req = Object.assign({}, MockRequest, {
+          body: {
+            token: 'my-token'
+          }
+        });
+
+        middleware.normalizeAuthToken()(req, MockResponse, MockNext);
+        assert.equal(req.body.token, undefined);
+      });
     });
 
-    it('grabs the token from the query string', () => {
-      const req = Object.assign({}, MockRequest, {
-        query: {
-          token: 'my-token'
-        }
+    describe('Auth token passed via query', () => {
+      it('grabs the token', () => {
+        const req = Object.assign({}, MockRequest, {
+          query: {
+            token: 'my-token'
+          }
+        });
+
+        middleware.normalizeAuthToken()(req, MockResponse, MockNext);
+        assert.deepEqual(req.feathers.token, 'my-token');
       });
 
-      middleware.normalizeAuthToken()(req, MockResponse, MockNext);
-      assert.deepEqual(req.feathers.token, 'my-token');
+      it('removes the token from the query string', () => {
+        const req = Object.assign({}, MockRequest, {
+          query: {
+            token: 'my-token'
+          }
+        });
+
+        middleware.normalizeAuthToken()(req, MockResponse, MockNext);
+        assert.equal(req.query.token, undefined);
+      });
     });
   });
 });

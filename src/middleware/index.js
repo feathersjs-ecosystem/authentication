@@ -42,10 +42,12 @@ export let normalizeAuthToken = function(options = { header: 'authorization'}) {
     // Check the body next if we don't have a token
     else if (req.body.token) {
       token = req.body.token;
+      delete req.body.token;
     }
     // Finally, check the query string. (worst method)
     else if (req.query.token) {
-      token = req.query.token; 
+      token = req.query.token;
+      delete req.query.token;
     }
 
     // Tack it on to our feathers object so that it is passed to services
