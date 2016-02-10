@@ -28,7 +28,14 @@ export let exposeConnectMiddleware = function(req, res, next) {
 // };
 
 // Make the authenticated passport user also available for REST services
-export let normalizeAuthToken = function(options = { header: 'authorization'}) {
+export let normalizeAuthToken = function(options = {}) {
+  const defaults = {
+    header: 'authorization',
+    cookie: 'feathers-jwt'
+  };
+  
+  options = Object.assign({}, defaults, options);
+
   return function(req, res, next) {
     let token = req.headers[options.header];
     
@@ -39,7 +46,12 @@ export let normalizeAuthToken = function(options = { header: 'authorization'}) {
         token = token.split(' ')[1];
       }
     }
-    // Check the body next if we don't have a token
+
+    // If we don't already have token in the header check for a cookie
+    if (!token && req.cookies[options.cookie]) {
+      token = req.cookies[options.cookie];
+    }
+    // Check the body next if we still don't have a token
     else if (req.body.token) {
       token = req.body.token;
       delete req.body.token;

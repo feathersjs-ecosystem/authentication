@@ -6,7 +6,8 @@ const MockRequest = {
   params: {},
   body: {},
   query: {},
-  headers: {}
+  headers: {},
+  cookies: {}
 };
 
 const MockResponse = {
@@ -49,6 +50,19 @@ describe('Middleware', () => {
         });
 
         middleware.normalizeAuthToken({header: 'x-authorization'})(req, MockResponse, MockNext);
+        assert.deepEqual(req.feathers.token, 'my-token');
+      });
+    });
+
+    describe('Auth token passed via cookie', () => {
+      it('grabs the token', () => {
+        const req = Object.assign({}, MockRequest, {
+          cookies: {
+            'feathers-jwt': 'my-token'
+          }
+        });
+
+        middleware.normalizeAuthToken()(req, MockResponse, MockNext);
         assert.deepEqual(req.feathers.token, 'my-token');
       });
     });
