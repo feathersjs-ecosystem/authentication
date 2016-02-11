@@ -15,9 +15,9 @@ var GithubStrategy = require('passport-github').Strategy;
 // Initialize the application
 var app = feathers()
   .configure(rest())
-  .configure(primus({
-    transformer: 'websockets'
-  }))
+  // .configure(primus({
+  //   transformer: 'websockets'
+  // }))
   .configure(socketio())
   .configure(hooks())
   // Needed for parsing bodies (login)
