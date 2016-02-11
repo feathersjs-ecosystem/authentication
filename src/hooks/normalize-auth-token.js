@@ -20,4 +20,4 @@ export default function() {
       delete hook.params.query.token;
     }
   };
-};
+}
