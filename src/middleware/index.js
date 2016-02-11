@@ -33,7 +33,7 @@ export let normalizeAuthToken = function(options = {}) {
     header: 'authorization',
     cookie: 'feathers-jwt'
   };
-  
+
   options = Object.assign({}, defaults, options);
 
   return function(req, res, next) {
@@ -100,9 +100,6 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
   debug('Setting up Socket.io authentication middleware with options:', options);
 
   return function(socket) {
-    // Set a timeout for the socket to establish a secure connection within.
-    const authTimeout = setTimeout(() => { socket.disconnect('unauthorized'); }, options.timeout);
-
     let errorHandler = function(error) {
       socket.emit('unauthorized', error, function(){
         socket.disconnect('unauthorized');
@@ -116,9 +113,6 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
     socket.feathers.req = socket.request;
 
     socket.on('authenticate', function(data) {
-      // Clear our timeout because we are authenticating
-      clearTimeout(authTimeout);
-
       // Authenticate the user using token strategy
       if (data.token) {
         if (typeof data.token !== 'string') {
@@ -159,9 +153,6 @@ export let setupPrimusAuthentication = function(app, options = {}) {
   debug('Setting up Primus authentication middleware with options:', options);
 
   return function(socket) {
-    // Set a timeout for the socket to establish a secure connection within.
-    const authTimeout = setTimeout(() => { socket.end('unauthorized', new errors.NotAuthenticated('Authentication timed out.')); }, options.timeout);
-
     let errorHandler = function(error) {
       socket.send('unauthorized', error);
       socket.end('unauthorized', error);
@@ -171,9 +162,6 @@ export let setupPrimusAuthentication = function(app, options = {}) {
     socket.request.feathers.req = socket.request;
 
     socket.on('authenticate', function(data) {
-      // Clear our timeout because we are authenticating
-      clearTimeout(authTimeout);
-
       // Authenticate the user using token strategy
       if (data.token) {
         if (typeof data.token !== 'string') {
