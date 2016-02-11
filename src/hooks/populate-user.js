@@ -1,7 +1,15 @@
 /**
  * Populate the current user associated with the JWT
  */
-export default function(options = { userEndpoint: '/users', passwordField: 'password', idField: 'id' }){
+const defaults = {
+  userEndpoint: '/users',
+  passwordField: 'password',
+  idField: 'id'
+};
+
+export default function(options = {}){
+  options = Object.assign({}, defaults, options);
+
   return function(hook) {
     // If we already have a current user just pass through
     if (hook.params.user) {
