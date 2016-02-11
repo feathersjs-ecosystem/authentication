@@ -202,9 +202,47 @@
 
   <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
   <script src="socket.io/socket.io.js" type="text/javascript"></script>
-  <script type="text/javascript" src="primus/primus.js"></script>
+  <!-- <script type="text/javascript" src="primus/primus.js"></script> -->
+  <script src="feathers.js" type="text/javascript"></script>
   <script type="text/javascript">
     var host = 'http://localhost:3030';
+    (function(){
+      var socket = io(host, {
+        transport: ['websockets']
+      });
+      // var primus = new Primus(host);
+
+      window.app = feathers()
+        .configure(feathers.socketio(socket))
+        // .configure(feathers.primus(primus))
+        // .configure(feathers.rest(host).jquery(jQuery))
+        .configure(feathers.hooks())
+        .configure(feathers.authentication());
+
+      window.userService = app.service('users');
+      window.messageService = app.service('messages');
+
+      app.io.on('connect', function(){
+        app.authenticate({
+          type: 'local',
+          'email': 'admin@feathersjs.com',
+          'password': 'admin'
+        }).then(function(result){
+          console.log('Authenticated!', result);
+          
+          app.service('messages').find({}).then(function(data){
+            console.log('messages', data);
+          }).catch(function(error){
+            console.error('Error finding data', error);
+          });
+        }).catch(function(error){
+          console.error('Error authenticating!', error);
+        });
+      });
+
+    })();
+  </script>
+  <script type="text/javascript">
 
     (function ($) {
       $.fn.serializeForm = function () {
