@@ -83,6 +83,22 @@ server.on('listening', function() {
 });
 ```
 
+## Client use
+
+```js
+import io from 'socket.io-client';
+import feathers from 'feathers/client';
+import rest from 'feathers-rest/client';
+import socketio from 'feathers-socketio/client';
+import authentication from 'feathers-authentication/client';
+
+const socket = io('http://path/to/api');
+const app = feathers()
+  .configure(rest())
+  .configure(socketio(socket))
+  .configure(authentication({}));
+```
+
 ## Changelog
 
 __0.0.5__

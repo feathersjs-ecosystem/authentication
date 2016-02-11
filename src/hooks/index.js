@@ -7,6 +7,7 @@ import setUserId from './set-user-id';
 import toLowerCase from './to-lower-case';
 import verifyToken from './verify-token';
 import populateUser from './populate-user';
+import normalizeAuthToken from './normalize-auth-token';
 
 let hooks = {
   hashPassword,
@@ -17,7 +18,8 @@ let hooks = {
   setUserId,
   toLowerCase,
   verifyToken,
-  populateUser
+  populateUser,
+  normalizeAuthToken
 };
 
 export default hooks;
