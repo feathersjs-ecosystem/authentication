@@ -21,6 +21,7 @@ var app = feathers()
   .configure(socketio())
   .configure(hooks())
   // Needed for parsing bodies (login)
+  .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: true }))
   // Configure feathers-authentication
   .configure(authentication({
@@ -47,7 +48,11 @@ var app = feathers()
   .use('/users', memory())
   // A simple Message service that we can used for testing
   .use('/messages', memory())
-  .use('/', feathers.static(__dirname + '/public'));
+  .use('/', feathers.static(__dirname + '/public'))
+  .use(function(error, req, res, next){
+    res.status(error.code);
+    res.json(error);
+  });
 
 var messageService = app.service('/messages');
 messageService.create({text: 'A million people walk into a Silicon Valley bar'}, {}, function(){});
