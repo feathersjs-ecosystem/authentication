@@ -5,7 +5,11 @@ import bcrypt from 'bcrypt';
  * of the password.
  * @param  {String} passwordField  The field containing the password.
  */
-export default function(options = {passwordField: 'password'}){
+export default function(options = {}){
+  const defaults = {passwordField: 'password'};
+
+  options = Object.assign({}, defaults, options);
+
   return function(hook) {
     if (!hook.data || !hook.data[options.passwordField]) {
       return hook;
