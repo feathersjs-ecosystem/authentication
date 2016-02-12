@@ -102,7 +102,10 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
   return function(socket) {
     let errorHandler = function(error) {
       socket.emit('unauthorized', error, function(){
-        socket.disconnect('unauthorized');
+        // TODO (EK): Maybe we support disconnecting the socket
+        // if a certain number of authorization attempts have failed
+        // for brute force protection
+        // socket.disconnect('unauthorized');
       });
 
       throw error;
@@ -155,7 +158,10 @@ export let setupPrimusAuthentication = function(app, options = {}) {
   return function(socket) {
     let errorHandler = function(error) {
       socket.send('unauthorized', error);
-      socket.end('unauthorized', error);
+      // TODO (EK): Maybe we support disconnecting the socket
+      // if a certain number of authorization attempts have failed
+      // for brute force protection
+      // socket.end('unauthorized', error);
       throw error;
     };
 
