@@ -32,7 +32,8 @@ describe('REST authentication', function() {
     createApplication(settings, email, password, true, (err, obj) =>{
       app = obj.app;
       server = obj.server;
-      done();
+      
+      setTimeout(done, 10);
     });
   });
 

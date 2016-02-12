@@ -4,7 +4,7 @@ import createApplication from '../test-server';
 import jwt from 'jsonwebtoken';
 
 describe('Socket.io authentication', function() {
-  this.timeout(10000);
+  this.timeout(15000);
   const host = 'http://localhost:8888';
 
   let server, app, socket;
@@ -32,7 +32,8 @@ describe('Socket.io authentication', function() {
     createApplication(settings, email, password, true, (err, obj) =>{
       app = obj.app;
       server = obj.server;
-      done();
+      
+      setTimeout(done, 10);
     });
   });
 

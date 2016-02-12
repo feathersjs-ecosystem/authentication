@@ -32,7 +32,9 @@ describe('Primus authentication', function() {
       app = obj.app;
       server = obj.server;
       Socket = app.primus.Socket;
-      done();
+
+      // Add a quick timeout to make sure that our token is expired
+      setTimeout(done, 10);
     });
   });
 
