@@ -7,7 +7,6 @@ import bcrypt from 'bcrypt';
  */
 export default function(options = {}){
   const defaults = {passwordField: 'password'};
-
   options = Object.assign({}, defaults, options);
 
   return function(hook) {
@@ -19,11 +18,11 @@ export default function(options = {}){
       bcrypt.genSalt(10, function(err, salt) {
         bcrypt.hash(hook.data[options.passwordField], salt, function(err, hash) {
           if (err) {
-            reject(err);
-          } else {
-            hook.data[options.passwordField] = hash;
-            resolve(hook);
+            return reject(err);
           }
+          
+          hook.data[options.passwordField] = hash;
+          resolve(hook);
         });
       });
     });

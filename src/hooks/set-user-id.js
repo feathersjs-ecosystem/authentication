@@ -8,12 +8,27 @@
  * before
  * all, find, get, create, update, patch, remove
  */
-export default function setUserId(options = {sourceProp: '_id', destProp: 'userId'}){
+export default function setUserId(options = {}){
+  const defaults = { sourceProp: '_id', destProp: 'userId' };
+  options = Object.assign({}, defaults, options);
+
   return function(hook) {
+    function setId(obj){
+      obj[options.destProp] = hook.params.user[options.sourceProp];
+    }
+
     if (hook.params.user) {
-      hook.data[options.destProp] = hook.params.user[options.sourceProp];
-    } else {
-      throw new Error('There is no user logged in.');
+      // Handle arrays.
+      if (Array.isArray(hook.data)) {
+        hook.data.forEach(item => {
+          setId(item);
+        });
+      
+      }
+      // Handle single objects.
+      else {
+        setId(hook.data);
+      }
     }
   };
 }
