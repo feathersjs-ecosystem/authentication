@@ -1,5 +1,5 @@
 import assert from 'assert';
-import middleware from '../src/middleware';
+import middleware from '../../src/middleware';
 
 const MockRequest = {
   feathers: {},
