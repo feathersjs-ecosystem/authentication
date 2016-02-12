@@ -59,10 +59,7 @@ let app = feathers()
       secret: 'feathers-rocks'
     },
     local: {
-    }
-    twitter: {
-      consumerKey: '',
-      consumerSecret: ''
+      usernameField: 'username'
     },
     facebook: {
       clientID: '',
@@ -72,7 +69,7 @@ let app = feathers()
 
 app.use('/users', new service('user', {Model: UserModel}))
 
-let userService = app.service('/users');
+let userService = app.service('users');
 userService.before({
   create: [authHooks.hashPassword('password')]
 });
@@ -85,18 +82,32 @@ server.on('listening', function() {
 
 ## Client use
 
+You can use the client in the Browser, in NodeJS and in React Native.
+
 ```js
 import io from 'socket.io-client';
 import feathers from 'feathers/client';
-import rest from 'feathers-rest/client';
+import hooks from `feathers-hooks`;
 import socketio from 'feathers-socketio/client';
 import authentication from 'feathers-authentication/client';
 
 const socket = io('http://path/to/api');
 const app = feathers()
-  .configure(rest())
-  .configure(socketio(socket))
-  .configure(authentication({}));
+  .configure(socketio(socket)) // you could use Primus or REST instead
+  .configure(hooks())
+  .configure(authentication());
+
+app.io.on('connect', function(){
+  app.authenticate({
+    type: 'local',
+    'email': 'admin@feathersjs.com',
+    'password': 'admin'
+  }).then(function(result){
+    console.log('Authenticated!', result);
+  }).catch(function(error){
+    console.error('Error authenticating!', error);
+  });
+});
 ```
 
 ## Changelog
