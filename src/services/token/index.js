@@ -4,14 +4,13 @@ import hooks from '../../hooks';
 import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:token');
-const TEN_HOURS = 36000;
 const defaults = {
   userEndpoint: '/users',
   passwordField: 'password',
   tokenEndpoint: '/auth/token',
   issuer: 'feathers',
   algorithms: ['HS256'],
-  expiresIn: TEN_HOURS,
+  expiresIn: '1d', // 1 day
 };
 
 /**

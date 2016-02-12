@@ -34,7 +34,7 @@ export class Service {
       .find(params)
       .then(users => {
         // Paginated services return the array of results in the data attribute.
-        let user = users[0] || users.data[0];
+        let user = users[0] || users.data && users.data[0];
 
         // Handle bad username.
         if (!user) {
