@@ -9,15 +9,12 @@ import bodyParser from 'body-parser';
 import memory from 'feathers-memory';
 import async from 'async';
 
-export default function(settings, username, password, next) {
+export default function(settings, username, password, useSocketio, next) {
 
   const app = feathers();
 
   app.configure(rest())
-    .configure(socketio())
-    .configure(primus({
-      transformer: 'websockets'
-    }))
+    .configure(useSocketio ? socketio() : primus({ transformer: 'websockets' }))
     .configure(feathersHooks())
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))

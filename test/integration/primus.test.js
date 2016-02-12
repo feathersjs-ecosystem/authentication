@@ -28,7 +28,7 @@ describe('Primus authentication', function() {
   let expiredToken = jwt.sign({ id: 0 }, settings.token.secret, jwtOptions);
 
   before((done) => {
-    createApplication(settings, email, password, (err, obj) =>{
+    createApplication(settings, email, password, false, (err, obj) =>{
       app = obj.app;
       server = obj.server;
       Socket = app.primus.Socket;
