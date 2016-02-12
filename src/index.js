@@ -37,10 +37,16 @@ export default function(providers) {
     // NOTE (EK): Currently we require token based auth so
     // if the developer didn't provide a config for our token
     // provider then we'll set up a sane default for them.
-    if (!providers.token) {
+    if (providers.token === undefined) {
       providers.token = {
         secret: crypto.randomBytes(64).toString('base64')
       };
+    }
+
+    // If they didn't pass in a local provider let's set one up
+    // for them with the default options.
+    if (providers.local === undefined) {
+      providers.local = {};
     }
 
     const authOptions = Object.assign({ successRedirect: '/auth/success' }, providers.local, providers.token);
@@ -82,7 +88,7 @@ export default function(providers) {
           throw new Error(`Sorry we don't support OAuth1 providers right now. Try using a ${key} OAuth2 provider.`);
         }
         else if (!provider) {
-          throw new Error(`Invalid ${key} provider configuration.\nYou need to provide your 'clientID' and 'clientSecret' if using an OAuth2 provider or your 'consumerKey' and 'consumerSecret' if using an OAuth1 provider.`);
+          throw new Error(`Invalid '${key}' provider configuration.\nYou need to provide your 'clientID' and 'clientSecret' if using an OAuth2 provider or your 'consumerKey' and 'consumerSecret' if using an OAuth1 provider.`);
         }
       }
 
