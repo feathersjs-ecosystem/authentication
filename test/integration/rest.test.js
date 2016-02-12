@@ -47,7 +47,7 @@ describe('REST authentication', function() {
         method: 'POST',
         form: {},
         json: true
-      }
+      };
 
       it('returns a 401 when user not found', function(done) {
         options.form = {
@@ -55,7 +55,7 @@ describe('REST authentication', function() {
           password
         };
 
-        request(options, function(err, response, body) {
+        request(options, function(err, response) {
           assert.equal(response.statusCode, 401);
           done();
         });
@@ -67,7 +67,7 @@ describe('REST authentication', function() {
           password: 'invalid'
         };
 
-        request(options, function(err, response, body) {
+        request(options, function(err, response) {
           assert.equal(response.statusCode, 401);
           done();
         });
@@ -86,7 +86,7 @@ describe('REST authentication', function() {
       };
 
       it('returns a 201', function(done) {
-        request(options, function(err, response, body) {
+        request(options, function(err, response) {
           assert.equal(response.statusCode, 201);
           done();
         });
@@ -115,14 +115,14 @@ describe('REST authentication', function() {
         method: 'POST',
         form: {},
         json: true
-      }
+      };
 
       it('returns a 401 when token is invalid', function(done) {
         options.form = {
           token: 'invalid'
         };
 
-        request(options, function(err, response, body) {
+        request(options, function(err, response) {
           assert.equal(response.statusCode, 401);
           done();
         });
@@ -133,7 +133,7 @@ describe('REST authentication', function() {
           token: expiredToken
         };
 
-        request(options, function(err, response, body) {
+        request(options, function(err, response) {
           assert.equal(response.statusCode, 401);
           done();
         });
@@ -151,7 +151,7 @@ describe('REST authentication', function() {
       };
 
       it('returns a 201', function(done) {
-        request(options, function(err, response, body) {
+        request(options, function(err, response) {
           assert.equal(response.statusCode, 201);
           done();
         });

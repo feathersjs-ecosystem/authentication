@@ -31,7 +31,7 @@ describe('Primus authentication', function() {
     createApplication(settings, email, password, (err, obj) =>{
       app = obj.app;
       server = obj.server;
-      Socket = app.primus.Socket
+      Socket = app.primus.Socket;
       done();
     });
   });

@@ -26,6 +26,7 @@ export default function(settings, username, password, next) {
     .use('/messages', memory())
     .use('/tasks', memory())
     .use('/', feathers.static(__dirname))
+    /*jshint unused: false*/
     .use(function(error, req, res, next){
       res.status(error.code);
       res.json(error);
