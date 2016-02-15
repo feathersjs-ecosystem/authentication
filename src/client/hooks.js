@@ -16,9 +16,9 @@ export let populateHeader = function(options = {}) {
 
   return function(hook) {
     if (hook.params.token) {
-      hook.params.headers = {
+      hook.params.headers = Object.assign({}, hook.params.headers, {
         [options.header]: hook.params.token
-      };
+      });
     }
   };
 };
