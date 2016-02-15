@@ -96,7 +96,10 @@ export default function(providers) {
 
       app.configure( provider(options) );
     });
+    
+    // TODO (EK): We might want to also support a failRedirect for HTML
 
+    // TODO (EK): Don't register this route handler if a custom success redirect is passed in
     app.get(authOptions.successRedirect, function(req, res){
       res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
     });
