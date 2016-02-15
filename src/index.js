@@ -19,11 +19,6 @@ export default function(providers) {
     const app = this;
     let _super = app.setup;
 
-    // Add mixin to normalize the auth token on the params
-    app.mixins.push(function(service){
-      service.before(hooks.normalizeAuthToken());
-    });
-
     // REST middleware
     if (app.rest) {
       debug('registering REST authentication middleware');
