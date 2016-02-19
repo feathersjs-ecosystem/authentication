@@ -31,7 +31,7 @@ const defaults = {
   cookie: 'feathers-jwt'
 };
 
-export default function(config = {}) {
+export default function auth(config = {}) {
   return function() {
     const app = this;
     let _super = app.setup;
@@ -150,4 +150,4 @@ export default function(config = {}) {
   };
 }
 
-export { hooks };
+auth.hooks = hooks;
