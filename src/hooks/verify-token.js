@@ -19,7 +19,7 @@ export default function(options = {}){
 
     if (!secret) {
       // Try to get the secret from the app config
-      const authOptions = app.get('auth');
+      const authOptions = hook.app.get('auth');
 
       if (authOptions && authOptions.token && authOptions.token.secret) {
         secret = authOptions.token.secret;
