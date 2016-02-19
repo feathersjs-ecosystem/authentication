@@ -8,7 +8,7 @@ import errors from 'feathers-errors';
  * @param {String} options.secret - The JWT secret
  */
 export default function(options = {}){
-  const secret = options.secret;
+  let secret = options.secret;
 
   return function(hook) {
     const token = hook.params.token;
