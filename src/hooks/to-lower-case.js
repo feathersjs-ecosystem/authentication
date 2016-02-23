@@ -12,7 +12,7 @@ export default function toLowercase(options = {}) {
   }
 
   function convert(obj){
-    if (obj[fieldName] && obj[fieldName].toLowercase) {
+    if (obj[fieldName] && obj[fieldName].toLowerCase) {
       obj[fieldName] = obj[fieldName].toLowerCase();
     }
   }
