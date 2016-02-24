@@ -144,9 +144,7 @@ export class Service {
                   .catch(reject);
       });
 
-      middleware(params.req, params.res, function() {
-        console.log('I was called', arguments);
-      });
+      middleware(params.req, params.res);
     });
   }
 
