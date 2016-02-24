@@ -29,8 +29,6 @@ export class Service {
       }
     };
 
-    // console.log('Authenticating', accessToken, refreshToken, profile);
-
     // Find or create the user since they could have signed up via facebook.
     app.service(options.userEndpoint)
       .find(params)
