@@ -43,55 +43,70 @@ export default function(opts = {}) {
         if (app.rest) {
           return app.service(endPoint).create(options).then(handleResponse);
         }
-
+        
         if (app.io || app.primus) {
-          const transport = app.io ? 'io' : 'primus';
-
-          app[transport].on('unauthorized', reject);
-          app[transport].on('authenticated', response => 
-            handleResponse(response).then(reponse => resolve(reponse))
-          );
+          const socket = app.io || app.primus;
+          const handleUnauthorized = function(error) {
+            // Unleak event handlers
+            this.off('disconnect', reject);
+            this.off('close', reject);
+            
+            reject(error);
+          };
+          const handleAuthenticated = function(response) {
+            // We need to bind and unbind the event handlers that didn't run
+            // so that they don't leak around
+            this.off('unauthorized', handleUnauthorized);
+            this.off('disconnect', reject);
+            this.off('close', reject);
+            
+            handleResponse(response).then(reponse => resolve(reponse));
+          };
+          
+          // Also, binding to events that aren't fired (like `close`)
+          // for Socket.io doesn't hurt if we unbind once we're done
+          socket.once('disconnect', reject);
+          socket.once('close', reject);
+          socket.once('unauthorized', handleUnauthorized);
+          socket.once('authenticated', handleAuthenticated);
         }
 
         // If we are using socket.io
         if (app.io) {
+          const socket = app.io;
+          
           // If we aren't already connected then throw an error
-          if (!app.io.connected) {
+          if (!socket.connected) {
             throw new Error('Socket not connected');
           }
-
-          app.io.on('disconnect', reject);
-          app.io.emit('authenticate', options);
+          
+          socket.emit('authenticate', options);
         }
 
         // If we are using primus
         if (app.primus) {
+          const socket = app.primus;
+          
           // If we aren't already connected then throw an error
-          if (app.primus.readyState !== 3) {
+          if (socket.readyState !== 3) {
             throw new Error('Socket not connected');
           }
-
-          app.primus.on('close', reject);
-          app.primus.send('authenticate', options);
+          
+          socket.send('authenticate', options);
         }
       });
     };
 
     app.user = function() {
-      return storage().get('user')
-        .then(data => data.value);
+      return storage().get('user').then(data => data.value);
     };
     
     app.token = function() {
-      return storage().get('token')
-        .then(data => data.value);
+      return storage().get('token').then(data => data.value);
     };
 
     app.logout = function() {
-      return Promise.all(
-        storage().remove('user'),
-        storage().remove('token')
-      );
+      return storage.remove(null, { id: { $in: ['user', 'token' ] } });
     };
 
     // Set up hook that adds adds token and user to params so that

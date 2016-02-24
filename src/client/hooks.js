@@ -2,6 +2,7 @@ export function populateParams(options) {
   return function(hook) {
     const storage = hook.app.service(options.storage);
     
+    // We can not run this hook on the storage service itself
     if(this !== storage) {
       return Promise.all(
         storage.get('user'),
