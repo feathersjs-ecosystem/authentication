@@ -112,6 +112,10 @@ app.io.on('connect', function(){
 
 ## Changelog
 
+### 0.4.0
+
+- Customize the JWT payload ([#78](https://github.com/feathersjs/feathers-authentication/issues/78))
+
 ### 0.3.1
 
 - Fix `toLowerCase` hook ([#74](https://github.com/feathersjs/feathers-authentication/issues/74))
@@ -137,7 +141,7 @@ app.io.on('connect', function(){
 - Adds support for OAuth2 ([#43](https://github.com/feathersjs/feathers-authentication/issues/43))
 - Adds a client side component for easy authentication with Feathers ([#44](https://github.com/feathersjs/feathers-authentication/issues/44))
 - Adds preliminary support for graceful fallback to cookies for JWT ([#45](https://github.com/feathersjs/feathers-authentication/issues/45))
-- Adds an example project showing all the different ways you can authenticate 
+- Adds an example project showing all the different ways you can authenticate
 
 ### 0.1.0
 
