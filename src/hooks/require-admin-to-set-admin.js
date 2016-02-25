@@ -5,12 +5,14 @@
  *
  * create, update, patch
  */
-export default function requireAdminToSetAdmin(adminField = 'admin'){
+const defaults = { adminField: 'admin' };
+
+export default function requireAdminToSetAdmin(options = {}){
+  options = Object.assign({}, defaults, options);
+
   return function(hook){
-
-    if (hook.params.user && !hook.params.user[adminField] && hook.params.provider) {
-      delete hook.data[adminField];
+    if (hook.params.user && !hook.params.user[options.adminField] && hook.params.provider) {
+      delete hook.data[options.adminField];
     }
-
   };
 }
