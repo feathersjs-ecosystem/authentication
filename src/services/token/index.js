@@ -38,7 +38,7 @@ let _verifyToken = function(options = {}){
         }
 
         // Normalize our params with the token in it.
-        hook.data = { id: payload.id };
+        hook.data = payload;
         hook.params.data = Object.assign({}, hook.data, payload, { token });
         hook.params.query = Object.assign({}, hook.params.query, { token });
         resolve(hook);
@@ -78,7 +78,7 @@ export class Service {
     }
 
     const options = this.options;
-    const data = params.data;
+    const data = params;
     // Our before hook determined that we had a valid token or that this
     // was internally called so let's generate a new token with the user
     // id and return both the ID and the token.
