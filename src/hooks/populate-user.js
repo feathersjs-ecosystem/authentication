@@ -20,7 +20,7 @@ export default function(options = {}){
     
     // If it's an after hook grab the id from the result
     if (hook.type === 'after') {
-      id = hook.result[options.idField];
+      id = hook.result.id;
     }
     // Check to see if we have an id from a decoded JWT
     else if (hook.params.payload) {
@@ -33,7 +33,7 @@ export default function(options = {}){
     }
 
     return new Promise(function(resolve, reject){
-      hook.app.service(options.userEndpoint).get(id, {}).then(user => {
+      hook.app.service(options.userEndpoint).get(id, hook.params).then(user => {
         // attach the user to the hook for use in other hooks or services
         hook.params.user = user;
 
