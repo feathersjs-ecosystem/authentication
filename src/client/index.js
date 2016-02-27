@@ -12,6 +12,11 @@ export default function(opts = {}) {
   return function() {
     const app = this;
     const storage = () => app.service(authOptions.storage);
+    
+    if (!storage) {
+      throw new Error(`You need register a local store before you can use feathers-authentication. Did you call app.use('storage', localstorage())`);
+    }
+
     const handleResponse = function (response) {
       return storage().create([{
         id: 'token',
@@ -60,7 +65,9 @@ export default function(opts = {}) {
             this.off('disconnect', reject);
             this.off('close', reject);
             
-            handleResponse(response).then(reponse => resolve(reponse));
+            handleResponse(response).then(reponse => resolve(reponse)).catch(error => {
+              throw error;
+            });
           };
           
           // Also, binding to events that aren't fired (like `close`)
@@ -112,12 +119,18 @@ export default function(opts = {}) {
     // Set up hook that adds adds token and user to params so that
     // it they can be accessed by client side hooks and services
     app.mixins.push(function(service) {
+      if (!service.before || !service.after) {
+        throw new Error(`It looks like feathers-hooks isn't ccnfigured. It is required before you configure feathers-authentication.`)
+      }
       service.before(hooks.populateParams(authOptions));
     });
     
     // Set up hook that adds authorization header for REST provider
     if (app.rest) {
       app.mixins.push(function(service) {
+        if (!service.before || !service.after) {
+          throw new Error(`It looks like feathers-hooks isn't ccnfigured. It is required before you configure feathers-authentication.`)
+        }
         service.before(hooks.populateHeader(authOptions));
       });
     }

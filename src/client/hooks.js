@@ -4,12 +4,11 @@ export function populateParams(options) {
     
     // We can not run this hook on the storage service itself
     if(this !== storage) {
-      return Promise.all(
+      return Promise.all([
         storage.get('user'),
         storage.get('token')
-      ).then(([ user, token ]) => {
+      ]).then(([ user, token ]) => {
         Object.assign(hook.params, { user, token });
-        
         return hook;
       });
     }
