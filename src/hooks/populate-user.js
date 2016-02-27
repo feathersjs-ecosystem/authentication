@@ -33,7 +33,7 @@ export default function(options = {}){
     }
 
     return new Promise(function(resolve, reject){
-      hook.app.service(options.userEndpoint).get(id, hook.params).then(user => {
+      hook.app.service(options.userEndpoint).get(id, {}).then(user => {
         // attach the user to the hook for use in other hooks or services
         hook.params.user = user;
 
