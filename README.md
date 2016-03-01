@@ -87,7 +87,7 @@ You can use the client in the Browser, in NodeJS and in React Native.
 ```js
 import io from 'socket.io-client';
 import feathers from 'feathers/client';
-import hooks from `feathers-hooks`;
+import hooks from 'feathers-hooks';
 import socketio from 'feathers-socketio/client';
 import localstorage from 'feathers-localstorage';
 import authentication from 'feathers-authentication/client';
