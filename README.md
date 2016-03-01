@@ -89,12 +89,14 @@ import io from 'socket.io-client';
 import feathers from 'feathers/client';
 import hooks from `feathers-hooks`;
 import socketio from 'feathers-socketio/client';
+import localstorage from 'feathers-localstorage';
 import authentication from 'feathers-authentication/client';
 
 const socket = io('http://path/to/api');
 const app = feathers()
   .configure(socketio(socket)) // you could use Primus or REST instead
   .configure(hooks())
+  .use('storage', localstorage())
   .configure(authentication());
 
 app.io.on('connect', function(){
@@ -114,7 +116,12 @@ app.io.on('connect', function(){
 
 ### 0.4.0
 
+<<<<<<< HEAD
 - Customize the JWT payload ([#78](https://github.com/feathersjs/feathers-authentication/issues/78))
+- Using `feathers-localstorage` for storing user and token credentials.
+- Adds support for using auth in NodeJS and React Native
+- Fixes issue where user was not getting added to response on authentication for databases that use `_id` as their field name.
+- adds better client side error handling
 
 ### 0.3.1
 
