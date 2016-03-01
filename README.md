@@ -116,7 +116,6 @@ app.io.on('connect', function(){
 
 ### 0.4.0
 
-<<<<<<< HEAD
 - Customize the JWT payload ([#78](https://github.com/feathersjs/feathers-authentication/issues/78))
 - Using `feathers-localstorage` for storing user and token credentials.
 - Adds support for using auth in NodeJS and React Native
