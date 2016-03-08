@@ -3,6 +3,7 @@ import * as hooks from './hooks';
 const defaults = {
   storage: '/storage',
   localEndpoint: '/auth/local',
+  passwordlessEndpoint: '/auth/passwordless',
   tokenEndpoint: '/auth/token'
 };
 
@@ -36,6 +37,8 @@ export default function(opts = {}) {
 
       if (options.type === 'local') {
         endPoint = authOptions.localEndpoint;
+      } else if (options.type === 'passwordless') {
+        endPoint = authOptions.passwordlessEndpoint;
       } else if (options.type === 'token') {
         endPoint = authOptions.tokenEndpoint;
       } else {

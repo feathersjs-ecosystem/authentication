@@ -51,7 +51,9 @@
     "feathers-hooks": "^1.3.0",
     "jsonwebtoken": "^5.4.0",
     "passport": "^0.3.0",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "passwordless": "^1.1.1",
+    "passwordless-memorystore": "0.0.1"
   },
   "devDependencies": {
     "async": "^1.4.2",

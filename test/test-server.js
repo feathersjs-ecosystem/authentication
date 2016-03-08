@@ -19,7 +19,9 @@ export default function(settings, username, password, useSocketio, next) {
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .configure(authentication(settings))
-    .use('/users', memory())
+    .use('/users', memory({
+      startId: 1
+    }))
     .use('/messages', memory())
     .use('/', feathers.static(__dirname))
     /*jshint unused: false*/
