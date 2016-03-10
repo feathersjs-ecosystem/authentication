@@ -6,6 +6,7 @@ import hooks from './hooks';
 import token from './services/token';
 import local from './services/local';
 import oauth2 from './services/oauth2';
+import passwordless from './services/passwordless';
 import * as middleware from './middleware';
 
 function isObject (item) {
@@ -15,7 +16,8 @@ function isObject (item) {
 const debug = Debug('feathers-authentication:main');
 const PROVIDERS = {
   token,
-  local
+  local,
+  passwordless
 };
 
 // Options that apply to any provider
@@ -26,6 +28,7 @@ const defaults = {
   failureRedirect: '/auth/failure',
   tokenEndpoint: '/auth/token',
   localEndpoint: '/auth/local',
+  passwordlessEndpoint: '/auth/passwordless',
   userEndpoint: '/users',
   header: 'authorization',
   cookie: 'feathers-jwt'
