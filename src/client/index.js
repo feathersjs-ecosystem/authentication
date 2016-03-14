@@ -23,7 +23,7 @@ export default function(opts = {}) {
 
       // If no type was given let's try to authenticate with a stored JWT
       if (!options.type) {
-        getOptions = this.token().then(token => {
+        getOptions = getJWT(config.tokenKey, this.get('storage')).then(token => {
           if(!token) {
             return Promise.reject(new Error(`Could not find stored JWT and no authentication type was given`));
           }
@@ -43,7 +43,7 @@ export default function(opts = {}) {
       return getOptions.then(options => {
         let endPoint;
 
-        if (options.type === 'local') {
+        if (options.type === 'local') 
           endPoint = config.localEndpoint;
         } else if (options.type === 'token') {
           endPoint = config.tokenEndpoint;
@@ -65,14 +65,11 @@ export default function(opts = {}) {
       });
     };
 
-    app.token = function() {
-      return getJWT(config.tokenKey, this.get('storage'));
-    };
-
     app.logout = function() {
       app.set('user', null);
       app.set('token', null);
-      // TODO invalidate token
+      
+      // TODO (EK): invalidate token with server
       return Promise.resolve(app.get('storage').setItem(config.tokenKey, null));
     };
 
