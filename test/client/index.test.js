@@ -102,18 +102,14 @@ const setupTests = initApp => {
         assert.ok(response.token);
         assert.ok(response.data);
 
-        return app.token().then(token => {
-          assert.deepEqual(response.token, token);
-        }).then(() => {
-          return app.authenticate().then(response => {
-            assert.deepEqual(app.get('token'), response.token);
-            assert.deepEqual(app.get('user'), response.data);
-          });
+        return app.authenticate().then(response => {
+          assert.deepEqual(app.get('token'), response.token);
+          assert.deepEqual(app.get('user'), response.data);
         }).then(done);
       }).catch(done);
   });
 
-  it.skip('.logout works, lets you not access to protected service', done => {
+  it.skip('.logout works, does not grant access to protected service', done => {
     app.authenticate({
         type: 'local',
         email, password
@@ -131,11 +127,10 @@ const setupTests = initApp => {
 };
 
 describe('Client side authentication', () => {
-  it('adds .authenticate, .token and .logout', () => {
+  it('adds .authenticate, and .logout', () => {
     const app = feathers().configure(authentication());
 
     assert.equal(typeof app.authenticate, 'function');
-    assert.equal(typeof app.token, 'function');
     assert.equal(typeof app.logout, 'function');
   });
 
