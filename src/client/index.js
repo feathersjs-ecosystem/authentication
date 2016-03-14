@@ -89,10 +89,6 @@ export default function(opts = {}) {
     // Set up hook that adds authorization header for REST provider
     if (app.rest) {
       app.mixins.push(function(service) {
-        if (typeof service.before !== 'function' || typeof service.after !== 'function') {
-          throw new Error(`It looks like feathers-hooks isn't configured. It is required running feathers-authentication.`);
-        }
-
         service.before(hooks.populateHeader(config));
       });
     }
