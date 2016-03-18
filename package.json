@@ -35,7 +35,7 @@
     "compile": "rm -rf lib/ && babel -d lib/ src/ && mkdir lib/public/ && cp src/public/* lib/public/",
     "watch": "babel --watch -d lib/ src/",
     "jshint": "jshint src/. test/. --config",
-    "mocha": "mocha test/* --compilers js:babel-core/register",
+    "mocha": "mocha --recursive test/ --compilers js:babel-core/register",
     "test": "npm run compile && npm run jshint && npm run mocha && nsp check"
   },
   "directories": {
