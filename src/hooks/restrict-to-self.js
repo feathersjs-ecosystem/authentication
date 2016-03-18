@@ -6,7 +6,7 @@
  *
  * find, get, create, update, remove
  */
-export default function restrictToSelf(options = {}) {
+export default function(options = {}) {
   const defaults = {idField: '_id'};
   options = Object.assign({}, defaults, options);
 

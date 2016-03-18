@@ -8,7 +8,7 @@ const defaults = {
   idOnResource: 'userId'
 };
 
-export default function queryWithUserId(options = {}) {
+export default function(options = {}) {
   options = Object.assign({}, defaults, options);
 
   return function(hook) {

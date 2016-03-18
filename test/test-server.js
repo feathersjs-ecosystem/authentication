@@ -54,7 +54,7 @@ export default function(settings, username, password, useSocketio, next) {
         all: [
           hooks.verifyToken({ secret: settings.token.secret }),
           hooks.populateUser(),
-          hooks.requireAuth()
+          hooks.isAuthenticated()
         ]
       });
       

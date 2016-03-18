@@ -1,23 +1,21 @@
+import associateCurrentUser from './associate-current-user';
 import hashPassword from './hash-password';
-import queryWithUserId from './query-with-user-id';
-import requireAdminToSetAdmin from './require-admin-to-set-admin';
-import requireAuth from './require-auth';
-import restrictToSelf from './restrict-to-self';
-import setUserId from './set-user-id';
-import toLowerCase from './to-lower-case';
-import verifyToken from './verify-token';
+import isAuthenticated from './is-authenticated';
 import populateUser from './populate-user';
+import queryWithCurrentUser from './query-with-current-user';
+import restrictToSelf from './restrict-to-self';
+import restrictToRoles from './restrict-to-roles';
+import verifyToken from './verify-token';
 
 let hooks = {
+  associateCurrentUser,
   hashPassword,
-  queryWithUserId,
-  requireAdminToSetAdmin,
-  requireAuth,
+  isAuthenticated,
+  populateUser,
+  queryWithCurrentUser,
   restrictToSelf,
-  setUserId,
-  toLowerCase,
-  verifyToken,
-  populateUser
+  restrictToRoles,
+  verifyToken
 };
 
 export default hooks;

@@ -8,12 +8,10 @@ import errors from 'feathers-errors';
  *
  * find, get, create, update, remove
  */
-export default function requireAuth() {
+export default function() {
   return function(hook){
-
     if (!hook.params.user && hook.params.provider) {
       throw new errors.NotAuthenticated('Please include a valid auth token in the Authorization header.');
     }
-
   };
 }
