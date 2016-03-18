@@ -94,7 +94,7 @@ export class Service {
     const options = this.options;
 
     const data = {
-      id: user.hasOwnProperty(options.idField) ? user[options.idField] : user.id
+      [options.idField]: user[options.idField]
     };
 
     if (Array.isArray(options.extraFields)) {
