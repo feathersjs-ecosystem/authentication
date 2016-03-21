@@ -14,11 +14,6 @@ export default function(options = {}){
 
     options = Object.assign({}, defaults, authOptions, options);
 
-    // If we already have a current user just pass through
-    if (hook.params.user) {
-      return Promise.resolve(hook);
-    }
-
     let id;
 
     // If it's an after hook grab the id from the result
