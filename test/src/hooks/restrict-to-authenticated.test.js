@@ -1,24 +1,39 @@
 import assert from 'assert';
-import { isAuthenticated } from '../../../src/hooks';
+import { restrictToAuthenticated } from '../../../src/hooks';
 
-describe('isAuthenticated', () => {
+describe('restrictToAuthenticated', () => {
+  describe('when not called as a before hook', () => {
+    it('throws an error', () => {
+      let hook = {
+        type: 'after'
+      };
+
+      try {
+        restrictToAuthenticated()(hook);
+      }
+      catch(error) {
+        assert.ok(error);
+      }
+    });
+  });
+
   describe('when user exists', () => {
     it('does not throw an error', () => {
       let hook = {
+        type: 'before',
         params: {
           user: 'Joe Rogan'
         }
       };
 
       try {
-        isAuthenticated()(hook);
+        restrictToAuthenticated()(hook);
         assert.ok(true);
       }
       catch(error) {
         // It should never get here
         assert.ok(false);
       }
-
     });
   });
 
@@ -26,13 +41,14 @@ describe('isAuthenticated', () => {
     describe('when provider exists', () => {
       it('throws a not authenticated error', () => {
         let hook = {
+          type: 'before',
           params: {
             provider: 'rest'
           }
         };
 
         try {
-          hook = isAuthenticated()(hook);
+          hook = restrictToAuthenticated()(hook);
         }
         catch (error) {
           assert.equal(error.code, 401);
@@ -43,11 +59,12 @@ describe('isAuthenticated', () => {
     describe('when provider does not exist', () => {
       it('does not throw an error', () => {
         let hook = {
+          type: 'before',
           params: {}
         };
 
         try {
-          isAuthenticated()(hook);
+          restrictToAuthenticated()(hook);
           assert.ok(true);
         }
         catch(error) {

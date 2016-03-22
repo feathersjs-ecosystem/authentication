@@ -1,39 +1,78 @@
 import assert from 'assert';
 import { hashPassword } from '../../../src/hooks';
 
-describe('hashPassword()', () => {
+describe('hashPassword', () => {
+  describe('when not called as a before hook', () => {
+    it('throws an error', () => {
+      let hook = {
+        type: 'after'
+      };
+
+      try {
+        hashPassword()(hook);
+      }
+      catch(error) {
+        assert.ok(error);
+      }
+    });
+  });
+
   describe('when hook.data does not exist', () => {
     it('does not do anything', () => {
       let hook = {
-        foo: { password: 'password' }
+        type: 'before',
+        foo: { password: 'password' },
+        app: {
+          get: function() { return {}; }
+        }
       };
 
       hook = hashPassword()(hook);
       assert.equal(hook.data, undefined);
+      assert.equal(hook.foo.password, 'password');
     });
   });
 
-  describe('when hook.data does exist', () => {
-    it('attaches hashed password to hook.data', (done) => {
-      let hook = {
-        data: { password: 'password' }
-      };
+  describe('when hook.data exists', () => {
+    let hook;
 
+    beforeEach(() => {
+      hook = {
+        type: 'before',
+        data: { password: 'secret' },
+        app: {
+          get: function() { return {}; }
+        }
+      };
+    });
+
+    it('hashes with default options', (done) => {
       hashPassword()(hook).then(hook => {
         assert.ok(hook.data.password);
-        assert.notEqual(hook.data.custom, 'password');
+        assert.notEqual(hook.data.password, 'secret');
         done();
       });
     });
 
-    it('supports custom password fields', (done) => {
-      let hook = {
-        data: { custom: 'password' }
+    it('hashes with options from global auth config', (done) => {
+      hook.data.pass = 'secret';
+      hook.app.get = function() {
+        return { passwordField: 'pass' };
       };
 
-      hashPassword({ passwordField: 'custom'})(hook).then(hook => {
-        assert.ok(hook.data.custom);
-        assert.notEqual(hook.data.custom, 'password');
+      hashPassword()(hook).then(hook => {
+        assert.ok(hook.data.pass);
+        assert.notEqual(hook.data.pass, 'secret');
+        done();
+      });
+    });
+
+    it('hashes with custom options', (done) => {
+      hook.data.pass = 'secret';
+
+      hashPassword({ passwordField: 'pass'})(hook).then(hook => {
+        assert.ok(hook.data.pass);
+        assert.notEqual(hook.data.pass, 'secret');
         done();
       });
     });

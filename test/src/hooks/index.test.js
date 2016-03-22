@@ -18,10 +18,6 @@ describe('Auth hooks', () => {
     assert.equal(typeof hooks.hashPassword, 'function');
   });
 
-  it('exposes isAuthenticated hook', () => {
-    assert.equal(typeof hooks.isAuthenticated, 'function');
-  });
-
   it('exposes populateUser hook', () => {
     assert.equal(typeof hooks.populateUser, 'function');
   });
@@ -30,12 +26,16 @@ describe('Auth hooks', () => {
     assert.equal(typeof hooks.queryWithCurrentUser, 'function');
   });
 
+  it('exposes restrictToAuthenticated hook', () => {
+    assert.equal(typeof hooks.restrictToAuthenticated, 'function');
+  });
+
   it('exposes restrictToRoles hook', () => {
     assert.equal(typeof hooks.restrictToRoles, 'function');
   });
 
-  it('exposes restrictToSelf hook', () => {
-    assert.equal(typeof hooks.restrictToSelf, 'function');
+  it('exposes restrictToOwner hook', () => {
+    assert.equal(typeof hooks.restrictToOwner, 'function');
   });
 
   it('exposes verifyToken hook', () => {
