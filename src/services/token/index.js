@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import hooks from '../../hooks';
+import commonHooks from 'feathers-hooks';
 import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:token');
@@ -9,7 +10,7 @@ const debug = Debug('feathers-authentication:token');
 const defaults = {
   passwordField: 'password',
   issuer: 'feathers',
-  algorithms: ['HS256'],
+  algorithm: 'HS256',
   expiresIn: '1d', // 1 day
 };
 
@@ -134,9 +135,18 @@ export default function(options){
     });
 
     tokenService.after({
-      create: [hooks.populateUser(options)],
-      find: [hooks.populateUser(options)],
-      get: [hooks.populateUser(options)]
+      create: [
+        hooks.populateUser(options),
+        commonHooks.remove(options.passwordField)
+      ],
+      find: [
+        hooks.populateUser(options),
+        commonHooks.remove(options.passwordField)
+      ],
+      get: [
+        hooks.populateUser(options),
+        commonHooks.remove(options.passwordField)
+      ]
     });
   };
 }
