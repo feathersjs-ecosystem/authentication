@@ -3,7 +3,6 @@
  */
 const defaults = {
   userEndpoint: '/users',
-  passwordField: 'password',
   idField: '_id'
 };
 
