@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import { queryWithCurrentUser } from '../../../src/hooks';
 
 describe('queryWithCurrentUser', () => {
@@ -12,7 +12,7 @@ describe('queryWithCurrentUser', () => {
         queryWithCurrentUser()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -28,7 +28,7 @@ describe('queryWithCurrentUser', () => {
         queryWithCurrentUser()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -62,7 +62,7 @@ describe('queryWithCurrentUser', () => {
           queryWithCurrentUser()(hook);
         }
         catch(error) {
-          assert.ok(error);
+          expect(error).to.not.equal(undefined);
         }
       });
     });
@@ -70,7 +70,7 @@ describe('queryWithCurrentUser', () => {
     it('adds user id to query using default options', () => {
       queryWithCurrentUser()(hook);
 
-      assert.equal(hook.params.query.userId, '1');
+      expect(hook.params.query.userId).to.equal('1');
     });
 
     it('adds user id to query using options from global auth config', () => {
@@ -81,7 +81,7 @@ describe('queryWithCurrentUser', () => {
 
       queryWithCurrentUser()(hook);
 
-      assert.equal(hook.params.query.customId, '2');
+      expect(hook.params.query.customId).to.equal('2');
     });
 
     it('adds user id to query using custom options', () => {
@@ -89,7 +89,7 @@ describe('queryWithCurrentUser', () => {
 
       queryWithCurrentUser({ idField: 'id', as: 'customId' })(hook);
 
-      assert.equal(hook.params.query.customId, '2');
+      expect(hook.params.query.customId).to.equal('2');
     });
   });
 });

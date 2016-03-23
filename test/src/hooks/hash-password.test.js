@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import { hashPassword } from '../../../src/hooks';
 
 describe('hashPassword', () => {
@@ -12,7 +12,7 @@ describe('hashPassword', () => {
         hashPassword()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -28,8 +28,8 @@ describe('hashPassword', () => {
       };
 
       hook = hashPassword()(hook);
-      assert.equal(hook.data, undefined);
-      assert.equal(hook.foo.password, 'password');
+      expect(hook.data).to.equal(undefined);
+      expect(hook.foo.password).to.equal('password');
     });
   });
 
@@ -48,8 +48,8 @@ describe('hashPassword', () => {
 
     it('hashes with default options', (done) => {
       hashPassword()(hook).then(hook => {
-        assert.ok(hook.data.password);
-        assert.notEqual(hook.data.password, 'secret');
+        expect(hook.data.password).to.not.equal(undefined);
+        expect(hook.data.password).to.not.equal('secret');
         done();
       });
     });
@@ -61,8 +61,8 @@ describe('hashPassword', () => {
       };
 
       hashPassword()(hook).then(hook => {
-        assert.ok(hook.data.pass);
-        assert.notEqual(hook.data.pass, 'secret');
+        expect(hook.data.pass).to.not.equal(undefined);
+        expect(hook.data.pass).to.not.equal('secret');
         done();
       });
     });
@@ -71,8 +71,8 @@ describe('hashPassword', () => {
       hook.data.pass = 'secret';
 
       hashPassword({ passwordField: 'pass'})(hook).then(hook => {
-        assert.ok(hook.data.pass);
-        assert.notEqual(hook.data.pass, 'secret');
+        expect(hook.data.pass).to.not.equal(undefined);
+        expect(hook.data.pass).to.not.equal('secret');
         done();
       });
     });

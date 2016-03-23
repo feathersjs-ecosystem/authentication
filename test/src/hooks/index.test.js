@@ -1,44 +1,44 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import hooks from '../../../src/hooks';
 
 describe('Auth hooks', () => {
   it('is CommonJS compatible', () => {
-    assert.equal(typeof require('../../../lib/hooks'), 'object');
+    expect(typeof require('../../../lib/hooks')).to.equal('object');
   });
 
   it('is ES6 compatible', () => {
-    assert.equal(typeof hooks, 'object');
+    expect(typeof hooks).to.equal('object');
   });
 
   it('exposes associateCurrentUser hook', () => {
-    assert.equal(typeof hooks.associateCurrentUser, 'function');
+    expect(typeof hooks.associateCurrentUser).to.equal('function');
   });
 
   it('exposes hashPassword hook', () => {
-    assert.equal(typeof hooks.hashPassword, 'function');
+    expect(typeof hooks.hashPassword).to.equal('function');
   });
 
   it('exposes populateUser hook', () => {
-    assert.equal(typeof hooks.populateUser, 'function');
+    expect(typeof hooks.populateUser).to.equal('function');
   });
 
   it('exposes queryWithCurrentUser hook', () => {
-    assert.equal(typeof hooks.queryWithCurrentUser, 'function');
+    expect(typeof hooks.queryWithCurrentUser).to.equal('function');
   });
 
   it('exposes restrictToAuthenticated hook', () => {
-    assert.equal(typeof hooks.restrictToAuthenticated, 'function');
+    expect(typeof hooks.restrictToAuthenticated).to.equal('function');
   });
 
   it('exposes restrictToRoles hook', () => {
-    assert.equal(typeof hooks.restrictToRoles, 'function');
+    expect(typeof hooks.restrictToRoles).to.equal('function');
   });
 
   it('exposes restrictToOwner hook', () => {
-    assert.equal(typeof hooks.restrictToOwner, 'function');
+    expect(typeof hooks.restrictToOwner).to.equal('function');
   });
 
   it('exposes verifyToken hook', () => {
-    assert.equal(typeof hooks.verifyToken, 'function');
+    expect(typeof hooks.verifyToken).to.equal('function');
   });
 });

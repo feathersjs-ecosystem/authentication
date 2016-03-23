@@ -1,16 +1,24 @@
 import authentication from '../../src';
-import assert from 'assert';
+import { expect } from 'chai';
 
 describe('Feathers Authentication', () => {
   it('is CommonJS compatible', () => {
-    assert.equal(typeof require('../../lib'), 'function');
+    expect(typeof require('../../lib')).to.equal('function');
   });
 
   it('is ES6 compatible', () => {
-    assert.equal(typeof authentication, 'function');
+    expect(typeof authentication).to.equal('function');
   });
 
   it('exposes hooks', () => {
-    assert.equal(typeof authentication.hooks, 'object');
+    expect(typeof authentication.hooks).to.equal('object');
+  });
+
+  describe.skip('config options', () => {
+
+    it('sets up default token', () => {
+
+    });
+
   });
 });

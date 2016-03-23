@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import request from 'request';
 import createApplication from '../test-server';
 import jwt from 'jsonwebtoken';
@@ -58,7 +58,7 @@ describe('REST authentication', function() {
         };
 
         request(options, function(err, response) {
-          assert.equal(response.statusCode, 401);
+          expect(response.statusCode).to.equal(401);
           done();
         });
       });
@@ -70,7 +70,7 @@ describe('REST authentication', function() {
         };
 
         request(options, function(err, response) {
-          assert.equal(response.statusCode, 401);
+          expect(response.statusCode).to.equal(401);
           done();
         });
       });
@@ -89,21 +89,21 @@ describe('REST authentication', function() {
 
       it('returns a 201', function(done) {
         request(options, function(err, response) {
-          assert.equal(response.statusCode, 201);
+          expect(response.statusCode).to.equal(201);
           done();
         });
       });
 
       it('returns a JWT', function(done) {
         request(options, function(err, response, body) {
-          assert.ok(body.token, 'POST to /auth/local gave us back a token.');
+          expect(body.token).to.not.equal(undefined);
           done();
         });
       });
 
       it('returns the logged in user', function(done) {
         request(options, function(err, response, body) {
-          assert.equal(body.data.email, 'test@feathersjs.com');
+          expect(body.data.email).to.equal('test@feathersjs.com');
           done();
         });
       });
@@ -125,7 +125,7 @@ describe('REST authentication', function() {
         };
 
         request(options, function(err, response) {
-          assert.equal(response.statusCode, 401);
+          expect(response.statusCode).to.equal(401);
           done();
         });
       });
@@ -136,7 +136,7 @@ describe('REST authentication', function() {
         };
 
         request(options, function(err, response) {
-          assert.equal(response.statusCode, 401);
+          expect(response.statusCode).to.equal(401);
           done();
         });
       });
@@ -154,21 +154,21 @@ describe('REST authentication', function() {
 
       it('returns a 201', function(done) {
         request(options, function(err, response) {
-          assert.equal(response.statusCode, 201);
+          expect(response.statusCode).to.equal(201);
           done();
         });
       });
 
       it('returns a JWT', function(done) {
         request(options, function(err, response, body) {
-          assert.ok(body.token, 'POST to /auth/token gave us back a token.');
+          expect(body.token).to.not.equal(undefined);
           done();
         });
       });
 
       it('returns the logged in user', function(done) {
         request(options, function(err, response, body) {
-          assert.equal(body.data.email, 'test@feathersjs.com');
+          expect(body.data.email).to.equal('test@feathersjs.com');
           done();
         });
       });
@@ -202,7 +202,7 @@ describe('REST authentication', function() {
           options.url = `${host}/messages/1`;
 
           request(options, function(err, response, body) {
-            assert.equal(body.id, 1);
+            expect(body.id).to.equal(1);
             done();
           });
         });
@@ -226,8 +226,8 @@ describe('REST authentication', function() {
           options.url = `${host}/messages/2`;
 
           request(options, function(err, response, body) {
-            assert.equal(body.id, 2);
-            assert.equal(body.text, 'new text');
+            expect(body.id).to.equal(2);
+            expect(body.text).to.equal('new text');
             done();
           });
         });
@@ -247,7 +247,7 @@ describe('REST authentication', function() {
           options.url = `${host}/messages/1?token=${validToken}`;
 
           request(options, function(err, response, body) {
-            assert.equal(body.id, 1);
+            expect(body.id).to.equal(1);
             done();
           });
         });
@@ -271,14 +271,14 @@ describe('REST authentication', function() {
 
         it('returns 401', (done) => {
           request(options, function(err, response) {
-            assert.equal(response.statusCode, 401);
+            expect(response.statusCode).to.equal(401);
             done();
           });
         });
 
         it('returns error instead of data', (done) => {
           request(options, function(err, response, body) {
-            assert.equal(body.code, 401);
+            expect(body.code).to.equal(401);
             done();
           });
         });
@@ -291,14 +291,14 @@ describe('REST authentication', function() {
 
         it('returns 200', (done) => {
           request(options, function(err, response) {
-            assert.equal(response.statusCode, 200);
+            expect(response.statusCode).to.equal(200);
             done();
           });
         });
 
         it('returns data', (done) => {
           request(options, function(err, response, body) {
-            assert.notEqual(body, undefined);
+            expect(body).to.not.equal(undefined);
             done();
           });
         });

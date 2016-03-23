@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import assert from 'assert';
+import { expect } from 'chai';
 import { verifyToken } from '../../../src/hooks';
 
 describe('verifyToken', () => {
@@ -13,7 +13,7 @@ describe('verifyToken', () => {
         verifyToken()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -27,11 +27,11 @@ describe('verifyToken', () => {
 
       try {
         var returnedHook = verifyToken()(hook);
-        assert.deepEqual(hook, returnedHook);
+        expect(hook).to.deep.equal(returnedHook);
       }
       catch(error) {
         // It should never get here
-        assert.ok(false);
+        expect(false).to.equal(true);
       }
     });
   });
@@ -49,7 +49,7 @@ describe('verifyToken', () => {
         hook = verifyToken()(hook);
       }
       catch (error) {
-        assert.equal(error.code, 401);
+        expect(error.code).to.equal(401);
       }
     });
   });
@@ -76,7 +76,7 @@ describe('verifyToken', () => {
           verifyToken()(hook);
         }
         catch(error) {
-          assert.ok(error);
+          expect(error).to.not.equal(undefined);
         }
       });
     });
@@ -97,7 +97,7 @@ describe('verifyToken', () => {
           hook.params.token = 'invalid';
           
           verifyToken()(hook).then(done).catch(error => {
-            assert.equal(error.code, 401);
+            expect(error.code).to.equal(401);
             done();  
           });
         });
@@ -122,10 +122,10 @@ describe('verifyToken', () => {
 
           verifyToken()(hook).then(() => {
             // should never get here
-            assert.ok(false);
+            expect(false).to.equal(true);
             done();
           }).catch(error => {
-            assert.equal(error.code, 401);
+            expect(error.code).to.equal(401);
             done();
           });
         });
@@ -152,7 +152,7 @@ describe('verifyToken', () => {
           hook.params.token = jwt.sign({ id: 1 }, 'secret', jwtOptions);
 
           verifyToken()(hook).then(hook => {
-            assert.equal(hook.params.payload.id, 1);
+            expect(hook.params.payload.id).to.equal(1);
             done();
           }).catch(done);
         });
@@ -166,7 +166,7 @@ describe('verifyToken', () => {
           hook.params.token = jwt.sign({ id: 1 }, 'custom secret', jwtOptions);
 
           verifyToken({ secret: 'custom secret' })(hook).then(hook => {
-            assert.equal(hook.params.payload.id, 1);
+            expect(hook.params.payload.id).to.equal(1);
             done();
           }).catch(done);
         });

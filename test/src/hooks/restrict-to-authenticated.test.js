@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import { restrictToAuthenticated } from '../../../src/hooks';
 
 describe('restrictToAuthenticated', () => {
@@ -12,7 +12,7 @@ describe('restrictToAuthenticated', () => {
         restrictToAuthenticated()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -28,11 +28,11 @@ describe('restrictToAuthenticated', () => {
 
       try {
         restrictToAuthenticated()(hook);
-        assert.ok(true);
+        expect(true).to.equal(true);
       }
       catch(error) {
         // It should never get here
-        assert.ok(false);
+        expect(true).to.equal(false);
       }
     });
   });
@@ -51,7 +51,7 @@ describe('restrictToAuthenticated', () => {
           hook = restrictToAuthenticated()(hook);
         }
         catch (error) {
-          assert.equal(error.code, 401);
+          expect(error.code).to.equal(401);
         }
       });
     });
@@ -65,11 +65,11 @@ describe('restrictToAuthenticated', () => {
 
         try {
           restrictToAuthenticated()(hook);
-          assert.ok(true);
+          expect(true).to.equal(true);
         }
         catch(error) {
           // It should never get here
-          assert.ok(false);
+          expect(true).to.equal(false);
         }
       });
     });

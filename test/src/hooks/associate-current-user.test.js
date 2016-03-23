@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import { associateCurrentUser } from '../../../src/hooks';
 
 describe('associateCurrentUser', () => {
@@ -12,7 +12,7 @@ describe('associateCurrentUser', () => {
         associateCurrentUser()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -28,7 +28,7 @@ describe('associateCurrentUser', () => {
         associateCurrentUser()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -52,7 +52,7 @@ describe('associateCurrentUser', () => {
     it('has default options', () => {
       associateCurrentUser()(hook);
 
-      assert.equal(hook.data.userId, '1');
+      expect(hook.data.userId).to.equal('1');
     });
 
     it('pulls from global auth config', () => {
@@ -63,7 +63,7 @@ describe('associateCurrentUser', () => {
 
       associateCurrentUser()(hook);
 
-      assert.equal(hook.data.customId, '2');
+      expect(hook.data.customId).to.equal('2');
     });
 
     it('supports custom options', () => {
@@ -71,7 +71,7 @@ describe('associateCurrentUser', () => {
 
       associateCurrentUser({ idField: 'id', as: 'customId' })(hook);
 
-      assert.equal(hook.data.customId, '2');
+      expect(hook.data.customId).to.equal('2');
     });
   });
 
@@ -88,7 +88,7 @@ describe('associateCurrentUser', () => {
         associateCurrentUser()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -113,7 +113,7 @@ describe('associateCurrentUser', () => {
 
       associateCurrentUser()(hook);
 
-      assert.equal(hook.data.userId, '1');
+      expect(hook.data.userId).to.equal('1');
     });
 
     it('adds the user\'s ID to a an array of objects', () => {
@@ -124,8 +124,8 @@ describe('associateCurrentUser', () => {
 
       associateCurrentUser()(hook);
 
-      assert.equal(hook.data[0].userId, '1');
-      assert.equal(hook.data[1].userId, '1');
+      expect(hook.data[0].userId).to.equal('1');
+      expect(hook.data[1].userId).to.equal('1');
     });
   });
 });

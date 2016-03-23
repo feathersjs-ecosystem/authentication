@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import { restrictToOwner } from '../../../src/hooks';
 
 describe('restrictToOwner', () => {
@@ -12,7 +12,7 @@ describe('restrictToOwner', () => {
         restrictToOwner()(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -26,11 +26,11 @@ describe('restrictToOwner', () => {
 
       try {
         var returnedHook = restrictToOwner()(hook);
-        assert.deepEqual(hook, returnedHook);
+        expect(hook).to.deep.equal(returnedHook);
       }
       catch(error) {
         // It should never get here
-        assert.ok(false);
+        expect(true).to.equal(false);
       }
     });
   });
@@ -48,7 +48,7 @@ describe('restrictToOwner', () => {
         hook = restrictToOwner()(hook);
       }
       catch (error) {
-        assert.equal(error.code, 401);
+        expect(error.code).to.equal(401);
       }
     });
   });
@@ -85,7 +85,7 @@ describe('restrictToOwner', () => {
           restrictToOwner()(hook);
         }
         catch(error) {
-          assert.ok(error);
+          expect(error).to.not.equal(undefined);
         }
       });
     });
@@ -93,7 +93,7 @@ describe('restrictToOwner', () => {
     it('adds user id to query using default options', () => {
       restrictToOwner()(hook);
 
-      assert.equal(hook.params.query.userId, '1');
+      expect(hook.params.query.userId).to.equal('1');
     });
 
     it('adds user id to query using options from global auth config', () => {
@@ -104,7 +104,7 @@ describe('restrictToOwner', () => {
 
       restrictToOwner()(hook);
 
-      assert.equal(hook.params.query.ownerId, '2');
+      expect(hook.params.query.ownerId).to.equal('2');
     });
 
     it('adds user id to query using custom options', () => {
@@ -112,7 +112,7 @@ describe('restrictToOwner', () => {
 
       restrictToOwner({ idField: 'id', ownerField: 'ownerId' })(hook);
 
-      assert.equal(hook.params.query.ownerId, '2');
+      expect(hook.params.query.ownerId).to.equal('2');
     });
   });
 });

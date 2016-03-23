@@ -12,7 +12,7 @@ const mockService = sinon.stub().returns({
   get: mockGet
 });
 
-describe.only('populateUser', () => {
+describe('populateUser', () => {
   describe('when user id is missing', () => {
     it('does not do anything', done => {
       let hook = {

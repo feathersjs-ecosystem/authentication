@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { expect } from 'chai';
 import { restrictToRoles } from '../../../src/hooks';
 
 const options = { roles: ['admin', 'super'] };
@@ -9,7 +9,7 @@ describe('restrictToRoles', () => {
       restrictToRoles();
     }
     catch(error) {
-      assert.ok(error);
+      expect(error).to.not.equal(undefined);
     }
   });
 
@@ -18,7 +18,7 @@ describe('restrictToRoles', () => {
       restrictToRoles({ roles: [] });
     }
     catch(error) {
-      assert.ok(error);
+      expect(error).to.not.equal(undefined);
     }
   });
 
@@ -32,7 +32,7 @@ describe('restrictToRoles', () => {
         restrictToRoles(options)(hook);
       }
       catch(error) {
-        assert.ok(error);
+        expect(error).to.not.equal(undefined);
       }
     });
   });
@@ -46,11 +46,11 @@ describe('restrictToRoles', () => {
 
       try {
         var returnedHook = restrictToRoles(options)(hook);
-        assert.deepEqual(hook, returnedHook);
+        expect(returnedHook).to.deep.equal(hook);
       }
       catch(error) {
         // It should never get here
-        assert.ok(false);
+        expect(true).to.equal(false);
       }
     });
   });
@@ -68,7 +68,7 @@ describe('restrictToRoles', () => {
         hook = restrictToRoles(options)(hook);
       }
       catch (error) {
-        assert.equal(error.code, 401);
+        expect(error.code).to.equal(401);
       }
     });
   });
@@ -108,7 +108,7 @@ describe('restrictToRoles', () => {
           restrictToRoles(options)(hook);
         }
         catch(error) {
-          assert.ok(error);
+          expect(error).to.not.equal(undefined);
         }
       });
     });
@@ -133,7 +133,7 @@ describe('restrictToRoles', () => {
           restrictToRoles(options)(hook);
         }
         catch(error) {
-          assert.equal(error.code, 403);
+          expect(error.code).to.equal(403);
         }
       });
     });
@@ -163,13 +163,13 @@ describe('restrictToRoles', () => {
           restrictToRoles(options)(hook);
         }
         catch(error) {
-          assert.equal(error.code, 403);
+          expect(error.code).to.equal(403);
         }
       });
 
       it('adds user id to query when owner option is present', () => {
         restrictToRoles({ roles: ['admin'], owner: true })(hook);
-        assert.equal(hook.params.query.userId, '1');
+        expect(hook.params.query.userId).to.equal('1');
       });
     });
 
@@ -196,11 +196,11 @@ describe('restrictToRoles', () => {
       it('does not throw an error using default options', () => {
         try {
           restrictToRoles(options)(hook);
-          assert.ok(true);
+          expect(true).to.equal(true);
         }
         catch (e) {
           // Should never get here
-          assert.ok(false);
+          expect(true).to.equal(false);
         }
       });
 
@@ -209,11 +209,11 @@ describe('restrictToRoles', () => {
         
         try {
           restrictToRoles(options)(hook);
-          assert.ok(true);
+          expect(true).to.equal(true);
         }
         catch (e) {
           // Should never get here
-          assert.ok(false);
+          expect(true).to.equal(false);
         }
       });
 
@@ -226,11 +226,11 @@ describe('restrictToRoles', () => {
 
         try {
           restrictToRoles(options)(hook);
-          assert.ok(true);
+          expect(true).to.equal(true);
         }
         catch (e) {
           // Should never get here
-          assert.ok(false);
+          expect(true).to.equal(false);
         }
       });
 
@@ -240,11 +240,11 @@ describe('restrictToRoles', () => {
 
         try {
           restrictToRoles({ roles: options.roles, idField: 'id', ownerField: 'ownerId', fieldName: 'permissions' })(hook);
-          assert.ok(true);
+          expect(true).to.equal(true);
         }
         catch (e) {
           // Should never get here
-          assert.ok(false);
+          expect(true).to.equal(false);
         }
       });
     });
