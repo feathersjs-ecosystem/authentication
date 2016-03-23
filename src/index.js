@@ -52,7 +52,7 @@ export default function auth(config = {}) {
     }
 
     // Merge and flatten options
-    const authOptions = Object.assign({}, app.get('auth'), defaults, config);
+    const authOptions = Object.assign({}, defaults, app.get('auth'), config);
 
     // Set the options on the app
     app.set('auth', authOptions);
@@ -91,7 +91,7 @@ export default function auth(config = {}) {
     Object.keys(config).forEach(function (key) {
       
       // Because we are iterating through all the keys we might
-      // be dealing with a confir param and not a provider config
+      // be dealing with a config param and not a provider config
       // If that's the case we don't need to merge params and we
       // shouldn't try to set up a service for this key.
       if (!isObject(config[key])) {
