@@ -41,6 +41,12 @@ export class Service {
       })
       .then(user => {
         // Check password
+        const hash = user[this.options.passwordField];
+
+        if (!hash) {
+          return done(new Error(`User record in the database is missing a '${this.options.passwordField}'`));
+        }
+
         bcrypt.compare(password, user[this.options.passwordField], function(error, result) {
           // Handle 500 server error.
           if (error) {
@@ -106,6 +112,7 @@ export default function(options){
     const localService = app.service(options.localEndpoint);
 
     // Register our local auth strategy and get it to use the passport callback function
+    debug('registering passport-local strategy');
     passport.use(new Strategy(options, localService.checkCredentials.bind(localService)));
   };
 }
