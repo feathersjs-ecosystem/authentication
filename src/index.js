@@ -1,3 +1,5 @@
+if (!global._babelPolyfill) { require('babel-polyfill'); }
+
 import Debug from 'debug';
 import path from 'path';
 import crypto from 'crypto';
@@ -21,8 +23,8 @@ const PROVIDERS = {
 // Options that apply to any provider
 const defaults = {
   idField: '_id',
-  setUpSuccessRedirect: true,
-  setUpFailureRedirect: true,
+  shouldRedirectOnSuccess: true,
+  shouldRedirectOnFailure: true,
   successRedirect: '/auth/success',
   failureRedirect: '/auth/failure',
   tokenEndpoint: '/auth/token',
@@ -55,6 +57,28 @@ export default function auth(config = {}) {
     // Merge and flatten options
     const authOptions = Object.assign({}, defaults, app.get('auth'), config);
 
+    // If we should redirect on success and the redirect route is the same as the
+    // default then we'll set up a route. Otherwise we'll leave it to the developer
+    // to set up their own custom route handler.
+    if (authOptions.shouldRedirectOnSuccess && authOptions.successRedirect === defaults.successRedirect) {
+      debug(`Setting up successRedirect route: ${authOptions.successRedirect}`);
+      
+      app.get(authOptions.successRedirect, function(req, res){
+        res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
+      });
+    }
+
+    // If we should redirect on failure and the redirect route is the same as the
+    // default then we'll set up a route. Otherwise we'll leave it to the developer
+    // to set up their own custom route handler.
+    if (authOptions.shouldRedirectOnFailure && authOptions.failureRedirect === defaults.failureRedirect) {
+      debug(`Setting up failureRedirect route: ${authOptions.failureRedirect}`);
+
+      app.get(authOptions.failureRedirect, function(req, res){
+        res.sendFile(path.resolve(__dirname, 'public', 'auth-fail.html'));
+      });
+    }
+
     // Set the options on the app
     app.set('auth', authOptions);
 
@@ -63,8 +87,8 @@ export default function auth(config = {}) {
       debug('registering REST authentication middleware');
       // Make the Passport user available for REST services.
       // app.use( middleware.exposeAuthenticatedUser() );
+
       // Get the token and expose it to REST services.
-      // TODO (EK): Maybe make header key configurable
       app.use( middleware.normalizeAuthToken(authOptions) );
     }
     
@@ -103,18 +127,6 @@ export default function auth(config = {}) {
       let provider = PROVIDERS[key];
       let providerOptions = config[key];
 
-      // If they passed a custom success redirect then we'll
-      // leave it to the developer to set up their own route.
-      if (providerOptions.successRedirect) {
-        authOptions.setUpSuccessRedirect = false;
-      }
-
-      // If they passed a custom failure redirect then we'll
-      // leave it to the developer to set up their own route.
-      if (providerOptions.failureRedirect) {
-        authOptions.setUpFailureRedirect = false;
-      }
-
       // If it's not one of our own providers then determine whether it is oauth1 or oauth2
       if (!provider && isObject(providerOptions)) {
         // Check to see if it is an oauth2 provider
@@ -133,20 +145,9 @@ export default function auth(config = {}) {
       
       app.configure( provider(options) );
     });
-    
 
-    // Don't register this route handler if a custom success redirect is passed in
-    if (authOptions.setUpSuccessRedirect) {
-      app.get(authOptions.successRedirect, function(req, res){
-        res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
-      });
-    }
-
-    // Don't register this route handler if a custom failure redirect is passed in
-    if (authOptions.setUpFailureRedirect) {
-      app.get(authOptions.failureRedirect, function(req, res){
-        res.sendFile(path.resolve(__dirname, 'public', 'auth-fail.html'));
-      });
+    if (authOptions.shouldRedirectOnFailure) {
+      app.use(middleware.failedLogin(authOptions));
     }
   };
 }

@@ -8,8 +8,6 @@ const debug = Debug('feathers-authentication:oauth2');
 
 // Provider specific config
 const defaults = {
-  // successRedirect: '/auth/success',
-  // failureRedirect: '/auth/failure',
   passReqToCallback: true,
   callbackSuffix: 'callback',
   permissions: {

@@ -9,7 +9,8 @@ import { successfulLogin } from '../../middleware';
 const debug = Debug('feathers-authentication:local');
 const defaults = {
   usernameField: 'email',
-  passwordField: 'password'
+  passwordField: 'password',
+  session: false
 };
 
 export class Service {
@@ -69,7 +70,7 @@ export class Service {
 
     // Validate username and password, then generate a JWT and return it
     return new Promise(function(resolve, reject){
-      let middleware = passport.authenticate('local', { session: false }, function(error, user) {
+      let middleware = passport.authenticate('local', { session: options.session }, function(error, user) {
         if (error) {
           return reject(error);
         }

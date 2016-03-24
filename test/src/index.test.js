@@ -40,12 +40,12 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').idField).to.equal('_id');
         });
 
-        it('sets setUpSuccessRedirect', () => {
-          expect(app.get('auth').setUpSuccessRedirect).to.equal(true);
+        it('sets shouldRedirectOnSuccess', () => {
+          expect(app.get('auth').shouldRedirectOnSuccess).to.equal(true);
         });
 
-        it('sets setUpFailureRedirect', () => {
-          expect(app.get('auth').setUpFailureRedirect).to.equal(true);
+        it('sets shouldRedirectOnFailure', () => {
+          expect(app.get('auth').shouldRedirectOnFailure).to.equal(true);
         });
 
         it('sets successRedirect', () => {
@@ -205,14 +205,14 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').idField).to.equal('id');
         });
 
-        it('allows overriding setUpSuccessRedirect', () => {
-          app.configure(authentication({ setUpSuccessRedirect: false }));
-          expect(app.get('auth').setUpSuccessRedirect).to.equal(false);
+        it('allows overriding shouldRedirectOnSuccess', () => {
+          app.configure(authentication({ shouldRedirectOnSuccess: false }));
+          expect(app.get('auth').shouldRedirectOnSuccess).to.equal(false);
         });
 
-        it('allows overriding setUpFailureRedirect', () => {
-          app.configure(authentication({ setUpFailureRedirect: false }));
-          expect(app.get('auth').setUpFailureRedirect).to.equal(false);
+        it('allows overriding shouldRedirectOnFailure', () => {
+          app.configure(authentication({ shouldRedirectOnFailure: false }));
+          expect(app.get('auth').shouldRedirectOnFailure).to.equal(false);
         });
 
         it('allows overriding successRedirect', () => {
