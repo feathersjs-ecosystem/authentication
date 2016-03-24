@@ -51,7 +51,7 @@ export function getCookie(name) {
 }
 
 // Returns the value for a cookie
-export function clearCookie(name = 'feathers-jwt') {
+export function clearCookie(name) {
   if (typeof document !== 'undefined') {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:01 GMT;`; 
   }
