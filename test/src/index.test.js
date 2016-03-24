@@ -40,6 +40,14 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').idField).to.equal('_id');
         });
 
+        it('sets shouldSetupSuccessRoute', () => {
+          expect(app.get('auth').shouldSetupSuccessRoute).to.equal(true);
+        });
+
+        it('sets shouldSetupFailureRoute', () => {
+          expect(app.get('auth').shouldSetupFailureRoute).to.equal(true);
+        });
+
         it('sets successRedirect', () => {
           expect(app.get('auth').successRedirect).to.equal('/auth/success');
         });
@@ -210,11 +218,13 @@ describe('Feathers Authentication', () => {
         it('allows disabling successRedirect', () => {
           app.configure(authentication({ successRedirect: false }));
           expect(app.get('auth').successRedirect).to.equal(false);
+          expect(app.get('auth').shouldSetupSuccessRoute).to.equal(false);
         });
 
         it('allows disabling failureRedirect', () => {
           app.configure(authentication({ failureRedirect: false }));
           expect(app.get('auth').failureRedirect).to.equal(false);
+          expect(app.get('auth').shouldSetupFailureRoute).to.equal(false);
         });
 
         it('allows overriding tokenEndpoint', () => {
