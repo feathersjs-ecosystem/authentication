@@ -132,9 +132,11 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
           return errorHandler(new errors.BadRequest('Invalid token data type.'));
         }
 
+        const params = Object.assign({ provider: 'socketio' }, data);
+
         // The token gets normalized in hook.params for REST so we'll stay with
         // convention and pass it as params using sockets.
-        app.service(options.tokenEndpoint).create({}, data).then(response => {
+        app.service(options.tokenEndpoint).create({}, params).then(response => {
           socket.feathers.token = response.token;
           socket.feathers.user = response.data;
           socket.emit('authenticated', response);
@@ -146,6 +148,7 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
         // with Passport to work because it checks res.body for the 
         // username and password.
         let params = {
+          provider: 'socketio',
           req: socket.request
         };
 
@@ -186,9 +189,11 @@ export let setupPrimusAuthentication = function(app, options = {}) {
           return errorHandler(new errors.BadRequest('Invalid token data type.'));
         }
 
+        const params = Object.assign({ provider: 'primus' }, data);
+
         // The token gets normalized in hook.params for REST so we'll stay with
         // convention and pass it as params using sockets.
-        app.service(options.tokenEndpoint).create({}, data).then(response => {
+        app.service(options.tokenEndpoint).create({}, params).then(response => {
           socket.request.feathers.token = response.token;
           socket.request.feathers.user = response.data;
           socket.send('authenticated', response);
@@ -200,6 +205,7 @@ export let setupPrimusAuthentication = function(app, options = {}) {
         // with Passport to work because it checks res.body for the 
         // username and password.
         let params = {
+          provider: 'primus',
           req: socket.request
         };
 
