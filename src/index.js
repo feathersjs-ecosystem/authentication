@@ -20,6 +20,7 @@ const PROVIDERS = {
 
 // Options that apply to any provider
 const defaults = {
+  idField: '_id',
   setUpSuccessRedirect: true,
   setUpFailureRedirect: true,
   successRedirect: '/auth/success',
