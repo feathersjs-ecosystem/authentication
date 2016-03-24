@@ -75,8 +75,8 @@ const setupTests = initApp => {
     app.authenticate()
       .then(() => done(new Error('Should never get here')))
       .catch(error => {
-        assert.equal(error.message, 'Could not find stored JWT and no authentication type was given');
-        assert.equal(error.code, 401);
+        expect(error.message).to.equal('Could not find stored JWT and no authentication type was given');
+        expect(error.code).to.equal(401);
         done();
       });
   });
