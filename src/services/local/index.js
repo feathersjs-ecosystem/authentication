@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
 import { exposeConnectMiddleware } from '../../middleware';
@@ -40,8 +40,9 @@ export class Service {
         return user;
       })
       .then(user => {
+        const crypto = this.options.bcrypt || bcrypt;
         // Check password
-        bcrypt.compare(password, user[this.options.passwordField], function(error, result) {
+        crypto.compare(password, user[this.options.passwordField], function(error, result) {
           // Handle 500 server error.
           if (error) {
             return done(error);
