@@ -27,9 +27,7 @@ export default function(options = {}){
 
     // Handle arrays.
     if (Array.isArray(hook.data)) {
-      hook.data.forEach(item => {
-        setId(item);
-      });
+      hook.data.forEach(setId);
     }
     // Handle single objects.
     else {

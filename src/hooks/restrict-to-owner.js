@@ -19,7 +19,7 @@ export default function(options = {}){
     if (!hook.params.user) {
       // TODO (EK): Add a debugger call to remind the dev to check their hook chain
       // as they probably don't have the right hooks in the right order.
-      throw new errors.NotAuthenticated();
+      throw new errors.NotAuthenticated(`The current user is missing. You must not be authenticated.`);
     }
 
     options = Object.assign({}, defaults, hook.app.get('auth'), options);

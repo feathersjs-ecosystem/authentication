@@ -40,14 +40,6 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').idField).to.equal('_id');
         });
 
-        it('sets shouldRedirectOnSuccess', () => {
-          expect(app.get('auth').shouldRedirectOnSuccess).to.equal(true);
-        });
-
-        it('sets shouldRedirectOnFailure', () => {
-          expect(app.get('auth').shouldRedirectOnFailure).to.equal(true);
-        });
-
         it('sets successRedirect', () => {
           expect(app.get('auth').successRedirect).to.equal('/auth/success');
         });
@@ -205,16 +197,6 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').idField).to.equal('id');
         });
 
-        it('allows overriding shouldRedirectOnSuccess', () => {
-          app.configure(authentication({ shouldRedirectOnSuccess: false }));
-          expect(app.get('auth').shouldRedirectOnSuccess).to.equal(false);
-        });
-
-        it('allows overriding shouldRedirectOnFailure', () => {
-          app.configure(authentication({ shouldRedirectOnFailure: false }));
-          expect(app.get('auth').shouldRedirectOnFailure).to.equal(false);
-        });
-
         it('allows overriding successRedirect', () => {
           app.configure(authentication({ successRedirect: '/app' }));
           expect(app.get('auth').successRedirect).to.equal('/app');
@@ -223,6 +205,16 @@ describe('Feathers Authentication', () => {
         it('allows overriding failureRedirect', () => {
           app.configure(authentication({ failureRedirect: '/login' }));
           expect(app.get('auth').failureRedirect).to.equal('/login');
+        });
+
+        it('allows disabling successRedirect', () => {
+          app.configure(authentication({ successRedirect: false }));
+          expect(app.get('auth').successRedirect).to.equal(false);
+        });
+
+        it('allows disabling failureRedirect', () => {
+          app.configure(authentication({ failureRedirect: false }));
+          expect(app.get('auth').failureRedirect).to.equal(false);
         });
 
         it('allows overriding tokenEndpoint', () => {

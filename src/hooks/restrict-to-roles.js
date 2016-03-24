@@ -52,11 +52,7 @@ export default function(options = {}){
 
     // Iterate through all the roles the user may have and check
     // to see if any one of them is in the list of permitted roles.
-    roles.forEach(function(role){
-      if (options.roles.indexOf(role) !== -1) {
-        authorized = true;
-      }
-    });
+    authorized = roles.some(role => options.roles.indexOf(role) !== -1);
 
     // If we should allow users that own the resource and they don't already have
     // the permitted roles check to see if they are the owner of the requested resource

@@ -23,8 +23,6 @@ const PROVIDERS = {
 // Options that apply to any provider
 const defaults = {
   idField: '_id',
-  shouldRedirectOnSuccess: true,
-  shouldRedirectOnFailure: true,
   successRedirect: '/auth/success',
   failureRedirect: '/auth/failure',
   tokenEndpoint: '/auth/token',
@@ -58,9 +56,9 @@ export default function auth(config = {}) {
     const authOptions = Object.assign({}, defaults, app.get('auth'), config);
 
     // If we should redirect on success and the redirect route is the same as the
-    // default then we'll set up a route. Otherwise we'll leave it to the developer
+    // default then we'll set up a route handler. Otherwise we'll leave it to the developer
     // to set up their own custom route handler.
-    if (authOptions.shouldRedirectOnSuccess && authOptions.successRedirect === defaults.successRedirect) {
+    if (authOptions.successRedirect === defaults.successRedirect) {
       debug(`Setting up successRedirect route: ${authOptions.successRedirect}`);
       
       app.get(authOptions.successRedirect, function(req, res){
@@ -69,9 +67,9 @@ export default function auth(config = {}) {
     }
 
     // If we should redirect on failure and the redirect route is the same as the
-    // default then we'll set up a route. Otherwise we'll leave it to the developer
+    // default then we'll set up a route handler. Otherwise we'll leave it to the developer
     // to set up their own custom route handler.
-    if (authOptions.shouldRedirectOnFailure && authOptions.failureRedirect === defaults.failureRedirect) {
+    if (authOptions.failureRedirect === defaults.failureRedirect) {
       debug(`Setting up failureRedirect route: ${authOptions.failureRedirect}`);
 
       app.get(authOptions.failureRedirect, function(req, res){
@@ -146,9 +144,9 @@ export default function auth(config = {}) {
       app.configure( provider(options) );
     });
 
-    if (authOptions.shouldRedirectOnFailure) {
-      app.use(middleware.failedLogin(authOptions));
-    }
+    // Register error handling middleware for redirecting to support
+    // redirecting on authentication failure.
+    app.use(middleware.failedLogin(authOptions));
   };
 }
 

@@ -76,16 +76,12 @@ export let successfulLogin = function(options = {}) {
     throw new Error(`'cookie' must be provided to successfulLogin() middleware`);
   }
 
-  if (!options.successRedirect) {
-    throw new Error(`'successRedirect' must be provided to successfulLogin() middleware`);
-  }
-
   return function(req, res, next) {
     // NOTE (EK): If we are not dealing with a browser or it was an
     // XHR request then just skip this. This is primarily for
     // handling the oauth redirects and for us to securely send the
     // JWT to the client.
-    if (!options.shouldRedirectOnSuccess || req.xhr || req.is('json') || !req.accepts('html')) {
+    if (!options.successRedirect || req.xhr || req.is('json') || !req.accepts('html')) {
       return next();
     }
 
@@ -111,16 +107,12 @@ export let failedLogin = function(options = {}) {
     throw new Error(`'cookie' must be provided to failedLogin() middleware`);
   }
 
-  if (!options.failureRedirect) {
-    throw new Error(`'failureRedirect' must be provided to failedLogin() middleware`);
-  }
-
   return function(error, req, res, next) {
     // NOTE (EK): If we are not dealing with a browser or it was an
     // XHR request then just skip this. This is primarily for
     // handling redirecting on an oauth failure.
     // console.log('Auth Error', error, options);
-    if (!options.shouldRedirectOnFailure || req.xhr || req.is('json') || !req.accepts('html')) {
+    if (!options.failureRedirect || req.xhr || req.is('json') || !req.accepts('html')) {
       return next(error);
     }
 
