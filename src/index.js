@@ -1,5 +1,3 @@
-if (!global._babelPolyfill) { require('babel-polyfill'); }
-
 import Debug from 'debug';
 import path from 'path';
 import crypto from 'crypto';
