@@ -25,7 +25,8 @@ let _verifyToken = function(options = {}){
 
   return function(hook) {
     return new Promise(function(resolve, reject){
-      if (hook.params.internal) {
+      // If it was an internal call just skip
+      if (!hook.params.provider) {
         hook.params.data = hook.data;
         return resolve(hook);
       }

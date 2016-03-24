@@ -91,7 +91,7 @@ export class Service {
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(user, { internal: true })
+                  .create(user)
                   .then(resolve)
                   .catch(reject);
       });
@@ -131,7 +131,7 @@ export class Service {
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(payload, { internal: true })
+                  .create(payload)
                   .then(resolve)
                   .catch(reject);
       });
@@ -178,11 +178,11 @@ export default function(options){
     const service = app.service(options.endPoint);
 
     // Register our Passport auth strategy and get it to use our passport callback function
-    debug(`registering passport-${options.provider} OAuth2 strategy`, options);
+    debug(`registering passport-${options.provider} OAuth2 strategy`);
     passport.use(new Strategy(options, service.oauthCallback.bind(service)));
 
     if (TokenStrategy) {
-      debug(`registering passport-${options.provider}-token OAuth2 strategy`, options);
+      debug(`registering passport-${options.provider}-token OAuth2 strategy`);
       passport.use(new TokenStrategy(options, service.oauthCallback.bind(service)));
     }
   };

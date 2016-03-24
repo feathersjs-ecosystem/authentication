@@ -19,7 +19,6 @@ export class Service {
 
   checkCredentials(username, password, done) {
     const params = {
-      internal: true,
       query: {
         [this.options.usernameField]: username
       }
@@ -82,7 +81,7 @@ export class Service {
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(user, { internal: true })
+                  .create(user)
                   .then(resolve)
                   .catch(reject);
       });
