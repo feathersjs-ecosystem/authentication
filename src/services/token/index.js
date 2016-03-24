@@ -8,6 +8,7 @@ const debug = Debug('feathers-authentication:token');
 
 // Provider specific config
 const defaults = {
+  payload: [],
   passwordField: 'password',
   issuer: 'feathers',
   algorithm: 'HS256',
@@ -99,9 +100,8 @@ export class Service {
       [options.idField]: user[options.idField]
     };
 
-    if (Array.isArray(options.extraFields)) {
-      options.extraFields.forEach(field => data[field] = user[field]);
-    }
+    // Add any additional payload fields
+    options.payload.forEach(field => data[field] = user[field]);
 
     // Our before hook determined that we had a valid token or that this
     // was internally called so let's generate a new token with the user
