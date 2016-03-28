@@ -1,8 +1,9 @@
 import * as hooks from './hooks';
-import { connected, authenticateSocket, getJWT, getStorage } from './utils';
+import { connected, authenticateSocket, getJWT, getStorage, clearCookie } from './utils';
 import errors from 'feathers-errors';
 
 const defaults = {
+  cookie: 'fathers-jwt',
   tokenKey: 'feathers-jwt',
   localEndpoint: '/auth/local',
   tokenEndpoint: '/auth/token'
@@ -24,7 +25,7 @@ export default function(opts = {}) {
 
       // If no type was given let's try to authenticate with a stored JWT
       if (!options.type) {
-        getOptions = getJWT(config.tokenKey, this.get('storage')).then(token => {
+        getOptions = getJWT(config.tokenKey, config.cookie, this.get('storage')).then(token => {
           if (!token) {
             return Promise.reject(new errors.NotAuthenticated(`Could not find stored JWT and no authentication type was given`));
           }
@@ -69,6 +70,8 @@ export default function(opts = {}) {
     app.logout = function() {
       app.set('user', null);
       app.set('token', null);
+
+      clearCookie(config.cookie);
       
       // TODO (EK): invalidate token with server
       return Promise.resolve(app.get('storage').setItem(config.tokenKey, ''));

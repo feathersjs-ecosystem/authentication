@@ -21,6 +21,8 @@ const PROVIDERS = {
 // Options that apply to any provider
 const defaults = {
   idField: '_id',
+  shouldSetupSuccessRoute: true,
+  shouldSetupFailureRoute: true,
   successRedirect: '/auth/success',
   failureRedirect: '/auth/failure',
   tokenEndpoint: '/auth/token',
@@ -52,27 +54,17 @@ export default function auth(config = {}) {
 
     // Merge and flatten options
     const authOptions = Object.assign({}, defaults, app.get('auth'), config);
-
-    // If we should redirect on success and the redirect route is the same as the
-    // default then we'll set up a route handler. Otherwise we'll leave it to the developer
-    // to set up their own custom route handler.
-    if (authOptions.successRedirect === defaults.successRedirect) {
-      debug(`Setting up successRedirect route: ${authOptions.successRedirect}`);
-      
-      app.get(authOptions.successRedirect, function(req, res){
-        res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
-      });
+    
+    // If a custom success redirect is passed in or it is disabled then we
+    // won't setup the default route handler.
+    if (authOptions.successRedirect !== defaults.successRedirect) {
+      authOptions.shouldSetupSuccessRoute = false;
     }
 
-    // If we should redirect on failure and the redirect route is the same as the
-    // default then we'll set up a route handler. Otherwise we'll leave it to the developer
-    // to set up their own custom route handler.
-    if (authOptions.failureRedirect === defaults.failureRedirect) {
-      debug(`Setting up failureRedirect route: ${authOptions.failureRedirect}`);
-
-      app.get(authOptions.failureRedirect, function(req, res){
-        res.sendFile(path.resolve(__dirname, 'public', 'auth-fail.html'));
-      });
+    // If a custom failure redirect is passed in or it is disabled then we
+    // won't setup the default route handler.
+    if (authOptions.failureRedirect !== defaults.failureRedirect) {
+      authOptions.shouldSetupFailureRoute = false;
     }
 
     // Set the options on the app
@@ -145,6 +137,24 @@ export default function auth(config = {}) {
     // Register error handling middleware for redirecting to support
     // redirecting on authentication failure.
     app.use(middleware.failedLogin(authOptions));
+
+    // Setup route handler for default success redirect
+    if (authOptions.shouldSetupSuccessRoute) {
+      debug(`Setting up successRedirect route: ${authOptions.successRedirect}`);
+      
+      app.get(authOptions.successRedirect, function(req, res){
+        res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
+      });
+    }
+
+    // Setup route handler for default failure redirect
+    if (authOptions.shouldSetupFailureRoute) {
+      debug(`Setting up failureRedirect route: ${authOptions.failureRedirect}`);
+
+      app.get(authOptions.failureRedirect, function(req, res){
+        res.sendFile(path.resolve(__dirname, 'public', 'auth-fail.html'));
+      });
+    }
   };
 }
 
