@@ -18,7 +18,7 @@ describe('REST authentication', function() {
   };
   let jwtOptions = {
     issuer: 'feathers',
-    algorithms: ['HS256'],
+    algorithms: ['HS512'],
     expiresIn: '1h' // 1 hour
   };
 
