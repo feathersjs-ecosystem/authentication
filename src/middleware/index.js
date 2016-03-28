@@ -2,7 +2,7 @@ import Debug from 'debug';
 import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:middleware');
-const TEN_HOURS = 36000000;
+const THIRTY_SECONDS = 30000;
 
 // Usually this is a big no no but passport requires the 
 // request object to inspect req.body and req.query so we
@@ -82,14 +82,25 @@ export let successfulLogin = function(options = {}) {
     }
 
     // clear any previous JWT cookie
-    res.clearCookie(options.cookie);
+    res.clearCookie(options.cookie.name);
 
-    // Set a our JWT in a cookie.
-    // TODO (EK): Look into hardening this cookie a bit.
-    let expiration = new Date();
-    expiration.setTime(expiration.getTime() + TEN_HOURS);
+    // If cookies are enabled set our JWT in a cookie.
+    if (options.cookie.enabled) {
+      // Only send back cookies when not in production or when in production and using HTTPS
+      if (!req.secure && process.env.NODE_ENV === 'production') {
+        console.error(`You should be using HTTPS in production! Refusing to send JWT in a cookie`);
+      } else {
+        const cookieOptions = Object.assign({}, options.cookie, { path: options.successRedirect });
 
-    res.cookie(options.cookie, res.data.token, { expires: expiration});
+        if ( !(cookieOptions.expires instanceof Date) ) {
+          throw new Error('cookie.expires must be a valid Date object');
+        }
+
+        cookieOptions.expires.setTime(cookieOptions.expires.getTime() + THIRTY_SECONDS);
+
+        res.cookie(options.cookie.name, res.data.token, cookieOptions);
+      }
+    }
 
     // Redirect to our success route
     res.redirect(options.successRedirect);

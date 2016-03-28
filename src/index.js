@@ -29,7 +29,13 @@ const defaults = {
   localEndpoint: '/auth/local',
   userEndpoint: '/users',
   header: 'authorization',
-  cookie: 'feathers-jwt'
+  cookie: {
+    enabled: true,
+    name: 'feathers-jwt',
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production' ? true : false,
+    expires: new Date()
+  }
 };
 
 export default function auth(config = {}) {
@@ -107,7 +113,7 @@ export default function auth(config = {}) {
       // be dealing with a config param and not a provider config
       // If that's the case we don't need to merge params and we
       // shouldn't try to set up a service for this key.
-      if (!isObject(config[key])) {
+      if (!isObject(config[key]) || key === 'cookie') {
         return;
       }
 

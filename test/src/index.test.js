@@ -73,7 +73,27 @@ describe('Feathers Authentication', () => {
         });
 
         it('sets cookie', () => {
-          expect(app.get('auth').cookie).to.equal('feathers-jwt');
+          expect(typeof app.get('auth').cookie).to.equal('object');
+        });
+
+        it('sets whether cookies should be sent', () => {
+          expect(app.get('auth').cookie.enabled).to.equal(true);
+        });
+
+        it('sets cookie name', () => {
+          expect(app.get('auth').cookie.name).to.equal('feathers-jwt');
+        });
+
+        it('sets whether cookies should be httpOnly', () => {
+          expect(app.get('auth').cookie.httpOnly).to.equal(false);
+        });
+
+        it('sets whether cookies should be secure', () => {
+          expect(app.get('auth').cookie.secure).to.equal(false);
+        });
+
+        it('sets when the cookie expires', () => {
+          expect(app.get('auth').cookie.expires).to.not.equal(undefined);
         });
 
         it('sets token', () => {
@@ -248,22 +268,33 @@ describe('Feathers Authentication', () => {
         });
 
         it('allows overriding cookie', () => {
-          app.configure(authentication({ cookie: 'my-cookie' }));
-          expect(app.get('auth').cookie).to.equal('my-cookie');
+          const expiration = new Date('Jan 1, 2000');
+          app.configure(authentication({
+            cookie: {
+              enabled: false,
+              name: 'my-cookie',
+              secure: true,
+              httpOnly: true,
+              expires: expiration
+            }
+          }));
+          expect(typeof app.get('auth').cookie).to.equal('object');
+          expect(app.get('auth').cookie.enabled).to.equal(false);
+          expect(app.get('auth').cookie.name).to.equal('my-cookie');
+          expect(app.get('auth').cookie.secure).to.equal(true);
+          expect(app.get('auth').cookie.httpOnly).to.equal(true);
+          expect(app.get('auth').cookie.expires).to.equal(expiration);
         });
 
         it('allows overriding token', () => {
           app.configure(authentication({
-            token: { custom: true }
+            token: {
+              custom: true,
+              secret: 'secret'
+            }
           }));
           expect(typeof app.get('auth').token).to.equal('object');
           expect(app.get('auth').token.custom).to.equal(true);
-        });
-
-        it('setting custom token secret', () => {
-          app.configure(authentication({
-            token: { secret: 'secret' }
-          }));
           expect(app.get('auth').token.secret).to.equal('secret');
         });
 
