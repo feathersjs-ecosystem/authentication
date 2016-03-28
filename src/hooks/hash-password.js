@@ -1,5 +1,6 @@
-import bcrypt from 'bcrypt';
 import errors from 'feathers-errors';
+import bcrypt from 'bcryptjs';
+
 
 const defaults = { passwordField: 'password' };
 
@@ -10,6 +11,8 @@ export default function(options = {}){
     }
 
     options = Object.assign({}, defaults, hook.app.get('auth'), options);
+
+    const crypto = options.bcrypt || bcrypt;
 
     if (hook.data === undefined) {
       return hook;
@@ -22,12 +25,12 @@ export default function(options = {}){
     }
 
     return new Promise(function(resolve, reject){
-      bcrypt.genSalt(10, function(err, salt) {
-        bcrypt.hash(password, salt, function(err, hash) {
-          if (err) {
-            return reject(err);
+      crypto.genSalt(10, function(error, salt) {
+        crypto.hash(password, salt, function(error, hash) {
+          if (error) {
+            return reject(error);
           }
-          
+
           hook.data[options.passwordField] = hash;
           resolve(hook);
         });
