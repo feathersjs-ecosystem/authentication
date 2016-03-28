@@ -1,6 +1,13 @@
-import * as hooks from './hooks';
-import { connected, authenticateSocket, getJWT, getStorage, clearCookie } from './utils';
 import errors from 'feathers-errors';
+import * as hooks from './hooks';
+import {
+  connected,
+  authenticateSocket,
+  logoutSocket,
+  getJWT,
+  getStorage,
+  clearCookie
+} from './utils';
 
 const defaults = {
   cookie: 'fathers-jwt',
@@ -67,14 +74,23 @@ export default function(opts = {}) {
       });
     };
 
+    // Set our logout method with the correct socket context
     app.logout = function() {
       app.set('user', null);
       app.set('token', null);
 
       clearCookie(config.cookie);
       
-      // TODO (EK): invalidate token with server
-      return Promise.resolve(app.get('storage').setItem(config.tokenKey, ''));
+      // remove the token from localStorage
+      return Promise.resolve(app.get('storage').setItem(config.tokenKey, '')).then(() => {
+        // If using sockets de-authenticate the socket
+        if (app.io || app.primus) {
+          const method = app.io ? 'emit' : 'send';
+          const socket = app.io ? app.io : app.primus;
+
+          return logoutSocket(socket, method);
+        }
+      });
     };
 
     // Set up hook that adds adds token and user to params so that

@@ -190,6 +190,20 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
         }).catch(errorHandler);
       }
     });
+
+    socket.on('logout', function() {
+
+      // TODO (EK): Blacklist token
+      try {
+        delete socket.feathers.token;
+        delete socket.feathers.user;
+      }
+      catch(error) {
+        return errorHandler(error);
+      }
+      
+      socket.emit('logged out');
+    });
   };
 };
 
@@ -246,6 +260,20 @@ export let setupPrimusAuthentication = function(app, options = {}) {
           socket.send('authenticated', response);
         }).catch(errorHandler);
       }
+    });
+
+    socket.on('logout', function() {
+
+      // TODO (EK): Blacklist token
+      try {
+        delete socket.request.feathers.token;
+        delete socket.request.feathers.user;
+      }
+      catch(error) {
+        return errorHandler(error);
+      }
+      
+      socket.send('logged out');
     });
   };
 };
