@@ -82,32 +82,6 @@ describe('Middleware', () => {
         });
       });
 
-      describe('Auth token passed via cookie', () => {
-        it('grabs the token', () => {
-          const req = Object.assign({}, MockRequest, {
-            cookies: {
-              'feathers-jwt': 'my-token'
-            }
-          });
-
-          middleware.normalizeAuthToken(options)(req, MockResponse, MockNext);
-          expect(req.feathers.token).to.deep.equal('my-token');
-        });
-
-        it('supports a custom cookie', () => {
-          const req = Object.assign({}, MockRequest, {
-            cookies: {
-              'my-cookie': 'my-token'
-            }
-          });
-
-          const newOptions = Object.assign({}, options, {cookie: 'my-cookie'});
-
-          middleware.normalizeAuthToken(newOptions)(req, MockResponse, MockNext);
-          expect(req.feathers.token).to.deep.equal('my-token');
-        });
-      });
-
       describe('Auth token passed via body', () => {
         it('grabs the token', () => {
           const req = Object.assign({}, MockRequest, {

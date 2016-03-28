@@ -47,16 +47,12 @@ export let normalizeAuthToken = function(options = {}) {
       }
     }
 
-    // If we don't already have token in the header check for a cookie
-    if (!token && req.cookies && req.cookies[options.cookie]) {
-      token = req.cookies[options.cookie];
-    }
     // Check the body next if we still don't have a token
-    else if (req.body.token) {
+    if (req.body.token) {
       token = req.body.token;
       delete req.body.token;
     }
-    // Finally, check the query string. (worst method)
+    // Finally, check the query string. (worst method but nice for quick local dev)
     else if (req.query.token) {
       token = req.query.token;
       delete req.query.token;
