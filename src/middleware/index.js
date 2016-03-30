@@ -85,14 +85,22 @@ export let successfulLogin = function(options = {}) {
       // Only send back cookies when not in production or when in production and using HTTPS
       if (!req.secure && process.env.NODE_ENV === 'production') {
         console.error(`You should be using HTTPS in production! Refusing to send JWT in a cookie`);
-      } else {
+      }
+      else {
         const cookieOptions = Object.assign({}, options.cookie, { path: options.successRedirect });
+
+        // If a custom expiry wasn't passed then set the expiration to be 30 seconds from now.
+        if (cookieOptions.expires === undefined) {
+          const expiry = new Date();
+          expiry.setTime(expiry.getTime() + THIRTY_SECONDS);
+          cookieOptions.expires = expiry;
+        }
 
         if ( !(cookieOptions.expires instanceof Date) ) {
           throw new Error('cookie.expires must be a valid Date object');
         }
 
-        cookieOptions.expires.setTime(cookieOptions.expires.getTime() + THIRTY_SECONDS);
+        console.log(cookieOptions);
 
         res.cookie(options.cookie.name, res.data.token, cookieOptions);
       }

@@ -88,10 +88,6 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').cookie.secure).to.equal(false);
         });
 
-        it('sets when the cookie expires', () => {
-          expect(app.get('auth').cookie.expires).to.not.equal(undefined);
-        });
-
         it('sets token', () => {
           expect(typeof app.get('auth').token).to.equal('object');
         });

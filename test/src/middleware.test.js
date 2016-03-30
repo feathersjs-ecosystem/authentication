@@ -246,6 +246,8 @@ describe('Middleware', () => {
         });
 
         it('throws an error if expires is not a date', () => {
+          options.cookie.expires = 'not a date';
+
           try {
             middleware.successfulLogin(options)(MockRequest, MockResponse, MockNext);  
           }
@@ -255,16 +257,20 @@ describe('Middleware', () => {
         });
 
         it('sets the cookie', () => {
-          const expiry = new Date();
-          const expectedExpiry = new Date();
+          MockResponse.data.token = 'token';
 
-          expectedExpiry.setTime(expectedExpiry.getTime() + 30000);
+          middleware.successfulLogin(options)(MockRequest, MockResponse, MockNext);
+          expect(MockResponse.cookie).to.have.been.calledWith('feathers-jwt', 'token');
+        });
+
+        it('supports custom cookie expiration', () => {
+          const expiry = new Date('Jan 1, 2000');
           options.cookie.expires = expiry;
           MockResponse.data.token = 'token';
 
           const expected = Object.assign({}, options.cookie, {
             path: '/auth/success',
-            expires: expectedExpiry
+            expires: expiry
           });
 
           middleware.successfulLogin(options)(MockRequest, MockResponse, MockNext);

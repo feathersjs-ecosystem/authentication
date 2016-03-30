@@ -32,8 +32,7 @@ const defaults = {
   cookie: {
     name: 'feathers-jwt',
     httpOnly: false,
-    secure: process.env.NODE_ENV === 'production' ? true : false,
-    expires: new Date()
+    secure: process.env.NODE_ENV === 'production' ? true : false
   }
 };
 
