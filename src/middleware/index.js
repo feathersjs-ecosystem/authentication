@@ -64,8 +64,8 @@ export let normalizeAuthToken = function(options = {}) {
 export let successfulLogin = function(options = {}) {
   debug('Setting up successfulLogin middleware with options:', options);
 
-  if (!options.cookie) {
-    throw new Error(`'cookie' must be provided to successfulLogin() middleware`);
+  if (options.cookie === undefined) {
+    throw new Error(`'cookie' must be provided to successfulLogin() middleware or set to 'false'`);
   }
 
   return function(req, res, next) {
@@ -77,11 +77,11 @@ export let successfulLogin = function(options = {}) {
       return next();
     }
 
-    // clear any previous JWT cookie
-    res.clearCookie(options.cookie.name);
-
     // If cookies are enabled set our JWT in a cookie.
-    if (options.cookie.enabled) {
+    if (options.cookie) {
+      // clear any previous JWT cookie
+      res.clearCookie(options.cookie.name);
+
       // Only send back cookies when not in production or when in production and using HTTPS
       if (!req.secure && process.env.NODE_ENV === 'production') {
         console.error(`You should be using HTTPS in production! Refusing to send JWT in a cookie`);
@@ -106,8 +106,8 @@ export let successfulLogin = function(options = {}) {
 export let failedLogin = function(options = {}) {
   debug('Setting up failedLogin middleware with options:', options);
 
-  if (!options.cookie) {
-    throw new Error(`'cookie' must be provided to failedLogin() middleware`);
+  if (options.cookie === undefined) {
+    throw new Error(`'cookie' must be provided to failedLogin() middleware or set to 'false'`);
   }
 
   return function(error, req, res, next) {
@@ -120,7 +120,9 @@ export let failedLogin = function(options = {}) {
     }
 
     // clear any previous JWT cookie
-    res.clearCookie(options.cookie.name);
+    if (options.cookie) {
+      res.clearCookie(options.cookie.name);
+    }
 
     debug('An authentication error occurred.', error);
 

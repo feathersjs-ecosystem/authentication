@@ -76,10 +76,6 @@ describe('Feathers Authentication', () => {
           expect(typeof app.get('auth').cookie).to.equal('object');
         });
 
-        it('sets whether cookies should be sent', () => {
-          expect(app.get('auth').cookie.enabled).to.equal(true);
-        });
-
         it('sets cookie name', () => {
           expect(app.get('auth').cookie.name).to.equal('feathers-jwt');
         });
@@ -267,11 +263,15 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').header).to.equal('x-authorization');
         });
 
+        it('allows disabling cookie', () => {
+          app.configure(authentication({ cookie: false }));
+          expect(app.get('auth').cookie).to.equal(false);
+        });
+
         it('allows overriding cookie', () => {
           const expiration = new Date('Jan 1, 2000');
           app.configure(authentication({
             cookie: {
-              enabled: false,
               name: 'my-cookie',
               secure: true,
               httpOnly: true,
@@ -279,7 +279,6 @@ describe('Feathers Authentication', () => {
             }
           }));
           expect(typeof app.get('auth').cookie).to.equal('object');
-          expect(app.get('auth').cookie.enabled).to.equal(false);
           expect(app.get('auth').cookie.name).to.equal('my-cookie');
           expect(app.get('auth').cookie.secure).to.equal(true);
           expect(app.get('auth').cookie.httpOnly).to.equal(true);

@@ -30,7 +30,6 @@ const defaults = {
   userEndpoint: '/users',
   header: 'authorization',
   cookie: {
-    enabled: true,
     name: 'feathers-jwt',
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production' ? true : false,

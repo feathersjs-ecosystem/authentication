@@ -150,7 +150,7 @@ describe('Middleware', () => {
           middleware.successfulLogin()();
         }
         catch (error) {
-          expect(error.message).to.equal(`'cookie' must be provided to successfulLogin() middleware`);
+          expect(error).to.not.equal(undefined);
         }
       });
     });
@@ -204,7 +204,7 @@ describe('Middleware', () => {
 
       beforeEach(() => {
         options = {
-          cookie: { name: 'feathers-jwt' },
+          cookie: false,
           successRedirect: '/auth/success'
         };
         
@@ -214,11 +214,6 @@ describe('Middleware', () => {
         MockResponse.clearCookie = sinon.spy();
       });
 
-      it('clears cookies', () => {
-        middleware.successfulLogin(options)(MockRequest, MockResponse, MockNext);
-        expect(MockResponse.clearCookie).to.have.been.calledWith('feathers-jwt');
-      });
-
       it('redirects', () => {
         middleware.successfulLogin(options)(MockRequest, MockResponse, MockNext);
         expect(MockResponse.redirect).to.have.been.calledWith('/auth/success');
@@ -226,8 +221,14 @@ describe('Middleware', () => {
 
       describe('when cookie enabled', () => {
         beforeEach(() => {
-          options.cookie.enabled = true;
+          options.cookie = { name: 'feathers-jwt' };
           MockResponse.cookie = sinon.spy();
+        });
+
+        it('clears cookies', () => {
+          options.cookie.expires = new Date();
+          middleware.successfulLogin(options)(MockRequest, MockResponse, MockNext);
+          expect(MockResponse.clearCookie).to.have.been.calledWith('feathers-jwt');
         });
 
         it('throws an error if not using HTTPS in production', () => {
@@ -280,7 +281,7 @@ describe('Middleware', () => {
           middleware.failedLogin()();
         }
         catch (error) {
-          expect(error.message).to.equal(`'cookie' must be provided to failedLogin() middleware`);
+          expect(error).to.not.equal(undefined);
         }
       });
     });
@@ -334,7 +335,7 @@ describe('Middleware', () => {
 
       beforeEach(() => {
         options = {
-          cookie: { name: 'feathers-jwt' },
+          cookie: false,
           failureRedirect: '/auth/failure'
         };
         
@@ -344,9 +345,15 @@ describe('Middleware', () => {
         MockResponse.clearCookie = sinon.spy();
       });
 
-      it('clears cookies', () => {
-        middleware.failedLogin(options)(MockError, MockRequest, MockResponse, MockNext);
-        expect(MockResponse.clearCookie).to.have.been.calledWith('feathers-jwt');
+      describe('when cookie is enabled', () => {
+        beforeEach(() => {
+          options.cookie = { name: 'feathers-jwt' };
+        });
+
+        it('clears cookies', () => {
+          middleware.failedLogin(options)(MockError, MockRequest, MockResponse, MockNext);
+          expect(MockResponse.clearCookie).to.have.been.calledWith('feathers-jwt');
+        });
       });
 
       it('redirects', () => {
