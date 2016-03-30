@@ -112,6 +112,13 @@ export class Service {
       });
     });
   }
+
+  setup() {
+    // prevent regular service events from being dispatched
+    if (typeof this.filter === 'function') {
+      this.filter(() => false);
+    }
+  }
 }
 
 export default function(options){
@@ -127,11 +134,6 @@ export default function(options){
 
     // Get our initialize service to that we can bind hooks
     const tokenService = app.service(options.tokenEndpoint);
-
-    // prevent regular service events from being dispatched
-    if (app.io || app.primus) {
-      tokenService.filter(() => false);
-    }
 
     // Set up our before hooks
     tokenService.before({
