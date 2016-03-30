@@ -100,8 +100,6 @@ export let successfulLogin = function(options = {}) {
           throw new Error('cookie.expires must be a valid Date object');
         }
 
-        console.log(cookieOptions);
-
         res.cookie(options.cookie.name, res.data.token, cookieOptions);
       }
     }
