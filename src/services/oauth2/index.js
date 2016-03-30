@@ -38,13 +38,6 @@ export class Service {
         // Paginated services return the array of results in the data attribute.
         let user = users[0] || users.data && users.data[0];
 
-        // If user found return them
-        if (user) {
-          return done(null, user);
-        }
-
-        // No user found so we need to create one.
-        //
         // TODO (EK): This is where we should look at req.user and see if we
         // can consolidate profiles. We might want to give the developer a hook
         // so that they can control the consolidation strategy.
@@ -55,6 +48,22 @@ export class Service {
           [`${options.provider}`]: profile._json
         });
 
+        // If user found update and return them
+        if (user) {
+          const id = user[options.idField];
+
+          // Merge existing user data with new profile data
+          // TODO (EK): If stored profile data has been altered this might
+          // just overwrite the whole `<provider>` field when it should do a
+          // deep merge.
+          data = Object.assign({}, user, data);
+
+          return app.service(options.userEndpoint).update(id, data).then(updatedUser => {
+            return done(null, updatedUser);
+          }).catch(done);
+        }
+
+        // No user found so we need to create one.
         return app.service(options.userEndpoint).create(data).then(user => {
           return done(null, user);
         }).catch(done);
@@ -122,15 +131,9 @@ export class Service {
           return reject(new errors.NotAuthenticated(`An error occurred logging in with ${options.provider}`));
         }
 
-        // Login was successful. Clean up the user object for the response.
-        // TODO (EK): Maybe the id field should be configurable
-        const payload = {
-          id: user.id !== undefined ? user.id : user._id
-        };
-
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(payload)
+                  .create(user)
                   .then(resolve)
                   .catch(reject);
       });
