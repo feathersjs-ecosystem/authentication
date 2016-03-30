@@ -32,10 +32,6 @@ export let normalizeAuthToken = function(options = {}) {
     throw new Error(`'header' must be provided to normalizeAuthToken() middleware`);
   }
 
-  if (!options.cookie) {
-    throw new Error(`'cookie' must be provided to normalizeAuthToken() middleware`);
-  }
-
   return function(req, res, next) {
     let token = req.headers[options.header];
     
@@ -76,7 +72,7 @@ export let successfulLogin = function(options = {}) {
     // NOTE (EK): If we are not dealing with a browser or it was an
     // XHR request then just skip this. This is primarily for
     // handling the oauth redirects and for us to securely send the
-    // JWT to the client.
+    // JWT to the client in a cookie.
     if (!options.successRedirect || req.xhr || req.is('json') || !req.accepts('html')) {
       return next();
     }
@@ -124,7 +120,7 @@ export let failedLogin = function(options = {}) {
     }
 
     // clear any previous JWT cookie
-    res.clearCookie(options.cookie);
+    res.clearCookie(options.cookie.name);
 
     debug('An authentication error occurred.', error);
 
@@ -282,6 +278,7 @@ export default {
   exposeConnectMiddleware,
   normalizeAuthToken,
   successfulLogin,
+  failedLogin,
   setupSocketIOAuthentication,
   setupPrimusAuthentication
 };
