@@ -58,13 +58,19 @@ export class Service {
           // deep merge.
           data = Object.assign({}, user, data);
 
+          debug(`Updating user: ${id}`);
+
           return app.service(options.userEndpoint).update(id, data).then(updatedUser => {
             return done(null, updatedUser);
           }).catch(done);
         }
 
+        debug(`Creating new user with ${options.provider}Id: ${profile.id}`);
+
         // No user found so we need to create one.
         return app.service(options.userEndpoint).create(data).then(user => {
+          debug(`Created new user: ${user[options.idField]}`);
+
           return done(null, user);
         }).catch(done);
       }).catch(done);
