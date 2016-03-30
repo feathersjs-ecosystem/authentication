@@ -63,7 +63,7 @@ export default function(options = {}){
     if (options.owner && !authorized) {
       // look up the document and throw a Forbidden error if the user is not an owner
       return new Promise((resolve, reject) => {
-        this.get(hook.id).then(data => {
+        this.get(hook.id, hook.params).then(data => {
           const field = data[options.ownerField];
 
           if ( field === undefined || field.toString() !== id.toString() ) {
