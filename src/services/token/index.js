@@ -145,15 +145,15 @@ export default function(options){
     tokenService.after({
       create: [
         hooks.populateUser(options),
-        commonHooks.remove(options.passwordField)
+        commonHooks.remove(options.passwordField, () => true)
       ],
       find: [
         hooks.populateUser(options),
-        commonHooks.remove(options.passwordField)
+        commonHooks.remove(options.passwordField, () => true)
       ],
       get: [
         hooks.populateUser(options),
-        commonHooks.remove(options.passwordField)
+        commonHooks.remove(options.passwordField, () => true)
       ]
     });
   };
