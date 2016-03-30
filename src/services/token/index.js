@@ -128,6 +128,11 @@ export default function(options){
     // Get our initialize service to that we can bind hooks
     const tokenService = app.service(options.tokenEndpoint);
 
+    // prevent regular service events from being dispatched
+    if (app.io || app.primus) {
+      tokenService.filter(() => false);
+    }
+
     // Set up our before hooks
     tokenService.before({
       create: [_verifyToken(options)],

@@ -112,6 +112,11 @@ export default function(options){
     // Get our initialize service to that we can bind hooks
     const localService = app.service(options.localEndpoint);
 
+    // prevent regular service events from being dispatched
+    if (app.io || app.primus) {
+      localService.filter(() => false);
+    }
+
     // Register our local auth strategy and get it to use the passport callback function
     debug('registering passport-local strategy');
     passport.use(new Strategy(options, localService.checkCredentials.bind(localService)));

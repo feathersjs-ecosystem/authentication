@@ -179,6 +179,11 @@ export default function(options){
     // Get our initialized service
     const service = app.service(options.endPoint);
 
+    // prevent regular service events from being dispatched
+    if (app.io || app.primus) {
+      service.filter(() => false);
+    }
+
     // Register our Passport auth strategy and get it to use our passport callback function
     debug(`registering passport-${options.provider} OAuth2 strategy`);
     passport.use(new Strategy(options, service.oauthCallback.bind(service)));
