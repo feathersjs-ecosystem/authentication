@@ -165,6 +165,13 @@ describe('REST authentication', function() {
             done();
           });
         });
+
+        it('user\'s password has been removed', function(done) {
+          request(options, function(error, response, body) {
+            expect(body.data.password).to.equal(undefined);
+            done();
+          });
+        });
       });
     });
   });
