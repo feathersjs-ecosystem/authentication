@@ -127,7 +127,7 @@ describe('restrictToOwner', () => {
 
     describe('when user is not an owner', () => {
       it('returns a Forbidden error', done => {
-        hook.params.user._id ='2';
+        hook.params.user._id = '2';
         let fn = restrictToOwner();
 
         fn.call(MockService, hook).then(done).catch(error => {
