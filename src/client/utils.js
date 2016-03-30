@@ -39,18 +39,13 @@ export function authenticateSocket(options, socket, method) {
 // Returns a promise that de-authenticates a socket
 export function logoutSocket(socket, method) {
   return new Promise((resolve, reject) => {
-    // If we don't get a logged out message within 10 seconds
-    // consider it a failure. 
-    const timeout = setTimeout(function() {
-      reject(new Error('Could not logout over socket'));
-    }, 10000);
+    socket[method]('logout', error => {
+      if (error) {
+        reject(error);
+      }
 
-    socket.once('logged out', function() {
-      clearTimeout(timeout);
       resolve();
     });
-
-    socket[method]('logout');
   });
 }
 

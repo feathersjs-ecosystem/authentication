@@ -189,7 +189,7 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
       }
     });
 
-    socket.on('logout', function() {
+    socket.on('logout', function(callback) {
 
       // TODO (EK): Blacklist token
       try {
@@ -197,10 +197,11 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
         delete socket.feathers.user;
       }
       catch(error) {
-        return errorHandler(error);
+        debug('There was an error logging out', error);
+        return callback(new Error('There was an error logging out'));
       }
       
-      socket.emit('logged out');
+      callback();
     });
   };
 };
@@ -260,7 +261,7 @@ export let setupPrimusAuthentication = function(app, options = {}) {
       }
     });
 
-    socket.on('logout', function() {
+    socket.on('logout', function(callback) {
 
       // TODO (EK): Blacklist token
       try {
@@ -268,10 +269,11 @@ export let setupPrimusAuthentication = function(app, options = {}) {
         delete socket.request.feathers.user;
       }
       catch(error) {
-        return errorHandler(error);
+        debug('There was an error logging out', error);
+        return callback(new Error('There was an error logging out'));
       }
       
-      socket.send('logged out');
+      callback();
     });
   };
 };
