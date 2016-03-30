@@ -21,6 +21,10 @@ export default function(options = {}){
     const password = hook.data[options.passwordField];
 
     if (password === undefined) {
+      if (!hook.params.provider) {
+        return hook;
+      }
+
       throw new errors.BadRequest(`'${options.passwordField}' field is missing.`);
     }
 
