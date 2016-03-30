@@ -335,7 +335,7 @@ describe('REST authentication', function() {
           });
         });
 
-        it('returns erroror instead of data', (done) => {
+        it('returns error instead of data', (done) => {
           request(options, function(error, response, body) {
             expect(body.code).to.equal(401);
             done();

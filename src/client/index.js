@@ -10,7 +10,7 @@ import {
 } from './utils';
 
 const defaults = {
-  cookie: 'fathers-jwt',
+  cookie: 'feathers-jwt',
   tokenKey: 'feathers-jwt',
   localEndpoint: '/auth/local',
   tokenEndpoint: '/auth/token'

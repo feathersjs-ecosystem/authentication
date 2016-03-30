@@ -123,9 +123,8 @@ const setupTests = initApp => {
           expect(app.get('user')).to.equal(null);
 
           app.service('messages').create({ text: 'auth test message' })
-            .then(msg => console.log('!!!', msg))
+            .then(done)
             .catch(error => {
-              console.log(error);
               expect(error.code).to.equal(401);
               done();
             });
