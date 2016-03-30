@@ -63,7 +63,18 @@ export default function(options = {}){
     if (options.owner && !authorized) {
       // look up the document and throw a Forbidden error if the user is not an owner
       return new Promise((resolve, reject) => {
-        this.get(hook.id, hook.params).then(data => {
+        // Set provider as undefined so we avoid an infinite loop if this hook is
+        // set on the resource we are requesting.
+        const params = Object.assign({}, hook.params, { provider: undefined });
+
+        this.get(hook.id, params).then(data => {
+          if (data.toJSON) {
+            data = data.toJSON();
+          }
+          else if (data.toObject) {
+            data = data.toObject();
+          }
+
           const field = data[options.ownerField];
 
           if ( field === undefined || field.toString() !== id.toString() ) {
