@@ -12,7 +12,7 @@ export default function(options = {}){
     }
 
     if (!hook.id) {
-      throw new Error(`The 'restrictToOwner' hook should only be used on the 'get', 'update', 'patch' and 'remove' service methods.`);
+      throw new errors.MethodNotAllowed(`The 'restrictToOwner' hook should only be used on the 'get', 'update', 'patch' and 'remove' service methods.`);
     }
 
     // If it was an internal call then skip this hook
