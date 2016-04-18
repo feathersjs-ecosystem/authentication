@@ -75,7 +75,12 @@ export default function(options = {}){
             data = data.toObject();
           }
 
-          const field = data[options.ownerField];
+          let field = data[options.ownerField];
+
+          // Handle nested Sequelize or Mongoose models 
+          if (typeof field === 'object') {
+            field = field[options.idField];
+          }
 
           if ( field === undefined || field.toString() !== id.toString() ) {
             reject(new errors.Forbidden('You do not have the permissions to access this.'));
