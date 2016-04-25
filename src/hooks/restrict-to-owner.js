@@ -12,7 +12,7 @@ export default function(options = {}){
       throw new Error(`The 'restrictToOwner' hook should only be used as a 'before' hook.`);
     }
 
-    const methodIsAllowed = hook.method === 'get' || hook.method === 'update' || hook.method === 'patch' || hook.method == 'remove';
+    const methodIsAllowed = hook.method === 'get' || hook.method === 'update' || hook.method === 'patch' || hook.method === 'remove';
     if (!methodIsAllowed) {
       throw new errors.MethodNotAllowed(`The 'restrictToOwner' hook should only be used on the 'get', 'update', 'patch' and 'remove' service methods.`);
     }
