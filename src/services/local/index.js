@@ -18,12 +18,10 @@ export class Service {
     this.options = options;
   }
 
-  checkCredentials(username, password, done) {
-    const params = {
-      query: {
-        [this.options.usernameField]: username
-      }
-    };
+  checkCredentials(req, username, password, done) {
+    let params = this.options.checkCredentialsParams ? this.options.checkCredentialsParams(req, username, password) : {};
+    params.query = params.query || {};
+    params.query[this.options.usernameField] = username;
 
     // Look up the user
     this.app.service(this.options.userEndpoint)
@@ -105,7 +103,7 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign({}, defaults, options);
+  options = Object.assign({ passReqToCallback: true }, defaults, options);
   debug('configuring local authentication service with options', options);
 
   return function() {
