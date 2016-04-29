@@ -10,6 +10,7 @@ const debug = Debug('feathers-authentication:local');
 const defaults = {
   usernameField: 'email',
   passwordField: 'password',
+  passReqToCallback: true,
   session: false
 };
 
@@ -113,7 +114,7 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign({ passReqToCallback: true }, defaults, options);
+  options = Object.assign({}, defaults, options);
   debug('configuring local authentication service with options', options);
 
   return function() {
