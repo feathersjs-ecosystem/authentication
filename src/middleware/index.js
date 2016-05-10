@@ -4,7 +4,7 @@ import errors from 'feathers-errors';
 const debug = Debug('feathers-authentication:middleware');
 const THIRTY_SECONDS = 30000;
 
-// Usually this is a big no no but passport requires the 
+// Usually this is a big no no but passport requires the
 // request object to inspect req.body and req.query so we
 // need to miss behave a bit. Don't do this in your own code!
 export let exposeConnectMiddleware = function(req, res, next) {
@@ -34,7 +34,7 @@ export let normalizeAuthToken = function(options = {}) {
 
   return function(req, res, next) {
     let token = req.headers[options.header];
-    
+
     // Check the header for the token (preferred method)
     if (token) {
       // if the value contains "bearer" or "Bearer" then cut that part out
@@ -139,7 +139,7 @@ export let failedLogin = function(options = {}) {
 
 export let setupSocketIOAuthentication = function(app, options = {}) {
   options = Object.assign({}, options);
-  
+
   debug('Setting up Socket.io authentication middleware with options:', options);
 
   return function(socket) {
@@ -175,10 +175,10 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
           socket.emit('authenticated', response);
         }).catch(errorHandler);
       }
-      // Authenticate the user using local auth strategy
+      // Authenticate the user using local, facebook or google auth strategy
       else {
         // Put our data in a fake req.body object to get local auth
-        // with Passport to work because it checks res.body for the 
+        // with Passport to work because it checks res.body for the
         // username and password.
         let params = {
           provider: 'socketio',
@@ -187,7 +187,16 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
 
         params.req.body = data;
 
-        app.service(options.localEndpoint).create(data, params).then(response => {
+        // localEndpoint is default
+        let endPoint = options.localEndpoint;
+
+        if (data.type === 'facebook') {
+          endPoint = options.facebookEndpoint;
+        } else if (options.type === 'google') {
+          endPoint = options.googleEndpoint;
+        }
+
+        app.service(endPoint).create(data, params).then(response => {
           socket.feathers.token = response.token;
           socket.feathers.user = response.data;
           socket.emit('authenticated', response);
@@ -206,7 +215,7 @@ export let setupSocketIOAuthentication = function(app, options = {}) {
         debug('There was an error logging out', error);
         return callback(new Error('There was an error logging out'));
       }
-      
+
       callback();
     });
   };
@@ -250,7 +259,7 @@ export let setupPrimusAuthentication = function(app, options = {}) {
       // Authenticate the user using local auth strategy
       else {
         // Put our data in a fake req.body object to get local auth
-        // with Passport to work because it checks res.body for the 
+        // with Passport to work because it checks res.body for the
         // username and password.
         let params = {
           provider: 'primus',
@@ -278,7 +287,7 @@ export let setupPrimusAuthentication = function(app, options = {}) {
         debug('There was an error logging out', error);
         return callback(new Error('There was an error logging out'));
       }
-      
+
       callback();
     });
   };

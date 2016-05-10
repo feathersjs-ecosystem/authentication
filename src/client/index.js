@@ -13,7 +13,9 @@ const defaults = {
   cookie: 'feathers-jwt',
   tokenKey: 'feathers-jwt',
   localEndpoint: '/auth/local',
-  tokenEndpoint: '/auth/token'
+  tokenEndpoint: '/auth/token',
+  facebookEndpoint: '/auth/facebook',
+  googleEndpoint: '/auth/google'
 };
 
 export default function(opts = {}) {
@@ -56,6 +58,10 @@ export default function(opts = {}) {
           endPoint = config.localEndpoint;
         } else if (options.type === 'token') {
           endPoint = config.tokenEndpoint;
+        } else if (options.type === 'facebook') {
+          endPoint = config.facebookEndpoint;
+        } else if (options.type === 'google') {
+          endPoint = config.googleEndpoint;
         } else {
           throw new Error(`Unsupported authentication 'type': ${options.type}`);
         }
@@ -80,7 +86,7 @@ export default function(opts = {}) {
       app.set('token', null);
 
       clearCookie(config.cookie);
-      
+
       // remove the token from localStorage
       return Promise.resolve(app.get('storage').setItem(config.tokenKey, '')).then(() => {
         // If using sockets de-authenticate the socket
