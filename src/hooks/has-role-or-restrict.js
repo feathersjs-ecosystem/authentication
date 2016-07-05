@@ -30,12 +30,12 @@ export default function(options = {}){
     options = Object.assign({}, defaults, hook.app.get('auth'), options);
 
     // If we don't have a user we have to always use find instead of get because we must not return id queries that are unrestricted and we don't want the developer to have to add after hooks.
-    var query = Object.assign({}, hook.params.query, options.restrict);
+    let query = Object.assign({}, hook.params.query, options.restrict);
 
     if(hook.id !== null && hook.id !== undefined) {
       const id = {};
       id[options.idField] = hook.id;
-      var query = Object.assign(query, id);
+      query = Object.assign(query, id);
     }
 
     // Set provider as undefined so we avoid an infinite loop if this hook is
@@ -57,8 +57,7 @@ export default function(options = {}){
           return hook;
         }
         throw new errors.NotFound(`No record found`);
-      }).catch(err => {
-        console.log("err", err);
+      }).catch(() => {
         throw new errors.NotFound(`No record found`);
       });
     }
@@ -139,8 +138,7 @@ export default function(options = {}){
           return hook;
         }
         throw new errors.NotFound(`No record found`);
-      }).catch(err => {
-        console.log("err", err);
+      }).catch(() => {
         throw new errors.NotFound(`No record found`);
       });
     }

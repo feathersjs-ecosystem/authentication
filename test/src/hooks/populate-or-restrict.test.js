@@ -6,12 +6,6 @@ import { populateOrRestrict } from '../../../src/hooks';
 chai.use(sinonChai);
 
 const fn = sinon.stub();
-const User = { name: 'Mary', '_id': 111 };
-const mockGetFailure = sinon.stub().returns(Promise.reject('Could not find user with that id'));
-const mockServiceFailure = sinon.stub().returns({
-  get: mockGetFailure
-});
-
 const mockFind = sinon.stub().returns(Promise.resolve([{text: 'test', approved: true}]));
 const mockService = {
   find: mockFind
@@ -28,12 +22,12 @@ describe('populateOrRestrict', () => {
         type: 'before',
         params: {
           provider: 'rest',
-          query: {author: "James"}
+          query: {author: 'James'}
         }
       };
 
       hook = populateOrRestrict({ restrict: {approved: true} }).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query: {author: "James", approved: true} }, { provider: undefined, query: { author: "James" } });
+      expect(mockFind).to.be.calledWith({ query: {author: 'James', approved: true} }, { provider: undefined, query: { author: 'James' } });
     });
 
     it('if hook.id is set, merge the restriction and the id into the query and call find', () => {
@@ -50,7 +44,7 @@ describe('populateOrRestrict', () => {
       };
 
       hook = populateOrRestrict({ restrict: {approved: true}, idField: '_id'}).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query:{'_id': "525235", approved: true} }, { provider: undefined });
+      expect(mockFind).to.be.calledWith({ query:{'_id': '525235', approved: true} }, { provider: undefined });
     });
   });
 
@@ -64,12 +58,12 @@ describe('populateOrRestrict', () => {
         type: 'before',
         params: {
           provider: 'rest',
-          query: {author: "James"}
+          query: {author: 'James'}
         }
       };
 
       hook = populateOrRestrict({ restrict: {approved: true} }).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query: {author: "James", approved: true} }, { provider: undefined, query: { author: "James" } });
+      expect(mockFind).to.be.calledWith({ query: {author: 'James', approved: true} }, { provider: undefined, query: { author: 'James' } });
     });
 
     it('if hook.id is set, merge the restriction and the id into the query and call find', () => {
@@ -86,7 +80,7 @@ describe('populateOrRestrict', () => {
       };
 
       hook = populateOrRestrict({ restrict: {approved: true}, idField: '_id'}).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query:{'_id': "525235", approved: true} }, { provider: undefined });
+      expect(mockFind).to.be.calledWith({ query:{'_id': '525235', approved: true} }, { provider: undefined });
     });
   });
 

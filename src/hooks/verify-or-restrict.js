@@ -23,7 +23,7 @@ export default function(options = {}){
     if (!token) {
 
       // We have to always use find instead of get because we must not return id queries that are unrestricted and we don't want the developer to have to add after hooks.
-      var query = Object.assign({}, hook.params.query, options.restrict);
+      let query = Object.assign({}, hook.params.query, options.restrict);
 
       // Set provider as undefined so we avoid an infinite loop if this hook is
       // set on the resource we are requesting.
@@ -32,7 +32,7 @@ export default function(options = {}){
       if(hook.id !== null && hook.id !== undefined) {
         const id = {};
         id[options.idField] = hook.id;
-        var query = Object.assign(query, id);
+        query = Object.assign(query, id);
       }
 
       return this.find({ query }, params).then(results => {
@@ -46,8 +46,7 @@ export default function(options = {}){
         }
 
         throw new errors.NotFound(`No record found`);
-      }).catch(err => {
-        console.log("err", err);
+      }).catch(() => {
         throw new errors.NotFound(`No record found`);
       });
 

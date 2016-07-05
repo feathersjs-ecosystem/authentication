@@ -55,12 +55,12 @@ describe('verifyOrRestrict', () => {
         type: 'before',
         params: {
           provider: 'rest',
-          query: {author: "James"}
+          query: {author: 'James'}
         }
       };
 
       hook = verifyOrRestrict({ restrict: {approved: true} }).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query: {author: "James", approved: true} }, { provider: undefined, query: { author: "James" } });
+      expect(mockFind).to.be.calledWith({ query: {author: 'James', approved: true} }, { provider: undefined, query: { author: 'James' } });
     });
 
     it('if hook.id is set, merge the restriction and the id into the query and call find', () => {
@@ -77,7 +77,7 @@ describe('verifyOrRestrict', () => {
       };
 
       hook = verifyOrRestrict({ restrict: {approved: true}, idField: '_id'}).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query:{'_id': "525235", approved: true} }, { provider: undefined });
+      expect(mockFind).to.be.calledWith({ query:{'_id': '525235', approved: true} }, { provider: undefined });
     });
   });
 

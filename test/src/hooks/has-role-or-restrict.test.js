@@ -73,7 +73,6 @@ describe('hasRoleOrRestrict', () => {
         expect(returnedHook).to.deep.equal(hook);
       }
       catch(error) {
-        console.log("error", error);
         // It should never get here
         expect(true).to.equal(false);
       }
@@ -90,12 +89,12 @@ describe('hasRoleOrRestrict', () => {
         type: 'before',
         params: {
           provider: 'rest',
-          query: {author: "James"}
+          query: {author: 'James'}
         }
       };
 
       hook = hasRoleOrRestrict({ roles: ['admin'], restrict: {approved: true} }).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query: {author: "James", approved: true} }, { provider: undefined, query: { author: "James" } });
+      expect(mockFind).to.be.calledWith({ query: {author: 'James', approved: true} }, { provider: undefined, query: { author: 'James' } });
     });
 
     it('if hook.id is set, merge the restriction and the id into the query and call find', () => {
@@ -112,7 +111,7 @@ describe('hasRoleOrRestrict', () => {
       };
 
       hook = hasRoleOrRestrict({ roles: ['admin'], restrict: {approved: true}, idField: '_id'}).call(mockService, hook);
-      expect(mockFind).to.be.calledWith({ query:{'_id': "525235", approved: true} }, { provider: undefined });
+      expect(mockFind).to.be.calledWith({ query:{'_id': '525235', approved: true} }, { provider: undefined });
     });
   });
 
@@ -179,12 +178,12 @@ describe('hasRoleOrRestrict', () => {
           type: 'before',
           params: {
             provider: 'rest',
-            query: {author: "James"}
+            query: {author: 'James'}
           }
         };
 
         hook = hasRoleOrRestrict({ roles: ['admin'], restrict: {approved: true} }).call(mockService, hook);
-        expect(mockFind).to.be.calledWith({ query: {author: "James", approved: true} }, { provider: undefined, query: { author: "James" } });
+        expect(mockFind).to.be.calledWith({ query: {author: 'James', approved: true} }, { provider: undefined, query: { author: 'James' } });
       });
 
       it('if hook.id is set, merge the restriction and the id into the query and call find', () => {
@@ -201,7 +200,7 @@ describe('hasRoleOrRestrict', () => {
         };
 
         hook = hasRoleOrRestrict({ roles: ['admin'], restrict: {approved: true}, idField: '_id'}).call(mockService, hook);
-        expect(mockFind).to.be.calledWith({ query:{'_id': "525235", approved: true} }, { provider: undefined });
+        expect(mockFind).to.be.calledWith({ query:{'_id': '525235', approved: true} }, { provider: undefined });
       });
 
       describe('when owner option enabled', () => {
