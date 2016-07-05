@@ -45,10 +45,19 @@ approvedMessageService.create({text: 'A million people walk into a Silicon Valle
 approvedMessageService.create({text: 'Nobody buys anything', approved: true}, {}, function(){});
 approvedMessageService.create({text: 'Bar declared massive success', approved: true}, {}, function(){});
 
+
 // Will merge this restriction with the query params
 var restriction = { restrict: {approved: true} };
 
 approvedMessageService.before({
+  all: [
+    // Necessary since restrict must always use find and hook id is a string when the memory service expects it as a number
+    function(hook) {
+      if(hook.id) {
+        hook.id = parseInt(hook.id, 10);
+      }
+    }
+  ],
   find: [
     authentication.hooks.verifyOrRestrict(restriction),
     authentication.hooks.populateOrRestrict(restriction),
