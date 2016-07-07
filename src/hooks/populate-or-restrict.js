@@ -27,7 +27,7 @@ export default function(options = {}){
     if (!hook.params.provider) {
       return hook;
     }
-    
+
     // If we don't have a payload we have to always use find instead of get because we must not return id queries that are unrestricted and we don't want the developer to have to add after hooks.
     let query = Object.assign({}, hook.params.query, options.restrict);
 
@@ -50,15 +50,13 @@ export default function(options = {}){
       }
 
       return this.find({ query }, params).then(results => {
-        if(results.length >= 1) {
-          if(hook.id !== undefined && hook.id !== null) {
-            hook.result = results[0];
-          } else {
-            hook.result = results;
-          }
+        if(hook.method === 'get' && Array.isArray(results) && results.length === 1) {
+          hook.result = results[0];
+          return hook;
+        } else {
+          hook.result = results;
           return hook;
         }
-        throw new errors.NotFound(`No record found`);
       }).catch(() => {
         throw new errors.NotFound(`No record found`);
       });
@@ -90,16 +88,13 @@ export default function(options = {}){
         }
 
         return this.find({ query }, params).then(results => {
-          if(results.length >= 1) {
-            if(hook.id !== undefined && hook.id !== null) {
-              hook.result = results[0];
-            } else {
-              hook.result = results;
-            }
+          if(hook.method === 'get' && Array.isArray(results) && results.length === 1) {
+            hook.result = results[0];
+            return hook;
+          } else {
+            hook.result = results;
             return hook;
           }
-
-          throw new errors.NotFound(`No record found`);
         }).catch(() => {
           throw new errors.NotFound(`No record found`);
         });
