@@ -27,7 +27,7 @@ export default function(options = {}){
     if (!hook.params.provider) {
       return hook;
     }
-
+    
     // If we don't have a payload we have to always use find instead of get because we must not return id queries that are unrestricted and we don't want the developer to have to add after hooks.
     let query = Object.assign({}, hook.params.query, options.restrict);
 
