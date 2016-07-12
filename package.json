@@ -49,7 +49,7 @@
     "debug": "^2.2.0",
     "feathers-errors": "^2.0.1",
     "feathers-hooks": "^1.5.0",
-    "jsonwebtoken": "^5.4.0",
+    "jsonwebtoken": "^7.1.0",
     "lodash.isplainobject": "^4.0.4",
     "passport": "^0.3.0",
     "passport-local": "^1.0.0"
