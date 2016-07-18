@@ -19,7 +19,7 @@ export default function(options = {}){
     }
 
     const authOptions = hook.app.get('auth') || {};
-    
+
     // Grab the token options here
     options = Object.assign({}, authOptions.token, options);
 
@@ -29,7 +29,7 @@ export default function(options = {}){
       throw new Error(`You need to pass 'options.secret' to the verifyToken() hook or set 'auth.token.secret' it in your config.`);
     }
 
-    // convert the alorithm value to an array
+    // Convert the algorithm value to an array
     if (options.algorithm) {
       options.algorithms = [options.algorithm];
       delete options.algorithm;
@@ -41,7 +41,7 @@ export default function(options = {}){
           // Return a 401 if the token has expired or is invalid.
           return reject(new errors.NotAuthenticated(error));
         }
-        
+
         // Attach our decoded token payload to the params
         hook.params.payload = payload;
 

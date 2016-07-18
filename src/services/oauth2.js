@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 import passport from 'passport';
-import { exposeConnectMiddleware } from '../../middleware';
-import { successfulLogin } from '../../middleware';
+import { exposeConnectMiddleware } from '../middleware';
+import { successfulLogin } from '../middleware';
 
 const debug = Debug('feathers-authentication:oauth2');
 
@@ -41,11 +41,11 @@ export class Service {
         // TODO (EK): This is where we should look at req.user and see if we
         // can consolidate profiles. We might want to give the developer a hook
         // so that they can control the consolidation strategy.
-        profile._json.accessToken = accessToken;
+        const providerData = Object.assign({}, profile._json, {accessToken});
 
         let data = Object.assign({
           [`${options.provider}Id`]: profile.id,
-          [`${options.provider}`]: profile._json
+          [`${options.provider}`]: providerData
         });
 
         // If user found update and return them
@@ -60,7 +60,7 @@ export class Service {
 
           debug(`Updating user: ${id}`);
 
-          return app.service(options.userEndpoint).update(id, data).then(updatedUser => {
+          return app.service(options.userEndpoint).patch(id, data).then(updatedUser => {
             return done(null, updatedUser);
           }).catch(done);
         }

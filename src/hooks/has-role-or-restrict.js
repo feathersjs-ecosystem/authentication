@@ -15,7 +15,11 @@ export default function(options = {}){
 
   return function(hook) {
     if (hook.type !== 'before') {
-      throw new Error(`The 'restrictToRoles' hook should only be used as a 'before' hook.`);
+      throw new Error(`The 'hasRoleOrRestrict' hook should only be used as a 'before' hook.`);
+    }
+
+    if (hook.method !== 'find' && hook.method !== 'get') {
+      throw new Error(`'hasRoleOrRestrict' should only be used in a find or get hook.`);
     }
 
     // If it was an internal call then skip this hook
@@ -23,13 +27,42 @@ export default function(options = {}){
       return hook;
     }
 
-    if (!hook.params.user) {
-      // TODO (EK): Add a debugger call to remind the dev to check their hook chain
-      // as they probably don't have the right hooks in the right order.
-      throw new errors.NotAuthenticated();
+    if(hook.result) {
+      return hook;
     }
 
     options = Object.assign({}, defaults, hook.app.get('auth'), options);
+
+    // If we don't have a user we have to always use find instead of get because we must not return id queries that are unrestricted and we don't want the developer to have to add after hooks.
+    let query = Object.assign({}, hook.params.query, options.restrict);
+
+    if(hook.id !== null && hook.id !== undefined) {
+      const id = {};
+      id[options.idField] = hook.id;
+      query = Object.assign(query, id);
+    }
+
+    // Set provider as undefined so we avoid an infinite loop if this hook is
+    // set on the resource we are requesting.
+    const params = Object.assign({}, hook.params, { provider: undefined });
+
+    if (!hook.params.user) {
+      if(hook.result) {
+        return hook;
+      }
+
+      return this.find({ query }, params).then(results => {
+        if(hook.method === 'get' && Array.isArray(results) && results.length === 1) {
+          hook.result = results[0];
+          return hook;
+        } else {
+          hook.result = results;
+          return hook;
+        }
+      }).catch(() => {
+        throw new errors.NotFound(`No record found`);
+      });
+    }
 
     let authorized = false;
     let roles = hook.params.user[options.fieldName];
@@ -59,7 +92,7 @@ export default function(options = {}){
     // the permitted roles check to see if they are the owner of the requested resource
     if (options.owner && !authorized) {
       if (!hook.id) {
-        throw new errors.MethodNotAllowed(`The 'restrictToRoles' hook should only be used on the 'get', 'update', 'patch' and 'remove' service methods if you are using the 'owner' field.`);
+        throw new errors.MethodNotAllowed(`The 'hasRoleOrRestrict' hook should only be used on the 'get', 'update', 'patch' and 'remove' service methods if you are using the 'owner' field.`);
       }
 
       // look up the document and throw a Forbidden error if the user is not an owner
@@ -78,7 +111,7 @@ export default function(options = {}){
 
           let field = data[options.ownerField];
 
-          // Handle nested Sequelize or Mongoose models 
+          // Handle nested Sequelize or Mongoose models
           if (isPlainObject(field)) {
             field = field[options.idField];
           }
@@ -93,7 +126,21 @@ export default function(options = {}){
     }
 
     if (!authorized) {
-      throw error;
+      if(hook.result) {
+        return hook;
+      }
+
+      return this.find({ query }, params).then(results => {
+        if(hook.method === 'get' && Array.isArray(results) && results.length === 1) {
+          hook.result = results[0];
+          return hook;
+        } else {
+          hook.result = results;
+          return hook;
+        }
+      }).catch(() => {
+        throw new errors.NotFound(`No record found`);
+      });
     }
   };
 }

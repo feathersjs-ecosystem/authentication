@@ -1,4 +1,5 @@
 import errors from 'feathers-errors';
+import isPlainObject from 'lodash.isplainobject';
 
 const defaults = {
   idField: '_id',
@@ -27,7 +28,7 @@ export default function(options = {}){
     }
 
     options = Object.assign({}, defaults, hook.app.get('auth'), options);
-    
+
     const id = hook.params.user[options.idField];
 
     if (id === undefined) {
@@ -50,12 +51,17 @@ export default function(options = {}){
 
         let field = data[options.ownerField];
 
-        // Handle nested Sequelize or Mongoose models 
-        if (typeof field === 'object') {
+        // Handle nested Sequelize or Mongoose models
+        if (isPlainObject(field)) {
           field = field[options.idField];
         }
 
-        if ( field === undefined || field.toString() !== id.toString() ) {
+        if (Array.isArray(field)) {
+          const fieldArray = field.map(idValue => idValue.toString());
+          if (fieldArray.length === 0 || fieldArray.indexOf(id.toString()) < 0) {
+            reject(new errors.Forbidden('You do not have the permissions to access this.'));
+          }
+        } else if ( field === undefined || field.toString() !== id.toString() ) {
           reject(new errors.Forbidden('You do not have the permissions to access this.'));
         }
 
