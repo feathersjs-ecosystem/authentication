@@ -1,8 +1,9 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 import passport from 'passport';
-import { exposeConnectMiddleware } from '../middleware';
+import { exposeRequestResponse } from '../middleware';
 import { successfulLogin } from '../middleware';
+import { failedLogin } from '../middleware';
 
 const debug = Debug('feathers-authentication:oauth2');
 
@@ -153,6 +154,18 @@ export class Service {
     // so that we can call other services
     this.app = app;
 
+    // Register our Passport auth strategy and get it to use our passport callback function
+    const Strategy = this.options.strategy;
+    const TokenStrategy = this.options.tokenStrategy;
+
+    debug(`registering passport-${this.options.provider} OAuth2 strategy`);
+    passport.use(new Strategy(this.options, this.oauthCallback.bind(this)));
+
+    if (TokenStrategy) {
+      debug(`registering passport-${this.options.provider}-token OAuth2 strategy`);
+      passport.use(new TokenStrategy(this.options, this.oauthCallback.bind(this)));
+    }
+
     // prevent regular service events from being dispatched
     if (typeof this.filter === 'function') {
       this.filter(() => false);
@@ -184,22 +197,8 @@ export default function(options){
 
   return function() {
     const app = this;
-    const Strategy = options.strategy;
-    const TokenStrategy = options.tokenStrategy;
 
     // Initialize our service with any options it requires
-    app.use(options.endPoint, exposeConnectMiddleware, new Service(options), successfulLogin(options));
-
-    // Get our initialized service
-    const service = app.service(options.endPoint);
-
-    // Register our Passport auth strategy and get it to use our passport callback function
-    debug(`registering passport-${options.provider} OAuth2 strategy`);
-    passport.use(new Strategy(options, service.oauthCallback.bind(service)));
-
-    if (TokenStrategy) {
-      debug(`registering passport-${options.provider}-token OAuth2 strategy`);
-      passport.use(new TokenStrategy(options, service.oauthCallback.bind(service)));
-    }
+    app.use(options.endPoint, exposeRequestResponse, new Service(options), successfulLogin(options), failedLogin(options));
   };
 }

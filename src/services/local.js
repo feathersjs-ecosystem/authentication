@@ -3,8 +3,9 @@ import errors from 'feathers-errors';
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import { exposeConnectMiddleware } from '../middleware';
+import { exposeRequestResponse } from '../middleware';
 import { successfulLogin } from '../middleware';
+import { failedLogin } from '../middleware';
 
 const debug = Debug('feathers-authentication:local');
 const defaults = {
@@ -86,9 +87,9 @@ export class Service {
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(user)
-                  .then(resolve)
-                  .catch(reject);
+          .create(user)
+          .then(resolve)
+          .catch(reject);
       });
 
       middleware(params.req);
@@ -99,6 +100,10 @@ export class Service {
     // attach the app object to the service context
     // so that we can call other services
     this.app = app;
+
+    // Register our local auth strategy and get it to use the passport callback function
+    debug('registering passport-local strategy');
+    passport.use(new Strategy(this.options, this.checkCredentials.bind(this)));
 
     // prevent regular service events from being dispatched
     if (typeof this.filter === 'function') {
@@ -115,13 +120,6 @@ export default function(options){
     const app = this;
 
     // Initialize our service with any options it requires
-    app.use(options.localEndpoint, exposeConnectMiddleware, new Service(options), successfulLogin(options));
-
-    // Get our initialize service to that we can bind hooks
-    const localService = app.service(options.localEndpoint);
-
-    // Register our local auth strategy and get it to use the passport callback function
-    debug('registering passport-local strategy');
-    passport.use(new Strategy(options, localService.checkCredentials.bind(localService)));
+    app.use(options.localEndpoint, exposeRequestResponse, new Service(options), successfulLogin(options), failedLogin(options));
   };
 }

@@ -114,6 +114,30 @@ export class Service {
   }
 
   setup() {
+    const options = this.options;
+
+    // Set up our before hooks
+    this.before({
+      create: [_verifyToken(options)],
+      find: [_verifyToken(options)],
+      get: [_verifyToken(options)]
+    });
+
+    this.after({
+      create: [
+        hooks.populateUser(options),
+        commonHooks.remove(options.passwordField, () => true)
+      ],
+      find: [
+        hooks.populateUser(options),
+        commonHooks.remove(options.passwordField, () => true)
+      ],
+      get: [
+        hooks.populateUser(options),
+        commonHooks.remove(options.passwordField, () => true)
+      ]
+    });
+
     // prevent regular service events from being dispatched
     if (typeof this.filter === 'function') {
       this.filter(() => false);
@@ -131,30 +155,5 @@ export default function(options){
 
     // Initialize our service with any options it requires
     app.use(options.tokenEndpoint, new Service(options));
-
-    // Get our initialize service to that we can bind hooks
-    const tokenService = app.service(options.tokenEndpoint);
-
-    // Set up our before hooks
-    tokenService.before({
-      create: [_verifyToken(options)],
-      find: [_verifyToken(options)],
-      get: [_verifyToken(options)]
-    });
-
-    tokenService.after({
-      create: [
-        hooks.populateUser(options),
-        commonHooks.remove(options.passwordField, () => true)
-      ],
-      find: [
-        hooks.populateUser(options),
-        commonHooks.remove(options.passwordField, () => true)
-      ],
-      get: [
-        hooks.populateUser(options),
-        commonHooks.remove(options.passwordField, () => true)
-      ]
-    });
   };
 }
