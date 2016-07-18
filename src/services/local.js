@@ -11,7 +11,15 @@ const defaults = {
   usernameField: 'email',
   passwordField: 'password',
   passReqToCallback: true,
-  session: false
+  session: false,
+  verifyPassword: function(password, user, done) {
+    const hash = user[this.options.passwordField];
+    if (!hash) {
+      return done(new Error(`User record in the database is missing a '${this.options.passwordField}'`));
+    }
+    const crypto = this.options.bcrypt || bcrypt;
+    crypto.compare(password, hash, done);
+  }
 };
 
 export class Service {
@@ -47,15 +55,8 @@ export class Service {
         return user;
       })
       .then(user => {
-        const crypto = this.options.bcrypt || bcrypt;
         // Check password
-        const hash = user[this.options.passwordField];
-
-        if (!hash) {
-          return done(new Error(`User record in the database is missing a '${this.options.passwordField}'`));
-        }
-
-        crypto.compare(password, hash, function(error, result) {
+        this.options.verifyPassword(password, user, function(error, result) {
           // Handle 500 server error.
           if (error) {
             return done(error);
