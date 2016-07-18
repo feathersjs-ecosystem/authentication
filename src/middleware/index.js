@@ -1,16 +1,22 @@
 import { setupSocketIOAuthentication, setupPrimusAuthentication } from './sockets';
-import {
-  exposeConnectMiddleware,
-  normalizeAuthToken,
-  successfulLogin,
-  failedLogin
-} from './express';
+import exposeRequestResponse from './express/expose-request-response';
+import tokenParser from './express/token-parser';
+import decodeToken from './express/decode-token';
+import populateUser from './express/populate-user';
+import setCookie from './express/set-cookie';
+import successfulLogin from './express/login-success';
+import notAuthenticated from './express/not-authenticated';
+import logout from './express/logout';
 
 export default {
-  exposeConnectMiddleware,
-  normalizeAuthToken,
+  exposeRequestResponse,
+  tokenParser,
+  decodeToken,
+  populateUser,
+  setCookie,
   successfulLogin,
-  failedLogin,
+  notAuthenticated,
+  logout,
   setupSocketIOAuthentication,
   setupPrimusAuthentication
 };
