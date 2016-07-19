@@ -117,9 +117,12 @@
         <button id="submit">Login</button>
       </form>
     </section>
+    <section>
+      <button id="logout">Logout</button>
+    </section>
   </main>
   <script src="//code.jquery.com/jquery-2.2.1.js"></script>
-  <script src="//cdn.rawgit.com/feathersjs/feathers-client/v1.0.0/dist/feathers.js"></script>
+  <script src="//npmcdn.com/feathers-client@^1.0.0/dist/feathers.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/javascript">
     (function ($) {
@@ -148,6 +151,12 @@
         .configure(feathers.hooks())
         .configure(feathers.authentication({ storage: window.localStorage }));
 
+      $('#logout').on('click', function(ev){
+        app.logout().then(() => {
+          alert('Logged Out');
+        });
+      });
+
       $('#submit').on('click', function(ev){
         ev.preventDefault();
 
@@ -160,7 +169,7 @@
         }).then(function(result){
           console.log('Authenticated!', result);
 
-          alert('You successfully authenticated over sockets with email and password. Your new JWT is:\n\n' + app.get('token'));
+          alert('You successfully authenticated over sockets with email and password. Your new JWT is:\n\n' + app.get('token'));          
 
           app.service('messages').find({}).then(function(data){
             console.log('messages', data);
