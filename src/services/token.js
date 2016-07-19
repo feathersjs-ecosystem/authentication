@@ -14,6 +14,7 @@ const defaults = {
   idField: '_id',
   passwordField: 'password',
   issuer: 'feathers',
+  subject: 'auth',
   algorithm: 'HS256',
   expiresIn: '1d', // 1 day
   payload: []
@@ -99,7 +100,7 @@ export class Service {
   }
 
   // POST /auth/token
-  create(data) {
+  create(data, params) {
     const {
       algorithm,
       expiresIn,
@@ -110,7 +111,7 @@ export class Service {
       subject,
       noTimestamp,
       header
-    } = this.options;
+    } = Object.assign({}, this.options, params.jwt);
     // const payload = this.options.payload;
     const secret = this.options.secret;
     const options = {
