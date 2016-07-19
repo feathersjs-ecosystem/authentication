@@ -31,7 +31,8 @@ const defaults = {
     // Used for server side rendering
     'feathers-session': { // set to false to disable this cookie
       httpOnly: true,
-      maxAge: ONE_DAY,
+      // maxAge: ONE_DAY,
+      maxAge: 0, // session cookie
       secure: process.env.NODE_ENV === 'production'
     }
   },
