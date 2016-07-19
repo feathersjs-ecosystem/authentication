@@ -6,6 +6,7 @@ import populateUser from './express/populate-user';
 import setCookie from './express/set-cookie';
 import successfulLogin from './express/login-success';
 import notAuthenticated from './express/not-authenticated';
+import restrictToAuthenticated from './express/restrict-to-authenticated';
 import logout from './express/logout';
 
 export default {
@@ -16,6 +17,7 @@ export default {
   setCookie,
   successfulLogin,
   notAuthenticated,
+  restrictToAuthenticated,
   logout,
   setupSocketIOAuthentication,
   setupPrimusAuthentication

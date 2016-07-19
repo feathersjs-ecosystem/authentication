@@ -3,6 +3,8 @@ import Debug from 'debug';
 const debug = Debug('feathers-authentication:not-authenticated');
 
 export default function notAuthenticated(options = {}) {
+  debug('Registering notAuthenticated middleware with options:', options);
+
   return function(error, req, res, next) {
     debug('An authentication error occurred.', error);
 

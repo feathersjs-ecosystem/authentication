@@ -4,14 +4,8 @@ import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:decode-token');
 
-const defaults = {
-  issuer: 'feathers',
-  algorithm: 'HS256',
-  expiresIn: '1d', // 1 day
-};
-
 module.exports = function(options = {}) {
-  debug('Setting up decodeToken middleware with options:', options);
+  debug('Registering decodeToken middleware with options:', options);
 
   return function(req, res, next) {
     const token = req.feathers.token;
@@ -26,7 +20,7 @@ module.exports = function(options = {}) {
     const authOptions = req.app.get('auth') || {};
 
     // Grab the token options here
-    options = Object.assign(defaults, authOptions.token, options);
+    options = Object.assign({}, authOptions.token, options);
 
     const secret = options.secret;
 

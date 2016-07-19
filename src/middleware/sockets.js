@@ -3,7 +3,7 @@ import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:middleware');
 
-function setupSocketHandler(feathersParams, provider, emit, app, options) {
+function setupSocketHandler(feathersParams, provider, emit, disconnect, app, options) {
   return function(socket) {
     let errorHandler = function(error) {
       socket[emit]('unauthorized', error, function(){
@@ -35,6 +35,7 @@ function setupSocketHandler(feathersParams, provider, emit, app, options) {
           feathersParams(socket).token = response.token;
           feathersParams(socket).user = response.data;
           socket[emit]('authenticated', response);
+          app[emit]('login', response);
         }).catch(errorHandler);
       }
       // Authenticate the user using local auth strategy
@@ -54,12 +55,24 @@ function setupSocketHandler(feathersParams, provider, emit, app, options) {
       }
     });
 
-    socket.on('logout', function(callback) {
+    socket.on(disconnect, function() {
+      socket[emit]('logout');
+    });
+
+    socket.on('logout', function(callback = () => {}) {
       // TODO (EK): Blacklist token
+      // TODO (EK): Maybe we need to delete any cookies.
+      // Can we send the request object this socket is tied to?
+      
       try {
-        delete feathersParams(socket).token;
-        delete feathersParams(socket).user;
-      } catch(error) {
+        const params = feathersParams();
+        const { token, user } = params;
+        
+        app[emit]('logout', { token, user });
+        delete params.token;
+        delete params.user;
+      }
+      catch(error) {
         debug('There was an error logging out', error);
         return callback(new Error('There was an error logging out'));
       }
@@ -73,7 +86,7 @@ export function setupSocketIOAuthentication(app, options = {}) {
   debug('Setting up Socket.io authentication middleware with options:', options);
 
   return setupSocketHandler(
-    socket => socket.feathers, 'socketio', 'emit', app, options
+    socket => socket.feathers, 'socketio', 'emit', 'disconnect', app, options
   );
 }
 
@@ -81,6 +94,6 @@ export function setupPrimusAuthentication(app, options = {}) {
   debug('Setting up Primus authentication middleware with options:', options);
 
   return setupSocketHandler(
-    socket => socket.request.feathers, 'primus', 'send', app, options
+    socket => socket.request.feathers, 'primus', 'send', 'disconnection', app, options
   );
 }

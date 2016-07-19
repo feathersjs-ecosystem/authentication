@@ -2,30 +2,37 @@
 // and services. This gracefully falls back from
 // header -> cookie (optional) -> body -> query string
 
-// TODO (EK): Support cookie options
-// TODO (EK): Support different types of tokens
+import omit from 'lodash.omit';
 import Debug from 'debug';
 import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:token-parser');
-
-
 const defaults = {
   header: 'Authorization',
-  tokenKey: 'token',
-  cookie: false
+  token: {
+    name: 'token'
+  },
+  cookies: {}
 };
 
 export default function tokenParser(options = {}) {
   options = Object.assign({}, defaults, options);
+  const name = options.token.name;
 
   if (!options.header) {
     throw new Error(`'header' must be provided to tokenParser() middleware`);
   }
 
-  debug('Setting up tokenParser middleware with options:', options);
+  if (!name) {
+    throw new Error(`'options.token.name' must be provided to tokenParser() middleware`);
+  }
+
+  debug('Registering tokenParser middleware with options:', options);
 
   return function(req, res, next) {
+    debug('Parsing token');
+    const app = req.app;
+
     // Normalize header capitalization the same way Node.js does
     let token = req.headers[options.header.toLowerCase()];
 
@@ -35,22 +42,41 @@ export default function tokenParser(options = {}) {
       if ( /bearer/i.test(token) ) {
         token = token.split(' ')[1];
       }
+
+      debug('Token found in header');
     }
     
     // Check the cookie if we are haven't found a token already
-    // and we explicitly set the option to check cookies.
-    if (!token && options.cookie && req.cookies && req.cookies[options.cookie]) {
-      token = req.cookies[options.cookie];
+    // and cookies are enabled.
+    if (!token && options.cookies.enable && req.cookies) {
+      const cookies = omit(options.cookies, 'enable');
+      
+      // Loop through our cookies and see if we have an
+      // enabled one with a token.
+      // 
+      // TODO (EK): This will stop at the first one found.
+      // This may be a problem.
+      for (let key of Object.keys(cookies)) {
+        // If cookies are enabled and one of our expected
+        // ones was sent then grab the token from it.
+        if (cookies[key] && req.cookies[key]) {
+          debug(`Token found in cookie '${key}'`);
+          token = req.cookies[key];
+          break;
+        }
+      }
     }
     // Check the body next if we still don't have a token
-    else if (req.body[options.tokenKey]) {
-      token = req.body[options.tokenKey];
-      delete req.body[options.tokenKey];
+    else if (req.body[name]) {
+      debug('Token found in req.body');
+      token = req.body[name];
+      delete req.body[name];
     }
     // Finally, check the query string. (worst method but nice for quick local dev)
-    else if (req.query[options.tokenKey]) {
-      token = req.query[options.tokenKey];
-      delete req.query[options.tokenKey];
+    else if (req.query[name] && app.env !== 'production') {
+      debug('Token found in req.query');
+      token = req.query[name];
+      delete req.query[name];
 
       console.warn(`You are passing your token in the query string. This isn't very secure and is not recommended.`);
       console.warn(`Instead you should pass it as an Authorization header. See docs.feathersjs.com for more details.`);
@@ -58,8 +84,8 @@ export default function tokenParser(options = {}) {
 
     // Tack it on to our express and feathers request object
     // so that it is passed to hooks and services.
-    req.feathers[options.tokenKey] = token;
-    req[options.tokenKey] = token;
+    req.feathers[name] = token;
+    req[name] = token;
 
     next();
   };
