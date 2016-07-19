@@ -21,6 +21,14 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
     feathersParams(socket).req = socket.request;
 
     socket.on('authenticate', function(data) {
+
+      function successHandler(response) {
+        feathersParams(socket).token = response.token;
+        feathersParams(socket).user = response.data;
+        socket[emit]('authenticated', response);
+        app[emit]('login', response);
+      }
+
       // Authenticate the user using token strategy
       if (data.token) {
         if (typeof data.token !== 'string') {
@@ -31,12 +39,10 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
 
         // The token gets normalized in hook.params for REST so we'll stay with
         // convention and pass it as params using sockets.
-        app.service(options.tokenEndpoint).create({}, params).then(response => {
-          feathersParams(socket).token = response.token;
-          feathersParams(socket).user = response.data;
-          socket[emit]('authenticated', response);
-          app[emit]('login', response);
-        }).catch(errorHandler);
+        app.service(options.token.endpoint)
+          .create({}, params)
+          .then(successHandler)
+          .catch(errorHandler);
       }
       // Authenticate the user using local auth strategy
       else {
@@ -47,25 +53,32 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
 
         params.req.body = data;
 
-        app.service(options.localEndpoint).create(data, params).then(response => {
-          feathersParams(socket).token = response.token;
-          feathersParams(socket).user = response.data;
-          socket[emit]('authenticated', response);
-        }).catch(errorHandler);
+        app.service(options.local.endpoint)
+          .create(data, params)
+          .then(successHandler)
+          .catch(errorHandler);
       }
     });
 
     socket.on(disconnect, function() {
-      socket[emit]('logout');
+      debug('Socket disconnected');
+      
+      const params = feathersParams(socket);
+      const { token, user } = params;
+      
+      app[emit]('logout', { token, user });
+      delete params.token;
+      delete params.user;
     });
 
     socket.on('logout', function(callback = () => {}) {
       // TODO (EK): Blacklist token
       // TODO (EK): Maybe we need to delete any cookies.
       // Can we send the request object this socket is tied to?
+      debug('Socket log out');
       
       try {
-        const params = feathersParams();
+        const params = feathersParams(socket);
         const { token, user } = params;
         
         app[emit]('logout', { token, user });
