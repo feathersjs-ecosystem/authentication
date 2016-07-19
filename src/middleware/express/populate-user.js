@@ -1,4 +1,3 @@
-import errors from 'feathers-errors';
 import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:populate-user');
@@ -40,5 +39,5 @@ export default function populateUser(options = {}) {
       next();
     })
     .catch(next);
-  }
-};
+  };
+}

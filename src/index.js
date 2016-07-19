@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import path from 'path';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import merge from 'lodash.merge';

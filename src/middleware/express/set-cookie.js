@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import errors from 'feathers-errors';
 import omit from 'lodash.omit';
 
 const debug = Debug('feathers-authentication:set-cookie');

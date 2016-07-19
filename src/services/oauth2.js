@@ -218,6 +218,6 @@ export default function(options){
     debug(`configuring ${options.provider} OAuth2 service with options`, options);
 
     // Initialize our service with any options it requires
-    app.use(options.endpoint, new Service(options), setCookie(authConfig), successfulLogin(options));
+    app.use(options.endpoint, new Service(options), setCookie(authConfig), successHandler(options));
   };
 }

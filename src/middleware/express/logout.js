@@ -34,5 +34,5 @@ export default function logout(options = {}) {
     };
     
     next();
-  }
+  };
 }

@@ -4,7 +4,6 @@
 
 import omit from 'lodash.omit';
 import Debug from 'debug';
-import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:token-parser');
 const defaults = {

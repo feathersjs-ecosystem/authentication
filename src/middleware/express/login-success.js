@@ -1,6 +1,6 @@
-import Debug from 'debug';
+// import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:login-success');
+// const debug = Debug('feathers-authentication:login-success');
 
 export default function loginSuccess(options = {}) {
   return function(req, res, next) {
@@ -9,5 +9,5 @@ export default function loginSuccess(options = {}) {
     }
     
     next();
-  }
+  };
 }
