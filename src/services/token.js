@@ -99,7 +99,7 @@ export class Service {
   }
 
   // POST /auth/token
-  create(user) {
+  create(data) {
     const {
       algorithm,
       expiresIn,
@@ -111,7 +111,7 @@ export class Service {
       noTimestamp,
       header
     } = this.options;
-    const payload = this.options.payload;
+    // const payload = this.options.payload;
     const secret = this.options.secret;
     const options = {
       algorithm,
@@ -125,14 +125,14 @@ export class Service {
       header
     };
 
-    const data = {
-      [this.options.idField]: user[this.options.idField]
-    };
+    // const data = {
+    //   [this.options.idField]: payload[this.options.idField]
+    // };
 
-    // Add any additional payload fields
-    if (payload && Array.isArray(payload)) {
-      payload.forEach(field => data[field] = user[field]);
-    }
+    // // Add any additional payload fields
+    // if (payload && Array.isArray(payload)) {
+    //   payload.forEach(field => data[field] = payload[field]);
+    // }
 
     // Our before hook determined that we had a valid token or that this
     // was internally called so let's generate a new token with the user
@@ -147,7 +147,7 @@ export class Service {
         }
 
         debug('New JWT issued with payload', data);
-        return resolve( Object.assign(data, { token }) );
+        return resolve({ token });
       });
     });
   }
@@ -192,9 +192,9 @@ export default function(options){
   return function() {
     const app = this;
     const authConfig = Object.assign({}, app.get('auth'), options);
-    const { idField, passwordField } = authConfig.user;
+    const { passwordField } = authConfig.user;
 
-    options = merge(defaults, authConfig.token, options, { idField, passwordField });
+    options = merge(defaults, authConfig.token, options, { passwordField });
 
     const successHandler = options.successHandler || successfulLogin;
 

@@ -42,7 +42,6 @@ const defaults = {
     algorithm: 'HS256', // optional
     expiresIn: '1d', // optional
     secret: null, // required
-    payload: [], // optional - TODO (EK): Deprecate in favour of hooks
     successRedirect: null, // optional - no default. If set the default success handler will redirect to location
     failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
     successHandler: null, // optional - a middleware to handle things once authentication succeeds

@@ -8,6 +8,20 @@ const defaults = {
 
 export default function(options = {}){
   return function(hook) {
+    if (hook.params.user) {
+      let user = hook.params.user;
+
+      // If it's an after hook attach the user to the response
+      if (hook.result) {
+        hook.result.data = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+
+        // remove the id field from the root, it already exists inside the user object
+        delete hook.result[options.idField];
+      }
+
+      return Promise.resolve(hook);
+    }
+
     let id;
 
     options = Object.assign({}, defaults, hook.app.get('auth').user, options);

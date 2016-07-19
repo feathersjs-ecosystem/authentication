@@ -97,9 +97,13 @@ export class Service {
 
         debug('User authenticated via local authentication');
 
+        const tokenPayload = {
+          [options.idField]: user[options.idField]
+        };
+
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-          .create(user)
+          .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
       });

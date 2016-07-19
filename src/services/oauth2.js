@@ -104,11 +104,15 @@ export class Service {
           return reject(new errors.NotAuthenticated(`An error occurred logging in with ${options.provider}`));
         }
 
+        const tokenPayload = {
+          [options.idField]: user[options.idField]
+        };
+
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(user)
-                  .then(resolve)
-                  .catch(reject);
+          .create(tokenPayload, { user })
+          .then(resolve)
+          .catch(reject);
       });
 
       middleware(params.req, params.res);
@@ -137,11 +141,15 @@ export class Service {
           return reject(new errors.NotAuthenticated(`An error occurred logging in with ${options.provider}`));
         }
 
+        const tokenPayload = {
+          [options.idField]: user[options.idField]
+        };
+
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
-                  .create(user)
-                  .then(resolve)
-                  .catch(reject);
+          .create(tokenPayload, { user })
+          .then(resolve)
+          .catch(reject);
       });
 
       middleware(params.req, params.res);
