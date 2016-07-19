@@ -2,7 +2,7 @@
  * Populate the current user associated with the JWT
  */
 const defaults = {
-  userEndpoint: '/users',
+  endpoint: '/users',
   idField: '_id'
 };
 
@@ -10,7 +10,7 @@ export default function(options = {}){
   return function(hook) {
     let id;
 
-    options = Object.assign({}, defaults, hook.app.get('auth'), options);
+    options = Object.assign({}, defaults, hook.app.get('auth').user, options);
 
     // If it's an after hook grab the id from the result
     if (hook.type === 'after') {
@@ -27,7 +27,7 @@ export default function(options = {}){
     }
 
     return new Promise(function(resolve, reject){
-      hook.app.service(options.userEndpoint).get(id, {}).then(user => {
+      hook.app.service(options.endpoint).get(id, {}).then(user => {
         // attach the user to the hook for use in other hooks or services
         hook.params.user = user;
 
