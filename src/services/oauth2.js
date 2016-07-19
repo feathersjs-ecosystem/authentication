@@ -1,9 +1,8 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 import passport from 'passport';
-import { exposeRequestResponse } from '../middleware';
-import { successfulLogin } from '../middleware';
-import { failedLogin } from '../middleware';
+import { successfulLogin, setCookie } from '../middleware';
+import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:oauth2');
 
@@ -174,31 +173,51 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign({}, defaults, options);
-
-  options.permissions.state = options.permissions.state === undefined ? true : options.permissions.state;
-  options.permissions.session = options.permissions.session === undefined ? false : options.permissions.session;
-
   if (!options.provider) {
     throw new Error('You need to pass a `provider` for your authentication provider');
   }
 
-  if (!options.endPoint) {
-    throw new Error(`You need to provide an 'endPoint' for your ${options.provider} provider`);
+  if (!options.endpoint) {
+    throw new Error(`You need to provide an 'endpoint' for your ${options.provider} provider`);
   }
 
   if (!options.strategy) {
     throw new Error(`You need to provide a Passport 'strategy' for your ${options.provider} provider`);
   }
 
-  options.callbackURL = options.callbackURL || `${options.endPoint}/${options.callbackSuffix}`;
+  if (!options.clientID) {
+    throw new Error(`You need to provide a 'clientID' for your ${options.provider} provider`);
+  }
 
-  debug(`configuring ${options.provider} OAuth2 service with options`, options);
+  if (!options.clientSecret) {
+    throw new Error(`You need to provide a 'clientSecret' for your ${options.provider} provider`);
+  }
 
   return function() {
     const app = this;
+    const authConfig = Object.assign({}, app.get('auth'), options);
+    const userEndpoint = authConfig.user.endpoint;
+
+    // TODO (EK): Support pulling in a user and token service directly
+    // in order to talk to remote services.
+
+    if (authConfig.token === undefined) {
+      throw new Error('The TokenService needs to be configured before OAuth');
+    }
+
+    const tokenEndpoint = authConfig.token.endpoint;
+
+    options = merge(defaults, authConfig[options.provider], options, { userEndpoint, tokenEndpoint });
+
+    const successHandler = options.successHandler || successfulLogin;
+
+    options.permissions.state = options.permissions.state === undefined ? true : options.permissions.state;
+    options.permissions.session = options.permissions.session === undefined ? false : options.permissions.session;
+    options.callbackURL = options.callbackURL || `${options.endpoint}/${options.callbackSuffix}`;
+
+    debug(`configuring ${options.provider} OAuth2 service with options`, options);
 
     // Initialize our service with any options it requires
-    app.use(options.endPoint, exposeRequestResponse, new Service(options), successfulLogin(options), failedLogin(options));
+    app.use(options.endpoint, new Service(options), setCookie(authConfig), successfulLogin(options));
   };
 }

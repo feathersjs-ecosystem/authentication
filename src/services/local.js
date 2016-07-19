@@ -3,16 +3,20 @@ import errors from 'feathers-errors';
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import { exposeRequestResponse } from '../middleware';
-import { successfulLogin } from '../middleware';
-import { failedLogin } from '../middleware';
+import { successfulLogin, setCookie } from '../middleware';
+import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:local');
 const defaults = {
+  endpoint: '/auth/local',
+  tokenEndpoint: '/auth/local',
+  userEndpoint: '/users',
+  idField: '_id',
   usernameField: 'email',
   passwordField: 'password',
   passReqToCallback: true,
-  session: false
+  session: false,
+  // successHandler: null //optional - a middleware to call when successfully authenticated
 };
 
 export class Service {
@@ -33,7 +37,9 @@ export class Service {
   }
 
   checkCredentials(req, username, password, done) {
-    this.app.service(this.options.localEndpoint).buildCredentials(req, username, password)
+    debug('Checking credentials');
+
+    this.app.service(this.options.endpoint).buildCredentials(req, username, password)
       // Look up the user
       .then(params => this.app.service(this.options.userEndpoint).find(params))
       .then(users => {
@@ -45,6 +51,7 @@ export class Service {
           return done(null, false);
         }
 
+        debug('User found');
         return user;
       })
       .then(user => {
@@ -56,12 +63,15 @@ export class Service {
           return done(new Error(`User record in the database is missing a '${this.options.passwordField}'`));
         }
 
+        debug('Verifying password');
+
         crypto.compare(password, hash, function(error, result) {
           // Handle 500 server error.
           if (error) {
             return done(error);
           }
 
+          debug('Password correct');
           return done(null, result ? user : false);
         });
       })
@@ -84,6 +94,8 @@ export class Service {
         if (!user) {
           return reject(new errors.NotAuthenticated('Invalid login.'));
         }
+
+        debug('User authenticated via local authentication');
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
         return app.service(options.tokenEndpoint)
@@ -113,13 +125,33 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign({}, defaults, options);
-  debug('configuring local authentication service with options', options);
-
   return function() {
     const app = this;
+    const authConfig = Object.assign({}, app.get('auth'), options);
+    const userEndpoint = authConfig.user.endpoint;
+
+    if (authConfig.token === undefined) {
+      throw new Error('The TokenService needs to be configured before OAuth');
+    }
+
+    const tokenEndpoint = authConfig.token.endpoint;
+    
+    // TODO (EK): Support pulling in a user and token service directly
+    // in order to talk to remote services.
+
+    const {
+      idField,
+      passwordField,
+      usernameField
+    } = authConfig.user;
+
+    options = merge(defaults, authConfig.local, options, { idField, passwordField, usernameField, userEndpoint, tokenEndpoint });
+
+    const successHandler = options.successHandler || successfulLogin;
+
+    debug('configuring local authentication service with options', options);
 
     // Initialize our service with any options it requires
-    app.use(options.localEndpoint, exposeRequestResponse, new Service(options), successfulLogin(options), failedLogin(options));
+    app.use(options.endpoint, new Service(options), setCookie(authConfig), successHandler(options));
   };
 }

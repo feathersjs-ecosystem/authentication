@@ -3,16 +3,20 @@ import jwt from 'jsonwebtoken';
 import hooks from '../hooks';
 import commonHooks from 'feathers-hooks';
 import errors from 'feathers-errors';
+import { successfulLogin, setCookie } from '../middleware';
+import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:token');
 
 // Provider specific config
 const defaults = {
-  payload: [],
+  endpoint: '/auth/token',
+  idField: '_id',
   passwordField: 'password',
   issuer: 'feathers',
   algorithm: 'HS256',
   expiresIn: '1d', // 1 day
+  payload: []
 };
 
 /**
@@ -31,6 +35,8 @@ let _verifyToken = function(options = {}){
         hook.params.data = hook.data;
         return resolve(hook);
       }
+
+      debug('Verifying token');
 
       const token = hook.params.token;
 
@@ -94,20 +100,53 @@ export class Service {
 
   // POST /auth/token
   create(user) {
-    const options = this.options;
+    const {
+      algorithm,
+      expiresIn,
+      notBefore,
+      audience,
+      issuer,
+      jwtid,
+      subject,
+      noTimestamp,
+      header
+    } = this.options;
+    const payload = this.options.payload;
+    const secret = this.options.secret;
+    const options = {
+      algorithm,
+      expiresIn,
+      notBefore,
+      audience,
+      issuer,
+      jwtid,
+      subject,
+      noTimestamp,
+      header
+    };
 
     const data = {
-      [options.idField]: user[options.idField]
+      [this.options.idField]: user[this.options.idField]
     };
 
     // Add any additional payload fields
-    options.payload.forEach(field => data[field] = user[field]);
+    if (payload && Array.isArray(payload)) {
+      payload.forEach(field => data[field] = user[field]);
+    }
 
     // Our before hook determined that we had a valid token or that this
     // was internally called so let's generate a new token with the user
     // id and return both the ID and the token.
-    return new Promise(function(resolve){
-      jwt.sign(data, options.secret, options, token => {
+    return new Promise((resolve, reject) => {
+      debug('Creating JWT using options:', options);
+
+      jwt.sign(data, secret, options, (error, token) => {
+        if (error) {
+          debug('Error signing JWT');
+          return reject(error);
+        }
+
+        debug('New JWT issued with payload', data);
         return resolve( Object.assign(data, { token }) );
       });
     });
@@ -123,17 +162,21 @@ export class Service {
       get: [_verifyToken(options)]
     });
 
+
+    // TODO (EK): I'm not sure these should be done automatically
+    // I think this should be left up to the developer or the
+    // generator.
     this.after({
       create: [
-        hooks.populateUser(options),
+        hooks.populateUser(),
         commonHooks.remove(options.passwordField, () => true)
       ],
       find: [
-        hooks.populateUser(options),
+        hooks.populateUser(),
         commonHooks.remove(options.passwordField, () => true)
       ],
       get: [
-        hooks.populateUser(options),
+        hooks.populateUser(),
         commonHooks.remove(options.passwordField, () => true)
       ]
     });
@@ -146,14 +189,18 @@ export class Service {
 }
 
 export default function(options){
-  options = Object.assign({}, defaults, options);
-
-  debug('configuring token authentication service with options', options);
-
   return function() {
     const app = this;
+    const authConfig = Object.assign({}, app.get('auth'), options);
+    const { idField, passwordField } = authConfig.user;
+
+    options = merge(defaults, authConfig.token, options, { idField, passwordField });
+
+    const successHandler = options.successHandler || successfulLogin;
+
+    debug('configuring token authentication service with options', options);
 
     // Initialize our service with any options it requires
-    app.use(options.tokenEndpoint, new Service(options));
+    app.use(options.endpoint, new Service(options), setCookie(authConfig), successHandler(options));
   };
 }
