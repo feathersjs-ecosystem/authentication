@@ -43,7 +43,7 @@ export default function(opts = {}) {
 
       const handleResponse = function (response) {
         app.set('token', response.token);
-        app.set('user', response.data);
+        app.set('user', response.user);
 
         return Promise.resolve(storage.setItem(config.tokenKey, response.token))
           .then(() => response);

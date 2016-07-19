@@ -13,7 +13,7 @@ export default function(options = {}){
 
       // If it's an after hook attach the user to the response
       if (hook.result) {
-        hook.result.data = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+        hook.result.user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
 
         // remove the id field from the root, it already exists inside the user object
         delete hook.result[options.idField];
@@ -47,7 +47,7 @@ export default function(options = {}){
 
         // If it's an after hook attach the user to the response
         if (hook.result) {
-          hook.result.data = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+          hook.result.user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
 
           // remove the id field from the root, it already exists inside the user object
           delete hook.result[options.idField];

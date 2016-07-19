@@ -24,7 +24,7 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
 
       function successHandler(response) {
         feathersParams(socket).token = response.token;
-        feathersParams(socket).user = response.data;
+        feathersParams(socket).user = response.user;
         socket[emit]('authenticated', response);
         app[emit]('login', response);
       }

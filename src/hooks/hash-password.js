@@ -34,6 +34,8 @@ export default function (options = {}) {
     }
 
     if (password === undefined) {
+      // If it was an internal call then move along otherwise
+      // throw an error that password is required.
       if (!hook.params.provider) {
         return hook;
       }
