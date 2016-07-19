@@ -36,8 +36,10 @@ module.exports = function(options = {}) {
 
     jwt.verify(token, secret, options, function(error, payload) {
       if (error) {
-        // Return a 401 if the token has expired or is invalid.
-        return next(new errors.NotAuthenticated(error));
+        // If the token errors then we won't have a payload so we can
+        // just proceed. The actual verification should be done by
+        // the restrictToAuthenticated middleware or hook.
+        return next();
       }
 
       // Attach our decoded token payload to the request objects and
