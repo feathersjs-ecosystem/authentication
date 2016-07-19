@@ -1,7 +1,7 @@
 {
   "name": "feathers-authentication",
   "description": "Add Authentication to your FeathersJS app.",
-  "version": "0.7.9",
+  "version": "0.8.0-alpha",
   "homepage": "https://github.com/feathersjs/feathers-authentication",
   "main": "lib/",
   "keywords": [
@@ -32,6 +32,7 @@
     "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
     "release:major": "npm version major && npm publish",
+    "release:pre": "npm publish --tag next",
     "compile": "rm -rf lib/ && babel -d lib/ src/",
     "watch": "babel --watch -d lib/ src/",
     "jshint": "jshint src/. test/. --config",
