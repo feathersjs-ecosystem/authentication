@@ -15,6 +15,10 @@ export default function populateUser(options = {}) {
     debug('Attempting to populate user');
     const app = req.app;
 
+    if (app.locals) {
+      delete app.locals.user;
+    }
+
     options = Object.assign({}, defaults, app.get('auth'), options);
 
     const hasID = req.payload && req.payload[options.user.idField] !== undefined;
