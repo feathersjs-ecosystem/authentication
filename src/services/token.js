@@ -116,15 +116,22 @@ export class Service {
     const secret = this.options.secret;
     const options = {
       algorithm,
-      expiresIn,
       notBefore,
       audience,
-      issuer,
       jwtid,
-      subject,
       noTimestamp,
       header
     };
+
+    if (!data.iss) {
+      options.issuer = issuer;
+    }
+    if (!data.sub) {
+      options.subject = subject;
+    }
+    if (!data.exp) {
+      options.expiresIn = expiresIn;
+    }
 
     // const data = {
     //   [this.options.idField]: payload[this.options.idField]
