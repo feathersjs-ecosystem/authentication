@@ -1,3 +1,4 @@
+import omit from 'lodash.omit';
 import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:populate-user');
@@ -5,10 +6,16 @@ const defaults = {
   user: {
     endpoint: 'users',
     idField: '_id'
+  },
+  cookies: {
+    'feathers-session': true,
+    'feathers-jwt': true
   }
 };
 
 export default function populateUser(options = {}) {
+  options = Object.assign({}, defaults, options);
+
   debug('Registering populateUser middleware with options:', options);
 
   return function(req, res, next) {
@@ -45,6 +52,28 @@ export default function populateUser(options = {}) {
 
       next();
     })
-    .catch(next);
+    .catch(error => {
+      // If the user that is associated with the token doesn't
+      // exist anymore then we should make sure to clear cookies.
+      if (error.code === 404) {
+        debug(`User with id '${id}' not found. Clearing cookies.`);
+
+        const cookies = omit(options.cookies, 'enable');
+
+        for (let key of Object.keys(cookies)) {
+          const cookie = cookies[key];
+          
+          // If the cookie is not disabled clear it    
+          if (cookie) {
+            debug(`Clearing '${key}' cookie`);
+            res.clearCookie(key);
+          }
+        }
+        
+        return next();
+      }
+
+      next(error);
+    });
   };
 }

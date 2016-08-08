@@ -177,12 +177,6 @@
             console.error('Error finding data', error);
           });
 
-          app.service('approvedMessages').find({}).then(function(data){
-            console.log('approvedMessages', data);
-          }).catch(function(error){
-            console.error('Error finding data', error);
-          });
-
         }).catch(function(error){
           console.error('Error authenticating!', error);
           alert('Error: ' + error.message);
