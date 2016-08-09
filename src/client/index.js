@@ -26,6 +26,11 @@ export default function(opts = {}) {
       app.set('storage', getStorage(config.storage));
     }
 
+    getJWT(config.tokenKey, config.cookie, this.get('storage')).then(token => {
+      app.set('token', token);
+      app.get('storage').setItem(config.tokenKey, token);
+    });
+
     app.authenticate = function(options = {}) {
       const storage = this.get('storage');
       let getOptions = Promise.resolve(options);
