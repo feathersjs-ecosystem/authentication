@@ -32,7 +32,7 @@ export class Service {
 
       const params = {
         query: {
-          [field]: username
+          [field]: req.body[field],
         }
       };
 
