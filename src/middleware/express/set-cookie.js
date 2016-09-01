@@ -26,9 +26,9 @@ export default function setCookie(options = {}) {
     // XHR request then just skip this. This is primarily for
     // handling the oauth redirects and for us to securely send the
     // JWT to the client in a cookie.
-    if (req.xhr || req.is('json') || !req.accepts('html')) {
-      return next();
-    }
+    // if (req.xhr || req.is('json') || !req.accepts('html')) {
+    //   return next();
+    // }
 
     // If cookies are enabled go through each one and if it
     // is enabled then set it with it's options.
