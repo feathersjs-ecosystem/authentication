@@ -34,11 +34,7 @@ export default function (options = {}) {
     }
 
     if (password === undefined) {
-      if (!hook.params.provider) {
-        return hook;
-      }
-
-      throw new errors.BadRequest(`'${options.passwordField}' field is missing.`);
+      return hook;
     }
 
     return new Promise(function (resolve, reject) {
