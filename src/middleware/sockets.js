@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 
-const debug = Debug('feathers-authentication:middleware');
+const debug = Debug('feathers-authentication:middleware:socket');
 
 function setupSocketHandler(feathersParams, provider, emit, disconnect, app, options) {
   return function(socket) {
@@ -39,7 +39,7 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
 
         // The token gets normalized in hook.params for REST so we'll stay with
         // convention and pass it as params using sockets.
-        app.service(options.token.endpoint)
+        app.service(options.token.service)
           .create({}, params)
           .then(successHandler)
           .catch(errorHandler);
@@ -53,7 +53,7 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
 
         params.req.body = data;
 
-        app.service(options.local.endpoint)
+        app.service(options.local.service)
           .create(data, params)
           .then(successHandler)
           .catch(errorHandler);

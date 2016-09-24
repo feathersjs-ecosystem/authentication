@@ -1,11 +1,12 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:not-authenticated');
+const debug = Debug('feathers-authentication:middleware:not-authenticated');
 
 export default function notAuthenticated(options = {}) {
-  debug('Registering notAuthenticated middleware with options:', options);
+  debug('Registering notAuthenticated middleware');
 
   return function(error, req, res, next) {
+    debug('Running notAuthenticated middleware with options:', options);
     debug('An authentication error occurred.', error);
 
     // clear any previous JWT cookie

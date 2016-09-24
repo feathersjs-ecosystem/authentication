@@ -1,7 +1,7 @@
 import omit from 'lodash.omit';
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:logout');
+const debug = Debug('feathers-authentication:middleware:logout');
 const defaults = {
   cookies: {
     'feathers-session': true,
@@ -10,11 +10,12 @@ const defaults = {
 };
 
 export default function logout(options = {}) {
-  options = Object.assign({}, defaults, options);
+  debug('Registering logout middleware');
 
-  debug('Registering logout middleware with options:', options);
-  
   return function(req, res, next) {
+    options = Object.assign({}, defaults, options);
+    debug('Running logout middleware with options:', options);
+
     req.logout = function() {
       debug('Logging out');
 
@@ -30,7 +31,9 @@ export default function logout(options = {}) {
         }
       }
 
-      delete req.app.locals.user;
+      if (req.app.locals) {
+        delete req.app.locals.user;
+      }
     };
     
     next();

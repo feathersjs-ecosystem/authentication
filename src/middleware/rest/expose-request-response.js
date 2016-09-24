@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:expose-request-response');
+const debug = Debug('feathers-authentication:middleware:expose-request-response');
 
 // Usually this is a big no no but passport requires the
 // request object to inspect req.body and req.query so we

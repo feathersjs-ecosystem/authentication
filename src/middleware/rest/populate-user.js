@@ -1,10 +1,10 @@
 import omit from 'lodash.omit';
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:populate-user');
+const debug = Debug('feathers-authentication:middleware:populate-user');
 const defaults = {
   user: {
-    endpoint: 'users',
+    service: 'users',
     idField: '_id'
   },
   cookies: {
@@ -14,23 +14,27 @@ const defaults = {
 };
 
 export default function populateUser(options = {}) {
-  options = Object.assign({}, defaults, options);
-
-  debug('Registering populateUser middleware with options:', options);
+  debug('Registering populateUser middleware');
 
   return function(req, res, next) {
-    debug('Attempting to populate user');
     const app = req.app;
+
+    options = Object.assign({}, defaults, app.get('auth'), options);
+    debug('Running populateUser middleware with options:', options);
+    debug('Attempting to populate user');
 
     if (app.locals) {
       delete app.locals.user;
     }
+    
+    const field = options.user.idField;
+    const hasID = req.payload && req.payload[field] !== undefined;
+    const id = hasID ? req.payload[field] : undefined;
+    let userService = options.user.service;
 
-    options = Object.assign({}, defaults, app.get('auth'), options);
-
-    const hasID = req.payload && req.payload[options.user.idField] !== undefined;
-    const id = hasID ? req.payload[options.user.idField] : undefined;
-    const userService = options.service || app.service(options.user.endpoint);
+    if (typeof options.user.service === 'string') {
+      userService = app.service(options.user.service);
+    }
 
     // If we don't have an id to look up a
     // user by then move along.
@@ -45,6 +49,8 @@ export default function populateUser(options = {}) {
 
       req.user = user;
       req.feathers.user = user;
+      req.authenticated = true;
+      req.feathers.authenticated = true;
 
       if (app.locals) {
         app.locals.user = user;
@@ -53,6 +59,8 @@ export default function populateUser(options = {}) {
       next();
     })
     .catch(error => {
+      req.authenticated = true;
+      req.feathers.authenticated = true;
       // If the user that is associated with the token doesn't
       // exist anymore then we should make sure to clear cookies.
       if (error.code === 404) {

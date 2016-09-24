@@ -7,7 +7,7 @@ export function connected(app) {
 
     const socket = app.io || app.primus;
 
-    if(!socket) {
+    if (!socket) {
       return reject(new Error(`It looks like no client connection has been configured.`));
     }
 
@@ -87,7 +87,7 @@ export function getJWT(tokenKey, cookieKey, storage) {
 
 // Returns a storage implementation
 export function getStorage(storage) {
-  if(storage) {
+  if (storage) {
     return storage;
   }
 

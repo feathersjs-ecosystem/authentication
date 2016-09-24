@@ -3,7 +3,7 @@ const defaults = {
   as: 'userId'
 };
 
-export default function(options = {}){
+export default function associateCurrentUser(options = {}){
   return function(hook) {
     if (hook.type !== 'before') {
       throw new Error(`The 'associateCurrentUser' hook should only be used as a 'before' hook.`);

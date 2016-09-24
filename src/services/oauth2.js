@@ -4,7 +4,7 @@ import passport from 'passport';
 import { successfulLogin, setCookie } from '../middleware';
 import merge from 'lodash.merge';
 
-const debug = Debug('feathers-authentication:oauth2');
+const debug = Debug('feathers-authentication:services:oauth2');
 
 // Provider specific config
 const defaults = {
@@ -32,7 +32,7 @@ export class Service {
     };
 
     // Find or create the user since they could have signed up via facebook.
-    app.service(options.userEndpoint)
+    app.service(options.userService)
       .find(params)
       .then(users => {
         // Paginated services return the array of results in the data attribute.
@@ -60,7 +60,7 @@ export class Service {
 
           debug(`Updating user: ${id}`);
 
-          return app.service(options.userEndpoint).patch(id, data).then(updatedUser => {
+          return app.service(options.userService).patch(id, data).then(updatedUser => {
             return done(null, updatedUser);
           }).catch(done);
         }
@@ -68,7 +68,7 @@ export class Service {
         debug(`Creating new user with ${options.provider}Id: ${profile.id}`);
 
         // No user found so we need to create one.
-        return app.service(options.userEndpoint).create(data).then(user => {
+        return app.service(options.userService).create(data).then(user => {
           debug(`Created new user: ${user[options.idField]}`);
 
           return done(null, user);
@@ -84,7 +84,7 @@ export class Service {
 
   // For GET /auth/facebook/callback
   get(id, params) {
-    const options = this.options;
+    const options = Object.assign({}, this.options, params);
     let app = this.app;
 
     // TODO (EK): Make this configurable
@@ -109,7 +109,7 @@ export class Service {
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return app.service(options.tokenEndpoint)
+        return app.service(options.tokenService)
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
@@ -146,7 +146,7 @@ export class Service {
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return app.service(options.tokenEndpoint)
+        return app.service(options.tokenService)
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
@@ -180,13 +180,13 @@ export class Service {
   }
 }
 
-export default function(options){
+export default function init (options){
   if (!options.provider) {
     throw new Error('You need to pass a `provider` for your authentication provider');
   }
 
-  if (!options.endpoint) {
-    throw new Error(`You need to provide an 'endpoint' for your ${options.provider} provider`);
+  if (!options.service) {
+    throw new Error(`You need to provide an 'service' for your ${options.provider} provider`);
   }
 
   if (!options.strategy) {
@@ -204,28 +204,33 @@ export default function(options){
   return function() {
     const app = this;
     const authConfig = Object.assign({}, app.get('auth'), options);
-    const userEndpoint = authConfig.user.endpoint;
+    const userService = authConfig.user.service;
+    const OAuthService = options.Service || Service;
 
     // TODO (EK): Support pulling in a user and token service directly
     // in order to talk to remote services.
 
     if (authConfig.token === undefined) {
-      throw new Error('The TokenService needs to be configured before OAuth');
+      throw new Error('The TokenService needs to be configured before the OAuth2 service.');
     }
 
-    const tokenEndpoint = authConfig.token.endpoint;
+    const tokenService = authConfig.token.service;
 
-    options = merge(defaults, authConfig[options.provider], options, { userEndpoint, tokenEndpoint });
+    options = merge(defaults, authConfig[options.provider], options, { userService, tokenService });
 
     const successHandler = options.successHandler || successfulLogin;
 
     options.permissions.state = options.permissions.state === undefined ? true : options.permissions.state;
     options.permissions.session = options.permissions.session === undefined ? false : options.permissions.session;
-    options.callbackURL = options.callbackURL || `${options.endpoint}/${options.callbackSuffix}`;
+    options.callbackURL = options.callbackURL || `${options.service}/${options.callbackSuffix}`;
 
     debug(`configuring ${options.provider} OAuth2 service with options`, options);
 
+    // TODO (EK): throw warning if cookies are not enabled. They are required for OAuth
+
     // Initialize our service with any options it requires
-    app.use(options.endpoint, new Service(options), setCookie(authConfig), successHandler(options));
+    app.use(options.service, new OAuthService(options), setCookie(authConfig), successHandler(options));
   };
 }
+
+init.Service = Service;

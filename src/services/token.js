@@ -6,11 +6,11 @@ import errors from 'feathers-errors';
 import { successfulLogin, setCookie } from '../middleware';
 import merge from 'lodash.merge';
 
-const debug = Debug('feathers-authentication:token');
+const debug = Debug('feathers-authentication:services:token');
 
 // Provider specific config
 const defaults = {
-  endpoint: '/auth/token',
+  service: '/auth/token',
   idField: '_id',
   passwordField: 'password',
   issuer: 'feathers',
@@ -196,7 +196,7 @@ export class Service {
   }
 }
 
-export default function(options){
+export default function init(options){
   return function() {
     const app = this;
     const authConfig = Object.assign({}, app.get('auth'), options);
@@ -208,7 +208,10 @@ export default function(options){
 
     debug('configuring token authentication service with options', options);
 
+    // TODO (EK): Only enable set cookie middleware if cookies are enabled.
     // Initialize our service with any options it requires
-    app.use(options.endpoint, new Service(options), setCookie(authConfig), successHandler(options));
+    app.use(options.service, new Service(options), setCookie(authConfig), successHandler(options));
   };
 }
+
+init.Service = Service;

@@ -3,6 +3,7 @@ import errors from 'feathers-errors';
 
 export default function(options = {}){
   return function(hook) {
+    console.warn(`This 'verifyOrRestrict' hook is now deprecated and will be removed in version feathers-authentication@1.0.0. \nPlease use the 'hasPermissions' hook instead`);
 
     if (hook.type !== 'before') {
       throw new Error(`The 'verifyOrRestrict' hook should only be used as a 'before' hook.`);

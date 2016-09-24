@@ -7,6 +7,8 @@ const defaults = {
 };
 
 export default function(options = {}){
+  console.warn(`This 'restrictToOwner' hook is now deprecated and will be removed in version feathers-authentication@1.0.0. \nPlease use the 'hasPermissions' hook instead`);
+ 
   return function(hook) {
     if (hook.type !== 'before') {
       throw new Error(`The 'restrictToOwner' hook should only be used as a 'before' hook.`);

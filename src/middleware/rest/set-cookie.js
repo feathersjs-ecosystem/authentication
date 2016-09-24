@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import omit from 'lodash.omit';
 
-const debug = Debug('feathers-authentication:set-cookie');
+const debug = Debug('feathers-authentication:middleware:set-cookie');
 const defaults = {
   cookies: {}
 };
@@ -11,15 +11,16 @@ const defaults = {
 // and the HTTP only session cookie.
 
 export default function setCookie(options = {}) {
-  options = Object.assign({}, defaults, options);
-
-  debug('Registering setCookie middleware with options:', options);
-
-  if (options.cookies === undefined) {
-    throw new Error(`'options.cookies' must be provided to setCookie() middleware or explicitly set to 'false'`);
-  }
+  debug('Registering setCookie middleware');
 
   return function(req, res, next) {
+    options = Object.assign({}, defaults, options);
+    debug('Running setCookie middleware with options:', options);
+
+    if (options.cookies === undefined) {
+      throw new Error(`'options.cookies' must be provided to setCookie() middleware or explicitly set to 'false'`);
+    }
+
     const app = req.app;
 
     // NOTE (EK): If we are not dealing with a browser or it was an

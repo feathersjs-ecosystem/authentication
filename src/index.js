@@ -23,7 +23,7 @@ const defaults = {
     enable: false, // Set to true to enable all cookies
     // Used for redirects where JS can pick up the JWT and
     // store it in localStorage (ie. redirect or OAuth)
-    'feathers-jwt': { // set to false to disable this cookie
+    'feathers-oauth': { // set to false to disable this cookie
       httpOnly: false,
       maxAge: THIRTY_SECONDS,
       secure: process.env.NODE_ENV === 'production'
@@ -37,28 +37,33 @@ const defaults = {
   },
   token: {
     name: 'token', // optional
-    endpoint: '/auth/token', // optional
+    service: '/auth/token', // optional
     issuer: 'feathers', // optional
     algorithm: 'HS256', // optional
     expiresIn: '1d', // optional
     secret: null, // required
     successRedirect: null, // optional - no default. If set the default success handler will redirect to location
     failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    successHandler: null, // optional - a middleware to handle things once authentication succeeds
+    successHandler: null // optional - a middleware to handle things once authentication succeeds
   },
   local: {
-    endpoint: '/auth/local', // optional
+    service: '/auth/local', // optional
     successRedirect: null, // optional - no default. If set the default success handler will redirect to location
     failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    successHandler: null, // optional - a middleware to handle things once authentication succeeds
+    successHandler: null // optional - a middleware to handle things once authentication succeeds
   },
   user: {
-    endpoint: '/users', // optional
+    service: '/users', // optional
     idField: '_id', // optional
     usernameField: 'email', // optional
-    passwordField: 'password', // optional
-    service: null // optional - no default. an actual service (can be client side service)
-  }
+    passwordField: 'password' // optional
+  },
+  // oauth: {
+  //   service: '/users', // optional
+  //   idField: '_id', // optional
+  //   usernameField: 'email', // optional
+  //   passwordField: 'password' // optional
+  // }
 };
 
 export default function auth(config = {}) {

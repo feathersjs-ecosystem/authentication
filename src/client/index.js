@@ -21,23 +21,25 @@ export default function(opts = {}) {
 
   return function() {
     const app = this;
+    let storage = app.get('storage');
 
-    if(!app.get('storage')) {
-      app.set('storage', getStorage(config.storage));
+    if (!storage) {
+      storage = getStorage(config.storage);
+      app.set('storage', storage);
     }
 
-    getJWT(config.tokenKey, config.cookie, this.get('storage')).then(token => {
+    // load any pre-existing JWT from localStorage
+    getJWT(config.tokenKey, config.cookie, storage).then(token => {
       app.set('token', token);
       app.get('storage').setItem(config.tokenKey, token);
     });
 
     app.authenticate = function(options = {}) {
-      const storage = this.get('storage');
       let getOptions = Promise.resolve(options);
 
       // If no type was given let's try to authenticate with a stored JWT
       if (!options.type) {
-        getOptions = getJWT(config.tokenKey, config.cookie, this.get('storage')).then(token => {
+        getOptions = getJWT(config.tokenKey, config.cookie, storage).then(token => {
           if (!token) {
             return Promise.reject(new errors.NotAuthenticated(`Could not find stored JWT and no authentication type was given`));
           }
@@ -105,13 +107,28 @@ export default function(opts = {}) {
         throw new Error(`It looks like feathers-hooks isn't configured. It is required before running feathers-authentication.`);
       }
 
-      service.before(hooks.populateParams(config));
+      service.before(hooks.populateParams());
     });
 
     // Set up hook that adds authorization header for REST provider
     if (app.rest) {
       app.mixins.push(function(service) {
         service.before(hooks.populateHeader(config));
+      });
+    }
+
+    // Set up hook that adds the token to the query object for sockets
+    if (app.io || app.primus) {
+      app.mixins.push(function(service) {
+
+        // NOTE (EK): only set up token on the query object if the
+        // service makes requests to a backend. The only data that
+        // gets sent to the server resides in `hook.param.query`
+        // so in order to pass the token for every request type we
+        // need to add it there.
+        if (service.connection) {
+          service.before(hooks.attachTokenToQuery());
+        }
       });
     }
   };

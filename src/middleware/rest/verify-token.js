@@ -1,13 +1,18 @@
 import jwt from 'jsonwebtoken';
-import errors from 'feathers-errors';
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:decode-token');
+const debug = Debug('feathers-authentication:middleware:verify-token');
 
-module.exports = function(options = {}) {
-  debug('Registering decodeToken middleware with options:', options);
+module.exports = function verifyToken(options = {}) {
+  debug('Registering verifyToken middleware');
 
   return function(req, res, next) {
+    const authOptions = req.app.get('auth') || {};
+
+    // Grab the token options here
+    options = Object.assign({}, authOptions.token, options);
+    debug('Running verifyToken middleware with options:', options);
+
     const token = req.feathers.token;
 
     // If no token present then move along
@@ -17,18 +22,14 @@ module.exports = function(options = {}) {
 
     debug('Decoding token');
 
-    const authOptions = req.app.get('auth') || {};
-
-    // Grab the token options here
-    options = Object.assign({}, authOptions.token, options);
-
     const secret = options.secret;
 
     if (!secret) {
       throw new Error(`You need to pass 'options.secret' to the verifyToken() hook or set 'auth.token.secret' it in your config.`);
     }
 
-    // Convert the algorithm value to an array
+    // Convert the algorithm value to an array because that's
+    // what jsonwebtoken expects.
     if (options.algorithm) {
       options.algorithms = [options.algorithm];
       delete options.algorithm;

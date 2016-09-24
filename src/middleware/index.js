@@ -1,18 +1,20 @@
 import { setupSocketIOAuthentication, setupPrimusAuthentication } from './sockets';
-import exposeRequestResponse from './express/expose-request-response';
-import tokenParser from './express/token-parser';
-import decodeToken from './express/decode-token';
-import populateUser from './express/populate-user';
-import setCookie from './express/set-cookie';
-import successfulLogin from './express/login-success';
-import notAuthenticated from './express/not-authenticated';
-import restrictToAuthenticated from './express/restrict-to-authenticated';
-import logout from './express/logout';
+import exposeRequestResponse from './rest/expose-request-response';
+import tokenParser from './rest/token-parser';
+import decodeToken from './rest/decode-token';
+import verifyToken from './rest/verify-token';
+import populateUser from './rest/populate-user';
+import setCookie from './rest/set-cookie';
+import successfulLogin from './rest/login-success';
+import notAuthenticated from './rest/not-authenticated';
+import restrictToAuthenticated from './rest/restrict-to-authenticated';
+import logout from './rest/logout';
 
 export default {
   exposeRequestResponse,
   tokenParser,
   decodeToken,
+  verifyToken,
   populateUser,
   setCookie,
   successfulLogin,

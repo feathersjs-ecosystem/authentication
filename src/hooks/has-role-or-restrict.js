@@ -8,7 +8,9 @@ const defaults = {
   owner: false
 };
 
-export default function(options = {}){
+export default function(options = {}) {
+  console.warn(`This 'hasRoleOrRestrict' hook is now deprecated and will be removed in version feathers-authentication@1.0.0. \nPlease use the 'hasPermissions' hook instead`);
+
   if (!options.roles || !options.roles.length) {
     throw new Error(`You need to provide an array of 'roles' to check against.`);
   }

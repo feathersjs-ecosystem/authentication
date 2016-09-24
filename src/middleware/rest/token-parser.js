@@ -5,7 +5,7 @@
 import omit from 'lodash.omit';
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:token-parser');
+const debug = Debug('feathers-authentication:middleware:token-parser');
 const defaults = {
   header: 'Authorization',
   token: {
@@ -15,6 +15,8 @@ const defaults = {
 };
 
 export default function tokenParser(options = {}) {
+  debug('Registering tokenParser middleware');
+
   options = Object.assign({}, defaults, options);
   const name = options.token.name;
 
@@ -26,9 +28,8 @@ export default function tokenParser(options = {}) {
     throw new Error(`'options.token.name' must be provided to tokenParser() middleware`);
   }
 
-  debug('Registering tokenParser middleware with options:', options);
-
   return function(req, res, next) {
+    debug('Running tokenParser middleware with options:', options);
     debug('Parsing token');
     const app = req.app;
 
@@ -77,8 +78,8 @@ export default function tokenParser(options = {}) {
       token = req.query[name];
       delete req.query[name];
 
-      console.warn(`You are passing your token in the query string. This isn't very secure and is not recommended.`);
-      console.warn(`Instead you should pass it as an Authorization header. See docs.feathersjs.com for more details.`);
+      console.warn(`You are passing your token in the query string. This not secure and is not recommended.`);
+      console.warn(`Instead you should pass it as an Authorization header using HTTPS in production. See docs.feathersjs.com for more details.`);
     }
 
     // Tack it on to our express and feathers request object
