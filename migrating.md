@@ -27,6 +27,8 @@ If you want to only turn on logs for a specific hook, middleware or service you 
 
 ### New Options
 
+TODO (EK)
+
 - `shouldSetupMiddleware` - by default, middleware for HTTP(s) and socket requests is set up for you automatically. If you need to alter the default middleware or order you will need to set this option to `false` and register the middleware yourself. You can see how it is registered [here]().
 
 ### Better Permissions Control (WIP)
@@ -186,7 +188,9 @@ app.configure(authentication(options))
     .configure(oauth2(options))
 ```
 
-### You must configure register all middleware explicitly
+### You must configure register all middleware explicitly (WIP)
+
+TODO
 
 ### You no longer register some hooks
 
@@ -219,10 +223,11 @@ Much better! :smile:
 
 ### Removed Options
 
+TODO (EK)
+
 We've changed up some of the possible authentication options.
 
-- TODO
-- 
+- `cookie`
 
 ## Deprecations
 
