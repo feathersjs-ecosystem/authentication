@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import createApplication from '../test-server';
 import jwt from 'jsonwebtoken';
 
-describe.skip('Primus authentication', function() {
+describe('Primus authentication', function() {
   this.timeout(15000);
   const host = 'http://localhost:8888';
 

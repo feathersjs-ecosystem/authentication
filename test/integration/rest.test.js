@@ -3,7 +3,7 @@ import request from 'request';
 import createApplication from '../test-server';
 import jwt from 'jsonwebtoken';
 
-describe.skip('REST authentication', function() {
+describe('REST authentication', function() {
   this.timeout(10000);
   const host = 'http://localhost:8888';
 

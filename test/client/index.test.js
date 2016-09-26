@@ -23,121 +23,100 @@ const settings = {
 };
 const setupTests = initApp => {
   let app;
+  let options;
 
-  beforeEach(() => app = initApp());
-
-  it('local username password authentication', done => {
-    app.authenticate({
-        type: 'local',
-        email, password
-      }).then(response => {
-        expect(response.token).to.not.equal(undefined);
-        expect(response.data).to.not.equal(undefined);
-
-        expect(app.get('token')).to.deep.equal(response.token);
-        expect(app.get('user')).to.deep.equal(response.data);
-
-        done();
-      }).catch(done);
-  });
-
-  it('local username password authentication and access to protected service', done => {
-    app.authenticate({
-        type: 'local',
-        email, password
-      }).then(response => {
-        expect(response.token).to.not.equal(undefined);
-        expect(response.data).to.not.equal(undefined);
-
-        return app.service('messages').create({ text: 'auth test message' })
-          .then(msg => {
-            expect(typeof msg.id).to.not.equal(undefined);
-            done();
-          });
-      }).catch(done);
-  });
-
-  it('local authentication with wrong credentials fails', done => {
-    app.authenticate({
-        type: 'local',
-        email,
-        password: 'this is wrong'
-      })
-      .then(() => done(new Error('Should never get here')))
-      .catch(error => {
-        expect(error.name).to.equal('NotAuthenticated');
-        expect(error.code).to.equal(401);
-        done();
-      });
-  });
-
-  it('authentication with no options and no stored token fails', done => {
-    app.authenticate()
-      .then(() => done(new Error('Should never get here')))
-      .catch(error => {
-        expect(error.message).to.equal('Could not find stored JWT and no authentication type was given');
-        expect(error.code).to.equal(401);
-        done();
-      });
-  });
-
-  it('uses localStorage compatible stores', done => {
-    const oldStorage = app.get('storage');
-    app.set('storage', localstorage);
-
-    app.authenticate({
-        type: 'local',
-        email, password
-      }).then(response => {
-        expect(response.token).to.equal(localstorage.getItem('feathers-jwt'));
-        app.set('storage', oldStorage);
-        done();
-      });
-  });
-
-  it('token is stored and re-authentication with stored token works', done => {
-    app.authenticate({
-        type: 'local',
-        email, password
-      }).then(response => {
-        expect(response.token).to.not.equal(undefined);
-        expect(response.data).to.not.equal(undefined);
-
-        return app.authenticate().then(response => {
-          expect(app.get('token')).to.equal(response.token);
-          expect(app.get('user')).to.deep.equal(response.data);
-        }).then(done);
-      }).catch(done);
-  });
-
-  it('.logout works, does not grant access to protected service and token is removed from localstorage', done => {
-    app.authenticate({
+  beforeEach(() => {
+    options = {
       type: 'local',
-      email, password
-    }).then(response => {
+      email,
+      password
+    };
+    app = initApp();
+  });
+
+  it('local username password authentication', () => {
+    return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);
       expect(response.data).to.not.equal(undefined);
 
-      return app.logout().then(() => {
-        expect(app.get('token')).to.equal(null);
-        expect(app.get('user')).to.equal(null);
+      expect(app.get('token')).to.deep.equal(response.token);
+      expect(app.get('user')).to.deep.equal(response.data);
+    });
+  });
 
+  it('local username password authentication and access to protected service', () => {
+    return app.authenticate(options).then(response => {
+      expect(response.token).to.not.equal(undefined);
+      expect(response.data).to.not.equal(undefined);
 
-        return Promise.resolve(app.get('storage').getItem('feathers-jwt')).then(token => {
-          expect(token).to.equal(undefined);
-          app.service('messages').create({ text: 'auth test message' })
-            .then(done)
-            .catch(error => {
-              expect(error.code).to.equal(401);
-              done();
-            });
+      return app.service('messages').create({ text: 'auth test message' })
+        .then(msg => {
+          expect(typeof msg.id).to.not.equal(undefined);
         });
+    });
+  });
+
+  it('local authentication with wrong credentials fails', () => {
+    options.password = 'this is wrong';
+    return app.authenticate(options).catch(error => {
+      expect(error.name).to.equal('NotAuthenticated');
+      expect(error.code).to.equal(401);
+    });
+  });
+
+  it('authentication with no options and no stored token fails', () => {
+    return app.authenticate().catch(error => {
+      expect(error.message).to.equal('Could not find stored JWT and no authentication type was given');
+      expect(error.code).to.equal(401);
+    });
+  });
+
+  it('uses localStorage compatible stores', () => {
+    const oldStorage = app.get('storage');
+    app.set('storage', localstorage);
+
+    return app.authenticate(options).then(response => {
+      expect(response.token).to.equal(localstorage.getItem('feathers-jwt'));
+      app.set('storage', oldStorage);
+    });
+  });
+
+  it('token is stored and re-authentication with stored token works', () => {
+    return app.authenticate(options).then(response => {
+      expect(response.token).to.not.equal(undefined);
+      expect(response.data).to.not.equal(undefined);
+
+      return app.authenticate().then(response => {
+        expect(app.get('token')).to.equal(response.token);
+        expect(app.get('user')).to.deep.equal(response.data);
       });
-    }).catch(done);
+    });
+  });
+
+  it('.logout works, does not grant access to protected service and token is removed from localstorage', () => {
+    return app.authenticate(options).then(response => {
+      expect(response.token).to.not.equal(undefined);
+      expect(response.data).to.not.equal(undefined);
+
+      return app.logout();
+    })
+    .then(() => {
+      expect(app.get('token')).to.equal(null);
+      expect(app.get('user')).to.equal(null);
+
+      return Promise.resolve(app.get('storage').getItem('feathers-jwt'));
+    })
+    .then(token => {
+      expect(token).to.equal(undefined);
+
+      return app.service('messages').create({ text: 'auth test message' }).catch(error => {
+        expect(error.code).to.equal(401);
+      });
+    });
   });
 };
 
-describe.skip('Client side authentication', () => {
+describe.only('Client side authentication', () => {
   it('adds .authenticate, and .logout', () => {
     const app = feathers().configure(authentication());
 

@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 import createApplication from '../test-server';
 import jwt from 'jsonwebtoken';
 
-describe.skip('Socket.io authentication', function() {
+describe('Socket.io authentication', function() {
   this.timeout(15000);
   const host = 'http://localhost:8888';
 
