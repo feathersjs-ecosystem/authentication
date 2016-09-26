@@ -46,7 +46,10 @@ messageService.create({text: 'Nobody buys anything'}, {}, function(){});
 messageService.create({text: 'Bar declared massive success'}, {}, function(){});
 
 messageService.before({
-  all: [authentication.hooks.restrictToAuthenticated()]
+  all: [
+    authentication.hooks.isAuthenticated(),
+    authentication.hooks.hasPermissions('messages')
+  ]
 });
 
 var userService = app.service('users');
@@ -61,7 +64,7 @@ userService.before({
 var User = {
   email: 'admin@feathersjs.com',
   password: 'admin',
-  roles: ['admin']
+  permissions: ['*']
 };
 
 userService.create(User, {}).then(function(user) {

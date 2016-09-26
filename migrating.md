@@ -221,13 +221,18 @@ messageService.before({
 
 Much better! :smile:
 
-### Removed Options
+### Hooks always return promises
+
+This shouldn't really affect you unless you are testing, modifying or wrapping existing hooks but they **always** return promises now. This makes the interface more consistent, making it easier to test and reason as to what a hook does.
+
+### Removed Configuration Options
 
 TODO (EK)
 
 We've changed up some of the possible authentication options.
 
 - `cookie`
+- 
 
 ## Deprecations
 

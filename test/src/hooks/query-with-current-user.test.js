@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { queryWithCurrentUser } from '../../../src/hooks';
 
-describe('queryWithCurrentUser', () => {
+describe('hooks:queryWithCurrentUser', () => {
   describe('when not called as a before hook', () => {
     it('throws an error', () => {
       let hook = {

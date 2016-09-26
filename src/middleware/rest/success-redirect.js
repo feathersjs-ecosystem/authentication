@@ -1,9 +1,9 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:middleware:login-success');
+const debug = Debug('feathers-authentication:middleware:success-redirect');
 
-export default function loginSuccess(options = {}) {
-  debug('Registering loginSuccess middleware');
+export default function successRedirect(options = {}) {
+  debug('Registering successRedirect middleware');
 
   return function(req, res, next) {
     if (options.successRedirect !== undefined) {    

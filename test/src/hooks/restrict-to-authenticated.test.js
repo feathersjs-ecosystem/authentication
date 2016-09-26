@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { restrictToAuthenticated } from '../../../src/hooks';
 
-describe('restrictToAuthenticated', () => {
+describe('hooks:restrictToAuthenticated', () => {
   describe('when not called as a before hook', () => {
     it('throws an error', () => {
       let hook = {

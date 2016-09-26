@@ -5,7 +5,7 @@ const debug = Debug('feathers-authentication:middleware:logout');
 const defaults = {
   cookies: {
     'feathers-session': true,
-    'feathers-jwt': true
+    'feathers-oauth': true
   }
 };
 

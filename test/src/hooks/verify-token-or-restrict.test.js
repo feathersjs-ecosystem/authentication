@@ -11,7 +11,7 @@ const mockService = {
   find: mockFind
 };
 
-describe('verifyOrRestrict', () => {
+describe('hooks:verifyOrRestrict', () => {
   describe('when not called as a before hook', () => {
     it('throws an error', () => {
       let hook = {

@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import merge from 'lodash.merge';
 
@@ -37,7 +36,7 @@ const defaults = {
   },
   token: {
     name: 'token', // optional
-    service: '/auth/token', // optional
+    service: '/auth/token', // optional string or Service
     issuer: 'feathers', // optional
     algorithm: 'HS256', // optional
     expiresIn: '1d', // optional
@@ -47,19 +46,19 @@ const defaults = {
     successHandler: null // optional - a middleware to handle things once authentication succeeds
   },
   local: {
-    service: '/auth/local', // optional
+    service: '/auth/local', // optional string or Service
     successRedirect: null, // optional - no default. If set the default success handler will redirect to location
     failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
     successHandler: null // optional - a middleware to handle things once authentication succeeds
   },
   user: {
-    service: '/users', // optional
+    service: '/users', // optional string or Service
     idField: '_id', // optional
     usernameField: 'email', // optional
     passwordField: 'password' // optional
   },
   // oauth: {
-  //   service: '/users', // optional
+  //   service: '/auth/<provider>', // optional string or Service
   //   idField: '_id', // optional
   //   usernameField: 'email', // optional
   //   passwordField: 'password' // optional
@@ -74,7 +73,7 @@ export default function auth(config = {}) {
     // If cookies are enabled then load our defaults and
     // any passed in options
     if (config.cookies && config.cookies.enable) {
-      config.cookies = Object.assign({}, defaults.cookies, config.cookies);
+      config.cookies = merge(defaults.cookies, config.cookies);
     }
 
     // Merge and flatten options
@@ -94,9 +93,9 @@ export default function auth(config = {}) {
     if (app.rest && authOptions.setupMiddleware) {
       debug('registering REST authentication middleware');
       
-      // Be able to parse cookies it that is enabled
+      // Be able to parse cookies it they are enabled
       if (authOptions.cookies.enable) {
-        app.use(cookieParser());
+        app.use(mw.cookieParser());
       }
 
       // Expose Express req & res objects to hooks and services
@@ -104,7 +103,7 @@ export default function auth(config = {}) {
       // Parse token from header, cookie, or request objects
       app.use(mw.tokenParser(authOptions));
       // Verify and decode a JWT if it is present 
-      app.use(mw.decodeToken(authOptions));
+      app.use(mw.verifyToken(authOptions));
       // Make the Passport user available for REST services.
       app.use(mw.populateUser(authOptions));
       // Register server side logout middleware

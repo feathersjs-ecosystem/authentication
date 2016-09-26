@@ -11,7 +11,7 @@ const mockService = {
   find: mockFind
 };
 
-describe('populateOrRestrict', () => {
+describe('hooks:populateOrRestrict', () => {
   describe('when payload is missing', () => {
     it('should merge the restriction in to the query and call find', () => {
       let hook = {

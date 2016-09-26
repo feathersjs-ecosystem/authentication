@@ -137,7 +137,7 @@ const setupTests = initApp => {
   });
 };
 
-describe('Client side authentication', () => {
+describe.skip('Client side authentication', () => {
   it('adds .authenticate, and .logout', () => {
     const app = feathers().configure(authentication());
 

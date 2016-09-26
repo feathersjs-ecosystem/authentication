@@ -3,7 +3,7 @@ import errors from 'feathers-errors';
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import { successfulLogin, setCookie } from '../middleware';
+import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:services:local');
@@ -19,7 +19,7 @@ const defaults = {
   // successHandler: null //optional - a middleware to call when successfully authenticated
 };
 
-export class Service {
+export class LocalService {
   constructor(options = {}) {
     this.options = options;
   }
@@ -142,7 +142,7 @@ export default function init(options){
       throw new Error('The TokenService needs to be configured before the Local auth service.');
     }
     
-    const LocalService = authConfig.local.Service || Service;
+    const Service = authConfig.local.Service || LocalService;
     const userService = authConfig.user.service;
     const tokenService = authConfig.token.service;
 
@@ -154,14 +154,14 @@ export default function init(options){
 
     options = merge(defaults, authConfig.local, options, { idField, passwordField, usernameField, userService, tokenService });
 
-    const successHandler = options.successHandler || successfulLogin;
+    const successHandler = options.successHandler || successRedirect;
 
     debug('configuring local authentication service with options', options);
 
     // TODO (EK): Only enable set cookie middleware if cookies are enabled.
     // Initialize our service with any options it requires
-    app.use(options.service, new LocalService(options), setCookie(authConfig), successHandler(options));
+    app.use(options.service, new Service(options), setCookie(authConfig), successHandler(options));
   };
 }
 
-init.Service = Service;
+init.Service = LocalService;

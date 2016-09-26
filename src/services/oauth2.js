@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 import passport from 'passport';
-import { successfulLogin, setCookie } from '../middleware';
+import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:services:oauth2');
@@ -16,7 +16,7 @@ const defaults = {
   }
 };
 
-export class Service {
+export class OAuth2Service {
   constructor(options = {}) {
     this.options = options;
   }
@@ -61,6 +61,7 @@ export class Service {
           debug(`Updating user: ${id}`);
 
           return app.service(options.userService).patch(id, data).then(updatedUser => {
+            // TODO (EK): Handle paginated services?
             return done(null, updatedUser);
           }).catch(done);
         }
@@ -70,7 +71,7 @@ export class Service {
         // No user found so we need to create one.
         return app.service(options.userService).create(data).then(user => {
           debug(`Created new user: ${user[options.idField]}`);
-
+          // TODO (EK): Handle paginated services?
           return done(null, user);
         }).catch(done);
       }).catch(done);
@@ -205,7 +206,7 @@ export default function init (options){
     const app = this;
     const authConfig = Object.assign({}, app.get('auth'), options);
     const userService = authConfig.user.service;
-    const OAuthService = options.Service || Service;
+    const Service = options.Service || OAuth2Service;
 
     // TODO (EK): Support pulling in a user and token service directly
     // in order to talk to remote services.
@@ -218,7 +219,7 @@ export default function init (options){
 
     options = merge(defaults, authConfig[options.provider], options, { userService, tokenService });
 
-    const successHandler = options.successHandler || successfulLogin;
+    const successHandler = options.successHandler || successRedirect;
 
     options.permissions.state = options.permissions.state === undefined ? true : options.permissions.state;
     options.permissions.session = options.permissions.session === undefined ? false : options.permissions.session;
@@ -229,8 +230,8 @@ export default function init (options){
     // TODO (EK): throw warning if cookies are not enabled. They are required for OAuth
 
     // Initialize our service with any options it requires
-    app.use(options.service, new OAuthService(options), setCookie(authConfig), successHandler(options));
+    app.use(options.service, new Service(options), setCookie(authConfig), successHandler(options));
   };
 }
 
-init.Service = Service;
+init.Service = OAuth2Service;

@@ -5,14 +5,14 @@ import { populateUser } from '../../../src/hooks';
 
 chai.use(sinonChai);
 
-const fn = sinon.stub();
 const User = { name: 'Mary' };
+const fn = sinon.stub().returns({ user: User });
 const mockGet = sinon.stub().returns(Promise.resolve(User));
 const mockService = sinon.stub().returns({
   get: mockGet
 });
 
-describe('populateUser', () => {
+describe('hooks:populateUser', () => {
   describe('when user id is missing', () => {
     it('does not do anything', done => {
       let hook = {
@@ -70,9 +70,9 @@ describe('populateUser', () => {
         }).catch(done);
       });
 
-      it('adds the user to result.data', done => {
+      it('adds the user to result.user', done => {
         populateUser()(hook).then(hook => {
-          expect(hook.result.data).to.deep.equal(User);
+          expect(hook.result.user).to.deep.equal(User);
           done();
         }).catch(done);
       });
@@ -89,11 +89,13 @@ describe('populateUser', () => {
       beforeEach(() => {
         hook.result.id = '2';
         hook.app.get = function() {
-          return { idField: 'id', userEndpoint: 'api/users' };
+          return {
+            user: { idField: 'id', endpoint: 'api/users' }
+          };
         };
       });
 
-      it('calls service with correct userEndpoint', done => {
+      it('calls service with correct endpoint', done => {
         populateUser()(hook).then(() => {
           expect(mockService).to.be.calledWith('api/users');
           done();
@@ -114,9 +116,9 @@ describe('populateUser', () => {
         }).catch(done);
       });
 
-      it('adds the user to result.data', done => {
+      it('adds the user to result.user', done => {
         populateUser()(hook).then(hook => {
-          expect(hook.result.data).to.deep.equal(User);
+          expect(hook.result.user).to.deep.equal(User);
           done();
         }).catch(done);
       });
@@ -134,10 +136,10 @@ describe('populateUser', () => {
 
       beforeEach(() => {
         hook.result.id = '2';
-        options = { idField: 'id', userEndpoint: 'api/users' };
+        options = { idField: 'id', endpoint: 'api/users' };
       });
 
-      it('calls service with correct userEndpoint', done => {
+      it('calls service with correct endpoint', done => {
         populateUser(options)(hook).then(() => {
           expect(mockService).to.be.calledWith('api/users');
           done();
@@ -158,9 +160,9 @@ describe('populateUser', () => {
         }).catch(done);
       });
 
-      it('adds the user to result.data', done => {
+      it('adds the user to result.user', done => {
         populateUser(options)(hook).then(hook => {
-          expect(hook.result.data).to.deep.equal(User);
+          expect(hook.result.user).to.deep.equal(User);
           done();
         }).catch(done);
       });

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import { verifyToken } from '../../../src/hooks';
 
-describe('verifyToken', () => {
+describe('hooks:verifyToken', () => {
   describe('when not called as a before hook', () => {
     it('throws an error', () => {
       let hook = {

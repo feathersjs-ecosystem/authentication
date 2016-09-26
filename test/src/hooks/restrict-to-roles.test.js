@@ -6,7 +6,7 @@ let MockData;
 let MockService;
 let options;
 
-describe('restrictToRoles', () => {
+describe('hooks:restrictToRoles', () => {
   beforeEach(() => {
     MockData = {
       userId: '1',

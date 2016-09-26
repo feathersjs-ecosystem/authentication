@@ -2,6 +2,7 @@ import feathers from 'feathers';
 import primus from 'feathers-primus';
 import socketio from 'feathers-socketio';
 import rest from 'feathers-rest';
+import errorHandler from 'feathers-errors/handler';
 import feathersHooks from 'feathers-hooks';
 import authentication from '../src/';
 import { hooks } from '../src/';
@@ -18,14 +19,11 @@ export default function(settings, username, password, useSocketio, next) {
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .configure(authentication(settings))
+    .configure(authentication.TokenService(settings))
+    .configure(authentication.LocalService(settings))
     .use('/users', memory())
     .use('/messages', memory())
-    .use('/', feathers.static(__dirname))
-    /*jshint unused: false*/
-    .use(function(error, req, res, next){
-      res.status(error.code);
-      res.json(error);
-    });
+    .use(errorHandler());
 
   let server = app.listen(8888);
 
@@ -54,9 +52,7 @@ export default function(settings, username, password, useSocketio, next) {
       .then(() => {
         messageService.before({
           all: [
-            hooks.verifyToken(),
-            hooks.populateUser(),
-            hooks.restrictToAuthenticated()
+            hooks.isAuthenticated()
           ]
         });
 

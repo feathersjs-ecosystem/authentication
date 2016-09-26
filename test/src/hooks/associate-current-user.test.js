@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { associateCurrentUser } from '../../../src/hooks';
 
-describe('associateCurrentUser', () => {
+describe('hooks:associateCurrentUser', () => {
   describe('when not called as a before hook', () => {
     it('throws an error', () => {
       let hook = {

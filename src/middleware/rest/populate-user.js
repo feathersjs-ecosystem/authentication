@@ -9,7 +9,7 @@ const defaults = {
   },
   cookies: {
     'feathers-session': true,
-    'feathers-jwt': true
+    'feathers-oauth': true
   }
 };
 
@@ -30,16 +30,17 @@ export default function populateUser(options = {}) {
     const field = options.user.idField;
     const hasID = req.payload && req.payload[field] !== undefined;
     const id = hasID ? req.payload[field] : undefined;
-    let userService = options.user.service;
-
-    if (typeof options.user.service === 'string') {
-      userService = app.service(options.user.service);
-    }
 
     // If we don't have an id to look up a
     // user by then move along.
     if (id === undefined) {
       return next();
+    }
+
+    let userService = options.user.service;
+
+    if (typeof options.user.service === 'string') {
+      userService = app.service(options.user.service);
     }
 
     debug(`Populating user ${id}`);
@@ -49,8 +50,6 @@ export default function populateUser(options = {}) {
 
       req.user = user;
       req.feathers.user = user;
-      req.authenticated = true;
-      req.feathers.authenticated = true;
 
       if (app.locals) {
         app.locals.user = user;
@@ -59,8 +58,6 @@ export default function populateUser(options = {}) {
       next();
     })
     .catch(error => {
-      req.authenticated = true;
-      req.feathers.authenticated = true;
       // If the user that is associated with the token doesn't
       // exist anymore then we should make sure to clear cookies.
       if (error.code === 404) {

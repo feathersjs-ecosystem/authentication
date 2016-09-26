@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hooks from '../../../src/hooks';
 
-describe('Auth hooks', () => {
+describe('hooks', () => {
   it('is CommonJS compatible', () => {
     expect(typeof require('../../../lib/hooks')).to.equal('object');
   });
@@ -26,30 +26,44 @@ describe('Auth hooks', () => {
     expect(typeof hooks.queryWithCurrentUser).to.equal('function');
   });
 
-  it('exposes restrictToAuthenticated hook', () => {
-    expect(typeof hooks.restrictToAuthenticated).to.equal('function');
+  it('exposes isAuthenticated hook', () => {
+    expect(typeof hooks.isAuthenticated).to.equal('function');
   });
 
-  it('exposes restrictToRoles hook', () => {
-    expect(typeof hooks.restrictToRoles).to.equal('function');
-  });
-
-  it('exposes restrictToOwner hook', () => {
-    expect(typeof hooks.restrictToOwner).to.equal('function');
+  it('exposes hasPermissions hook', () => {
+    expect(typeof hooks.hasPermissions).to.equal('function');
   });
 
   it('exposes verifyToken hook', () => {
     expect(typeof hooks.verifyToken).to.equal('function');
   });
 
+  // deprecated
+  it('exposes restrictToAuthenticated hook', () => {
+    expect(typeof hooks.restrictToAuthenticated).to.equal('function');
+  });
+
+  // deprecated
+  it('exposes restrictToRoles hook', () => {
+    expect(typeof hooks.restrictToRoles).to.equal('function');
+  });
+
+  // deprecated
+  it('exposes restrictToOwner hook', () => {
+    expect(typeof hooks.restrictToOwner).to.equal('function');
+  });
+
+  // deprecated
   it('exposes verifyOrRestrict hook', () => {
     expect(typeof hooks.verifyOrRestrict).to.equal('function');
   });
 
+  // deprecated
   it('exposes populateOrRestrict hook', () => {
     expect(typeof hooks.populateOrRestrict).to.equal('function');
   });
 
+  // deprecated
   it('exposes hasRoleOrRestrict hook', () => {
     expect(typeof hooks.hasRoleOrRestrict).to.equal('function');
   });

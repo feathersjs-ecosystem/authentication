@@ -1,6 +1,8 @@
 /**
  * Populate the current user associated with the JWT
  */
+import merge from 'lodash.merge';
+
 const defaults = {
   endpoint: '/users',
   idField: '_id'
@@ -24,7 +26,7 @@ export default function(options = {}){
 
     let id;
 
-    options = Object.assign({}, defaults, hook.app.get('auth').user, options);
+    options = merge(defaults, hook.app.get('auth').user, options);
 
     // If it's an after hook grab the id from the result
     if (hook.type === 'after') {

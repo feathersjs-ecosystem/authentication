@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import hooks from '../hooks';
 import commonHooks from 'feathers-hooks';
 import errors from 'feathers-errors';
-import { successfulLogin, setCookie } from '../middleware';
+import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:services:token');
@@ -57,7 +57,7 @@ let _verifyToken = function(options = {}){
   };
 };
 
-export class Service {
+export class TokenService {
   constructor(options = {}) {
     this.options = options;
   }
@@ -204,14 +204,14 @@ export default function init(options){
 
     options = merge(defaults, authConfig.token, options, { passwordField });
 
-    const successHandler = options.successHandler || successfulLogin;
+    const successHandler = options.successHandler || successRedirect;
 
     debug('configuring token authentication service with options', options);
 
     // TODO (EK): Only enable set cookie middleware if cookies are enabled.
     // Initialize our service with any options it requires
-    app.use(options.service, new Service(options), setCookie(authConfig), successHandler(options));
+    app.use(options.service, new TokenService(options), setCookie(authConfig), successHandler(options));
   };
 }
 
-init.Service = Service;
+init.Service = TokenService;

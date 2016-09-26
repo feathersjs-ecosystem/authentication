@@ -1,19 +1,16 @@
 import { expect } from 'chai';
 import { hashPassword } from '../../../src/hooks';
 
-describe('hashPassword', () => {
+describe('hooks:hashPassword', () => {
   describe('when not called as a before hook', () => {
     it('throws an error', () => {
       let hook = {
         type: 'after'
       };
 
-      try {
-        hashPassword()(hook);
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
+      return hashPassword()(hook).catch(error => {
+        expect(error).to.not.equal(undefined);  
+      });
     });
   });
 
@@ -26,14 +23,9 @@ describe('hashPassword', () => {
         }
       };
 
-      try {
-        var returnedHook = hashPassword()(hook);
-        expect(returnedHook).to.deep.equal(hook);
-      }
-      catch(error) {
-        // It should never get here
-        expect(true).to.equal(false);
-      }
+      return hashPassword()(hook).then(returnedHook => {
+        expect(returnedHook).to.deep.equal(hook);  
+      });
     });
   });
 
@@ -51,28 +43,10 @@ describe('hashPassword', () => {
       };
     });
 
-    describe('when provider does not exist', () => {
-      it('does not do anything', () => {
-        try {
-          var returnedHook = hashPassword()(hook);
-          expect(returnedHook).to.deep.equal(hook);
-        }
-        catch(error) {
-          // It should never get here
-          expect(true).to.equal(false);
-        }
+    it('does not do anything', () => {
+      return hashPassword()(hook).then(returnedHook => {
+        expect(returnedHook).to.deep.equal(hook);  
       });
-    });
-
-    it('throws an error', () => {
-      hook.params.provider = 'rest';
-
-      try {
-        hashPassword()(hook);
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
     });
   });
 

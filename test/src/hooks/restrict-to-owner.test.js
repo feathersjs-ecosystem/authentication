@@ -7,7 +7,7 @@ let MockData2;
 let MockService;
 let MockService2;
 
-describe('restrictToOwner', () => {
+describe('hooks:restrictToOwner', () => {
   beforeEach(() => {
     MockData = {
       userId: '1',
