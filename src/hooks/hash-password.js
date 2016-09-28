@@ -1,6 +1,4 @@
-import errors from 'feathers-errors';
 import bcrypt from 'bcryptjs';
-
 
 const defaults = { passwordField: 'password' };
 
