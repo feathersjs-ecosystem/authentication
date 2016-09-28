@@ -55,7 +55,7 @@
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.1.18",
+    "babel-cli": "^6.16.0",
     "babel-core": "^6.1.21",
     "babel-plugin-add-module-exports": "^0.2.0",
     "babel-preset-es2015": "^6.1.18",
