@@ -18,7 +18,7 @@ export default function setCookie(options = {}) {
     debug('Running setCookie middleware with options:', options);
 
     if (options.cookies === undefined) {
-      throw new Error(`'options.cookies' must be provided to setCookie() middleware or explicitly set to 'false'`);
+      next(new Error(`'options.cookies' must be provided to setCookie() middleware or explicitly set to 'false'`));
     }
 
     const app = req.app;

@@ -9,7 +9,7 @@ import merge from 'lodash.merge';
 const debug = Debug('feathers-authentication:services:local');
 const defaults = {
   service: '/auth/local',
-  tokenService: '/auth/local',
+  tokenService: '/auth/token',
   userService: '/users',
   idField: '_id',
   usernameField: 'email',

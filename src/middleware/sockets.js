@@ -25,6 +25,7 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
       function successHandler(response) {
         feathersParams(socket).token = response.token;
         feathersParams(socket).user = response.user;
+        feathersParams(socket).authenticated = true;
         socket[emit]('authenticated', response);
         app[emit]('login', response);
       }
@@ -66,9 +67,11 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
       const params = feathersParams(socket);
       const { token, user } = params;
       
-      app[emit]('logout', { token, user });
+      app.emit('logout', { token, user });
       delete params.token;
       delete params.user;
+      delete params.permitted;
+      delete params.authenticated;
     });
 
     socket.on('logout', function(callback = () => {}) {
@@ -81,9 +84,11 @@ function setupSocketHandler(feathersParams, provider, emit, disconnect, app, opt
         const params = feathersParams(socket);
         const { token, user } = params;
         
-        app[emit]('logout', { token, user });
+        app.emit('logout', { token, user });
         delete params.token;
         delete params.user;
+        delete params.permitted;
+        delete params.authenticated;
       }
       catch(error) {
         debug('There was an error logging out', error);

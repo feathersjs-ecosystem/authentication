@@ -8,6 +8,8 @@ import setCookie from './rest/set-cookie';
 import successRedirect from './rest/success-redirect';
 import notAuthenticated from './rest/not-authenticated';
 import isAuthenticated from './rest/is-authenticated';
+import isPermitted from './rest/is-permitted';
+import checkPermissions from './rest/check-permissions';
 import logout from './rest/logout';
 
 export default {
@@ -20,6 +22,8 @@ export default {
   successRedirect,
   notAuthenticated,
   isAuthenticated,
+  isPermitted,
+  checkPermissions,
   logout,
   setupSocketIOAuthentication,
   setupPrimusAuthentication

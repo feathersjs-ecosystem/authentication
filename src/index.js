@@ -77,7 +77,7 @@ export default function auth(config = {}) {
     }
 
     // Merge and flatten options
-    const authOptions = merge(defaults, app.get('auth'), config);
+    const authOptions = merge({}, defaults, app.get('auth'), config);
 
     // NOTE (EK): Currently we require token based auth so
     // if the developer didn't provide a config for our token

@@ -33,7 +33,7 @@ describe('middleware:rest:successRedirect', () => {
     });
   });
 
-  describe('when successRedirect is defined', () => {
+  describe('when successRedirect is not defined', () => {
     it('calls next', () => {
       successRedirect()(req, res, next);
       expect(next).to.have.been.calledOnce;

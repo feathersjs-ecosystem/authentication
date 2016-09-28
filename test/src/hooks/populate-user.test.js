@@ -5,9 +5,9 @@ import { populateUser } from '../../../src/hooks';
 
 chai.use(sinonChai);
 
-const User = { name: 'Mary' };
-const fn = sinon.stub().returns({ user: User });
-const mockGet = sinon.stub().returns(Promise.resolve(User));
+const user = { name: 'Mary' };
+const fn = sinon.stub().returns({ user: {} });
+const mockGet = sinon.stub().returns(Promise.resolve(user));
 const mockService = sinon.stub().returns({
   get: mockGet
 });
@@ -49,39 +49,34 @@ describe('hooks:populateUser', () => {
         hook.result._id = '1';
       });
 
-      it('calls service with correct userEndpoint', done => {
-        populateUser()(hook).then(() => {
+      it('calls service with correct userEndpoint', () => {
+        return populateUser()(hook).then(() => {
           expect(mockService).to.be.calledWith('/users');
-          done();
-        }).catch(done);
+        });
       });
 
-      it('calls get with correct id', done => {
-        populateUser()(hook).then(() => {
+      it('calls get with correct id', () => {
+        return populateUser()(hook).then(() => {
           expect(mockGet).to.be.calledWith('1');
-          done();
-        }).catch(done);
+        });
       });
 
-      it('adds the user to params', done => {
-        populateUser()(hook).then(hook => {
-          expect(hook.params.user).to.deep.equal(User);
-          done();
-        }).catch(done);
+      it('adds the user to params', () => {
+        return populateUser()(hook).then(hook => {
+          expect(hook.params.user).to.deep.equal(user);
+        });
       });
 
-      it('adds the user to result.user', done => {
-        populateUser()(hook).then(hook => {
-          expect(hook.result.user).to.deep.equal(User);
-          done();
-        }).catch(done);
+      it('adds the user to result.user', () => {
+        return populateUser()(hook).then(hook => {
+          expect(hook.result.user).to.deep.equal(user);
+        });
       });
 
-      it('removes the id from the result object root', done => {
-        populateUser()(hook).then(hook => {
+      it('removes the id from the result object root', () => {
+        return populateUser()(hook).then(hook => {
           expect(hook.result._id).to.equal(undefined);
-          done();
-        }).catch(done);
+        });
       });
     });
 
@@ -90,44 +85,39 @@ describe('hooks:populateUser', () => {
         hook.result.id = '2';
         hook.app.get = function() {
           return {
-            user: { idField: 'id', endpoint: 'api/users' }
+            user: { idField: 'id', service: 'api/users' }
           };
         };
       });
 
-      it('calls service with correct endpoint', done => {
-        populateUser()(hook).then(() => {
+      it('calls service with correct endpoint', () => {
+        return populateUser()(hook).then(() => {
           expect(mockService).to.be.calledWith('api/users');
-          done();
-        }).catch(done);
+        });
       });
 
-      it('calls get with correct id', done => {
-        populateUser()(hook).then(() => {
+      it('calls get with correct id', () => {
+        return populateUser()(hook).then(() => {
           expect(mockGet).to.be.calledWith('2');
-          done();
-        }).catch(done);
+        });
       });
 
-      it('adds the user to params', done => {
-        populateUser()(hook).then(hook => {
-          expect(hook.params.user).to.deep.equal(User);
-          done();
-        }).catch(done);
+      it('adds the user to params', () => {
+        return populateUser()(hook).then(hook => {
+          expect(hook.params.user).to.deep.equal(user);
+        });
       });
 
-      it('adds the user to result.user', done => {
-        populateUser()(hook).then(hook => {
-          expect(hook.result.user).to.deep.equal(User);
-          done();
-        }).catch(done);
+      it('adds the user to result.user', () => {
+        return populateUser()(hook).then(hook => {
+          expect(hook.result.user).to.deep.equal(user);
+        });
       });
 
-      it('removes the id from the result object root', done => {
-        populateUser()(hook).then(hook => {
+      it('removes the id from the result object root', () => {
+        return populateUser()(hook).then(hook => {
           expect(hook.result.id).to.equal(undefined);
-          done();
-        }).catch(done);
+        });
       });
     });
 
@@ -136,42 +126,37 @@ describe('hooks:populateUser', () => {
 
       beforeEach(() => {
         hook.result.id = '2';
-        options = { idField: 'id', endpoint: 'api/users' };
+        options = { idField: 'id', service: 'api/users' };
       });
 
-      it('calls service with correct endpoint', done => {
-        populateUser(options)(hook).then(() => {
+      it('calls service with correct endpoint', () => {
+        return populateUser(options)(hook).then(() => {
           expect(mockService).to.be.calledWith('api/users');
-          done();
-        }).catch(done);
+        });
       });
 
-      it('calls get with correct id', done => {
-        populateUser(options)(hook).then(() => {
+      it('calls get with correct id', () => {
+        return populateUser(options)(hook).then(() => {
           expect(mockGet).to.be.calledWith('2');
-          done();
-        }).catch(done);
+        });
       });
 
-      it('adds the user to params', done => {
-        populateUser(options)(hook).then(hook => {
-          expect(hook.params.user).to.deep.equal(User);
-          done();
-        }).catch(done);
+      it('adds the user to params', () => {
+        return populateUser(options)(hook).then(hook => {
+          expect(hook.params.user).to.deep.equal(user);
+        });
       });
 
-      it('adds the user to result.user', done => {
-        populateUser(options)(hook).then(hook => {
-          expect(hook.result.user).to.deep.equal(User);
-          done();
-        }).catch(done);
+      it('adds the user to result.user', () => {
+        return populateUser(options)(hook).then(hook => {
+          expect(hook.result.user).to.deep.equal(user);
+        });
       });
 
-      it('removes the id from the result object root', done => {
-        populateUser(options)(hook).then(hook => {
+      it('removes the id from the result object root', () => {
+        return populateUser(options)(hook).then(hook => {
           expect(hook.result.id).to.equal(undefined);
-          done();
-        }).catch(done);
+        });
       });
     });
   });

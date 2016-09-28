@@ -1,7 +1,6 @@
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import hooks from '../hooks';
-import commonHooks from 'feathers-hooks';
 import errors from 'feathers-errors';
 import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
@@ -28,7 +27,6 @@ const defaults = {
  */
 let _verifyToken = function(options = {}){
   const secret = options.secret;
-
   return function(hook) {
     return new Promise(function(resolve, reject){
       // If it was an internal call just skip
@@ -109,8 +107,7 @@ export class TokenService {
       issuer,
       jwtid,
       subject,
-      noTimestamp,
-      header
+      noTimestamp
     } = Object.assign({}, this.options, params.jwt);
     // const payload = this.options.payload;
     const secret = this.options.secret;
@@ -119,8 +116,7 @@ export class TokenService {
       notBefore,
       audience,
       jwtid,
-      noTimestamp,
-      header
+      noTimestamp
     };
 
     if (!data.iss) {
@@ -147,7 +143,7 @@ export class TokenService {
     // id and return both the ID and the token.
     return new Promise((resolve, reject) => {
       debug('Creating JWT using options:', options);
-
+      debug('Payload:', data);
       jwt.sign(data, secret, options, (error, token) => {
         if (error) {
           debug('Error signing JWT');
@@ -176,16 +172,13 @@ export class TokenService {
     // generator.
     this.after({
       create: [
-        hooks.populateUser(),
-        commonHooks.remove(options.passwordField, () => true)
+        hooks.populateUser()
       ],
       find: [
-        hooks.populateUser(),
-        commonHooks.remove(options.passwordField, () => true)
+        hooks.populateUser()
       ],
       get: [
-        hooks.populateUser(),
-        commonHooks.remove(options.passwordField, () => true)
+        hooks.populateUser()
       ]
     });
 

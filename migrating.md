@@ -53,7 +53,8 @@ const auth = require('feathers-authentication').hooks;
 userService.before({
     all: [
         auth.isAuthenticated(),
-        auth.hasPermissions('users') // pass the name of the service/pre-fix you want to use
+        auth.checkPermissions({entity: 'user', has: 'users', field: 'permissions'}),
+        auth.isPermitted()
     ]
 });
 ```
@@ -62,10 +63,20 @@ and the middleware like this:
 
 ```js
 const mw = require('feathers-authentication').middleware;
-const requiredPermissions = ['users:*', 'admin']; // whatever permissions you want
-app.get('/protected', mw.hasPermissions(requiredPermissions), (req, res, next) => {
+const permissions = ['users:*', 'admin']; // whatever permissions you want
+app.get(
+    '/protected',
+    mw.checkPermissions({
+        entity: 'user',
+        has: 'admin',
+        field: 'permissions',
+        permissions
+    }),
+    isPermitted,
+    (req, res, next) => {
     // Do your thing
-});
+    }
+);
 ```
 
 By default this new hook and new middleware assume you are storing your permissions on a `permissions` field either as an array of strings or a string with comma separated permissions. As always, you can customize the field you are storing your permissions under so you can still use the old role based system by doing this:
@@ -225,6 +236,10 @@ Much better! :smile:
 
 This shouldn't really affect you unless you are testing, modifying or wrapping existing hooks but they **always** return promises now. This makes the interface more consistent, making it easier to test and reason as to what a hook does.
 
+### Response to `app.uthenticate()` returns `user`
+
+The authenticate call is not a typical service call. It doesn't support batch calls as you can't authenticate multiple users and it returns both the token and the authenticated user. Assigning the user object to `response.data` doesn't makes it harder for you to add your own custom data to the authentication response. For those reasons and to make it easier for people to find the logged in `user` in the response, `response.data` is now `response.user` when authenticating.
+
 ### Removed Configuration Options
 
 TODO (EK)
@@ -234,17 +249,19 @@ We've changed up some of the possible authentication options.
 - `cookie`
 - 
 
-## Deprecations
+### Options specific to hooks need to be passed explicitly
 
-We have deprecated some of the authentication hooks, specifically around authorization permissions. **They will be removed in v1.0**.
+### Removed Hooks
 
-The following hooks have been deprecated:
+We have removed some of the authentication hooks, specifically around authorization permissions.
+
+The following hooks have been remove:
 
 - `restrictToOwner`
 - `restrictToRoles`
 - `verifyOrRestrict`
 - `populateOrRestrict`
 - `hasRoleOrRestrict`
-- `restrictToAuthenticated` - It has been renamed to `isAuthenticated`. You should use that going forward but we will keep the old hook around until v1.0.0.
+- `restrictToAuthenticated` - renamed to `isAuthenticated`.
 
-You should now use the single `hasPermissions` hook (or middleware) as defined above.
+You should now use single `checkPermissions` and `isPermitted` hook (or middleware) as shown above.

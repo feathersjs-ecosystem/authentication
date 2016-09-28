@@ -54,7 +54,7 @@ describe('Feathers Authentication', () => {
     describe('default options', () => {
       let app;
 
-      before(() => {
+      beforeEach(() => {
         const options = {
           token: {
             secret: 'secret',
@@ -164,7 +164,7 @@ describe('Feathers Authentication', () => {
     describe('when rest is configured', () => {
       let app;
 
-      before(() => {
+      beforeEach(() => {
         sinon.spy(mw, 'exposeRequestResponse');
         sinon.spy(mw, 'tokenParser');
         sinon.spy(mw, 'verifyToken');
@@ -183,7 +183,7 @@ describe('Feathers Authentication', () => {
           .configure(authentication(options));
       });
 
-      after(() => {
+      afterEach(() => {
         mw.exposeRequestResponse.restore();
         mw.tokenParser.restore();
         mw.verifyToken.restore();
@@ -193,7 +193,7 @@ describe('Feathers Authentication', () => {
       });
 
       describe('when cookies are enabled', () => {
-        before(() => {
+        beforeEach(() => {
           const options = {
             token: {
               secret: 'secret'
@@ -237,7 +237,7 @@ describe('Feathers Authentication', () => {
     describe('when socketio is configured', () => {
       let app;
 
-      before(() => {
+      beforeEach(() => {
         sinon.spy(mw, 'setupSocketIOAuthentication');
 
         const options = {
@@ -252,7 +252,7 @@ describe('Feathers Authentication', () => {
           .listen();
       });
 
-      after(() => {
+      afterEach(() => {
         mw.setupSocketIOAuthentication.restore();
       });
 
@@ -264,7 +264,7 @@ describe('Feathers Authentication', () => {
     describe('when primus is configured', () => {
       let app;
 
-      before(() => {
+      beforeEach(() => {
         sinon.spy(mw, 'setupPrimusAuthentication');
 
         const options = {
@@ -279,7 +279,7 @@ describe('Feathers Authentication', () => {
           .listen();
       });
 
-      after(() => {
+      afterEach(() => {
         mw.setupPrimusAuthentication.restore();
       });
 
@@ -292,7 +292,7 @@ describe('Feathers Authentication', () => {
   describe('when setupMiddleware is false', () => {
     let app;
 
-    before(() => {
+    beforeEach(() => {
       sinon.spy(mw, 'exposeRequestResponse');
       sinon.spy(mw, 'tokenParser');
       sinon.spy(mw, 'verifyToken');
@@ -317,7 +317,7 @@ describe('Feathers Authentication', () => {
         .listen();
     });
 
-    after(() => {
+    afterEach(() => {
       mw.setupSocketIOAuthentication.restore();
       mw.setupPrimusAuthentication.restore();
       mw.exposeRequestResponse.restore();

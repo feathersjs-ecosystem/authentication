@@ -22,17 +22,3 @@ export function populateHeader(options = {}) {
     return Promise.resolve(hook);
   };
 }
-
-// This is only used for sockets
-export function attachTokenToQuery() {
-  return function(hook) {
-    const app = hook.app;
-
-    // Attach the token to the query object so that the server
-    // can pick it up and verify it and remove it from the query
-    // object server side.
-    Object.assign(hook.params.query, {$token: app.get('token') });
-
-    return Promise.resolve(hook);
-  };
-}

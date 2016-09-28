@@ -22,7 +22,7 @@ export default function notAuthenticated(options = {}) {
     //   return next(error);
     // }
 
-    if (error.code === 401 && options.failureRedirect !== undefined) {      
+    if (error.code === 401 && options.failureRedirect) {      
       return res.redirect(options.failureRedirect);
     }
     

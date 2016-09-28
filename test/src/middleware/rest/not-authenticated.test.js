@@ -36,7 +36,7 @@ describe('middleware:rest:notAuthenticated', () => {
     });
   });
 
-  describe('when notAuthenticated is defined', () => {
+  describe('when notAuthenticated is not defined', () => {
     it('calls next', () => {
       notAuthenticated()(error, req, res, next);
       expect(next).to.have.been.calledOnce;

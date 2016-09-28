@@ -4,7 +4,7 @@
 import merge from 'lodash.merge';
 
 const defaults = {
-  endpoint: '/users',
+  service: '/users',
   idField: '_id'
 };
 
@@ -26,7 +26,7 @@ export default function(options = {}){
 
     let id;
 
-    options = merge(defaults, hook.app.get('auth').user, options);
+    options = merge({}, defaults, hook.app.get('auth').user, options);
 
     // If it's an after hook grab the id from the result
     if (hook.type === 'after') {
@@ -42,21 +42,19 @@ export default function(options = {}){
       return Promise.resolve(hook);
     }
 
-    return new Promise(function(resolve, reject){
-      hook.app.service(options.endpoint).get(id, {}).then(user => {
-        // attach the user to the hook for use in other hooks or services
-        hook.params.user = user;
+    return hook.app.service(options.service).get(id, {}).then(user => {
+      // attach the user to the hook for use in other hooks or services
+      hook.params.user = user;
 
-        // If it's an after hook attach the user to the response
-        if (hook.result) {
-          hook.result.user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
+      // If it's an after hook attach the user to the response
+      if (hook.result) {
+        hook.result.user = Object.assign({}, user = !user.toJSON ? user : user.toJSON());
 
-          // remove the id field from the root, it already exists inside the user object
-          delete hook.result[options.idField];
-        }
+        // remove the id field from the root, it already exists inside the user object
+        delete hook.result[options.idField];
+      }
 
-        return resolve(hook);
-      }).catch(reject);
+      return Promise.resolve(hook);
     });
   };
 }

@@ -30,41 +30,15 @@ describe('hooks', () => {
     expect(typeof hooks.isAuthenticated).to.equal('function');
   });
 
-  it('exposes hasPermissions hook', () => {
-    expect(typeof hooks.hasPermissions).to.equal('function');
+  it('exposes isPermitted hook', () => {
+    expect(typeof hooks.isPermitted).to.equal('function');
+  });
+
+  it('exposes checkPermissions hook', () => {
+    expect(typeof hooks.checkPermissions).to.equal('function');
   });
 
   it('exposes verifyToken hook', () => {
     expect(typeof hooks.verifyToken).to.equal('function');
-  });
-
-  // deprecated
-  it('exposes restrictToAuthenticated hook', () => {
-    expect(typeof hooks.restrictToAuthenticated).to.equal('function');
-  });
-
-  // deprecated
-  it('exposes restrictToRoles hook', () => {
-    expect(typeof hooks.restrictToRoles).to.equal('function');
-  });
-
-  // deprecated
-  it('exposes restrictToOwner hook', () => {
-    expect(typeof hooks.restrictToOwner).to.equal('function');
-  });
-
-  // deprecated
-  it('exposes verifyOrRestrict hook', () => {
-    expect(typeof hooks.verifyOrRestrict).to.equal('function');
-  });
-
-  // deprecated
-  it('exposes populateOrRestrict hook', () => {
-    expect(typeof hooks.populateOrRestrict).to.equal('function');
-  });
-
-  // deprecated
-  it('exposes hasRoleOrRestrict hook', () => {
-    expect(typeof hooks.hasRoleOrRestrict).to.equal('function');
   });
 });

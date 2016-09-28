@@ -19,8 +19,8 @@ export default function(settings, username, password, useSocketio, next) {
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .configure(authentication(settings))
-    .configure(authentication.TokenService(settings))
     .configure(authentication.LocalService(settings))
+    .configure(authentication.TokenService(settings))
     .use('/users', memory())
     .use('/messages', memory())
     .use(errorHandler());
