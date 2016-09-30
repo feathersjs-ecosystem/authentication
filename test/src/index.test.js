@@ -53,15 +53,14 @@ describe('Feathers Authentication', () => {
 
     describe('default options', () => {
       let app;
+      const options = {
+        token: {
+          secret: 'secret',
+          custom: 'super custom'
+        }
+      };
 
       beforeEach(() => {
-        const options = {
-          token: {
-            secret: 'secret',
-            custom: 'super custom'
-          }
-        };
-
         app = feathers().configure(authentication(options));
       });
 
@@ -77,25 +76,41 @@ describe('Feathers Authentication', () => {
         expect(app.get('auth').token.custom).to.equal('super custom');
       });
 
-      describe('cookies', () => {
-        it('they are disabled', () => {
-          expect(app.get('auth').cookies.enable).to.equal(false);
+      describe('cookie', () => {
+        it('it is disabled', () => {
+          expect(app.get('auth').cookie.enabled).to.equal(false);
         });
 
-        it('sets the feathers-oauth cookie options', () => {
-          expect(app.get('auth').cookies['feathers-oauth']).to.deep.equal({
-            httpOnly: false,
-            maxAge: 30000, // 30 seconds in ms
-            secure: false // true in production
-          });
+        it('sets the name to feathers-jwt', () => {
+          expect(app.get('auth').cookie.name).to.equal('feathers-jwt');
         });
 
-        it('sets the feathers-session cookie options', () => {
-          expect(app.get('auth').cookies['feathers-session']).to.deep.equal({
-            httpOnly: true,
-            maxAge: 86400000, // 1 day in ms
-            secure: false // true in production
-          });
+        it('makes the cookie as httpOnly', () => {
+          expect(app.get('auth').cookie.httpOnly).to.equal(true);
+        });
+
+        it('sets the maxAge', () => {
+          expect(app.get('auth').cookie.maxAge).to.equal('1d');
+        });
+
+        it('sets the cookie as secure', () => {
+          expect(app.get('auth').cookie.secure).to.equal(true);
+        });
+
+        it('sets the cookie insecure in development', () => {
+          app = feathers();
+          app.env = 'development';
+          app.configure(authentication(options));
+
+          expect(app.get('auth').cookie.secure).to.equal(false);
+        });
+
+        it('sets the cookie insecure in test', () => {
+          app = feathers();
+          app.env = 'test';
+          app.configure(authentication(options));
+
+          expect(app.get('auth').cookie.secure).to.equal(false);
         });
       });
 
@@ -198,7 +213,7 @@ describe('Feathers Authentication', () => {
             token: {
               secret: 'secret'
             },
-            cookies: {
+            cookie: {
               enable: true
             }
           };

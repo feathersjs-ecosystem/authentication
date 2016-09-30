@@ -15,7 +15,11 @@ describe('middleware:rest:notAuthenticated', () => {
   let error;
 
   beforeEach(() => {
-    req = {};
+    req = {
+      app: {
+        get: () => {}
+      }
+    };
     res = {
       redirect: sinon.spy()
     };
@@ -28,7 +32,19 @@ describe('middleware:rest:notAuthenticated', () => {
     res.redirect.reset();
   });
 
-  describe('when failureRedirect is defined and unauthorized error', () => {
+  describe('when failureRedirect is defined in global auth config and unauthorized error', () => {
+    it('redirects to configured endpoint', () => {
+      req.app.get = () => {
+        return { failureRedirect: '/login' };
+      };
+
+      notAuthenticated()(error, req, res, next);
+      expect(res.redirect).to.have.been.calledOnce;
+      expect(res.redirect).to.have.been.calledWith('/login');
+    });
+  });
+
+  describe('when failureRedirect is passed as options and unauthorized error', () => {
     it('redirects to configured endpoint', () => {
       notAuthenticated({ failureRedirect: '/login' })(error, req, res, next);
       expect(res.redirect).to.have.been.calledOnce;

@@ -2,39 +2,37 @@
 // and services. This gracefully falls back from
 // header -> cookie (optional) -> body -> query string
 
-import omit from 'lodash.omit';
+import merge from 'lodash.merge';
 import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:middleware:token-parser');
-const defaults = {
-  header: 'Authorization',
-  token: {
-    name: 'token'
-  },
-  cookies: {}
-};
 
 export default function tokenParser(options = {}) {
   debug('Registering tokenParser middleware');
 
-  options = Object.assign({}, defaults, options);
-  const name = options.token.name;
-
-  if (!options.header) {
-    throw new Error(`'header' must be provided to tokenParser() middleware`);
-  }
-
-  if (!name) {
-    throw new Error(`'options.token.name' must be provided to tokenParser() middleware`);
-  }
-
   return function(req, res, next) {
-    debug('Running tokenParser middleware with options:', options);
-    debug('Parsing token');
     const app = req.app;
+    const authOptions = app.get('auth');
+
+    options = merge({ token: {}, cookie: {} }, authOptions, options);
+
+    debug('Running tokenParser middleware with options:', options);
+
+    const header = options.header;
+    const tokenName = options.token.name;
+
+    if (!header) {
+      return next(new Error(`'header' must be provided to tokenParser() middleware or set 'auth.header' in your config.`));
+    }
+
+    if (!tokenName) {
+      return next(new Error(`'token.name' must be provided to tokenParser() middleware or set 'auth.token.name' in your config.`));
+    }
+
+    debug('Parsing token');
 
     // Normalize header capitalization the same way Node.js does
-    let token = req.headers[options.header.toLowerCase()];
+    let token = req.headers[header.toLowerCase()];
 
     // Check the header for the token (preferred method)
     if (token) {
@@ -48,44 +46,40 @@ export default function tokenParser(options = {}) {
     
     // Check the cookie if we are haven't found a token already
     // and cookies are enabled.
-    if (!token && options.cookies.enable && req.cookies) {
-      const cookies = omit(options.cookies, 'enable');
-      
-      // Loop through our cookies and see if we have an
-      // enabled one with a token.
-      // 
-      // TODO (EK): This will stop at the first one found.
-      // This may be a problem.
-      for (let key of Object.keys(cookies)) {
-        // If cookies are enabled and one of our expected
-        // ones was sent then grab the token from it.
-        if (cookies[key] && req.cookies[key]) {
-          debug(`Token found in cookie '${key}'`);
-          token = req.cookies[key];
-          break;
-        }
+    if (!token && options.cookie.enabled && req.cookies) {
+      const cookieName = options.cookie.name;
+
+      if (!cookieName) {
+        return next(new Error(`'cookie.name' must be provided to tokenParser() middleware or set 'auth.cookie.name' in your config.`));
+      }
+
+      const cookie = req.cookies[cookieName];
+
+      if (cookie) {
+        debug(`Token found in cookie '${cookieName}'`);
+        token = cookie;
       }
     }
     // Check the body next if we still don't have a token
-    else if (req.body[name]) {
+    else if (req.body[tokenName]) {
       debug('Token found in req.body');
-      token = req.body[name];
-      delete req.body[name];
+      token = req.body[tokenName];
+      delete req.body[tokenName];
     }
     // Finally, check the query string. (worst method but nice for quick local dev)
-    else if (req.query[name] && app.env !== 'production') {
+    else if (req.query[tokenName] && app.env !== 'production') {
       debug('Token found in req.query');
-      token = req.query[name];
-      delete req.query[name];
+      token = req.query[tokenName];
+      delete req.query[tokenName];
 
-      console.warn(`You are passing your token in the query string. This not secure and is not recommended.`);
+      console.warn(`You are passing your token in the query string. This NOT secure and is NOT recommended.`);
       console.warn(`Instead you should pass it as an Authorization header using HTTPS in production. See docs.feathersjs.com for more details.`);
     }
 
     // Tack it on to our express and feathers request object
     // so that it is passed to hooks and services.
-    req.feathers[name] = token;
-    req[name] = token;
+    req.feathers[tokenName] = token;
+    req[tokenName] = token;
 
     next();
   };

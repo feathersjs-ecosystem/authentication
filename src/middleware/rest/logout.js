@@ -1,34 +1,30 @@
-import omit from 'lodash.omit';
 import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:middleware:logout');
-const defaults = {
-  cookies: {
-    'feathers-session': true,
-    'feathers-oauth': true
-  }
-};
 
 export default function logout(options = {}) {
   debug('Registering logout middleware');
 
   return function(req, res, next) {
-    options = Object.assign({}, defaults, options);
+    const app = req.app;
+    const authOptions = app.get('auth') || {};
+
+    options = Object.assign({}, authOptions.cookie, options);
+
     debug('Running logout middleware with options:', options);
 
     req.logout = function() {
       debug('Logging out');
 
-      const cookies = omit(options.cookies, 'enable');
-      
-      for (let key of Object.keys(cookies)) {
-        const cookie = cookies[key];
-        
-        // If the cookie is not disabled clear it    
-        if (cookie) {
-          debug(`Clearing '${key}' cookie`);
-          res.clearCookie(key);
+      if (options.enabled) {
+        const cookieName = options.name;
+
+        if (!cookieName) {
+          throw new Error(`'cookie.name' must be provided to logout() middleware or set 'auth.cookie.name' in your config.`);
         }
+
+        debug(`Clearing '${cookieName}' cookie`);
+        res.clearCookie(cookieName);
       }
 
       if (req.app.locals) {

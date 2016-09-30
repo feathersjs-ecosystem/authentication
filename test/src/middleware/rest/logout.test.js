@@ -17,7 +17,8 @@ describe('middleware:rest:logout', () => {
       app: {
         locals: {
           user: { id: 1 }
-        }
+        },
+        get: () => {}
       },
       feathers: {}
     };
@@ -41,13 +42,32 @@ describe('middleware:rest:logout', () => {
     expect(next).to.have.been.calledOnce;
   });
 
-  it('clears cookies', done => {
-    logout()(req, res, () => {
-      req.logout();
-      expect(res.clearCookie).to.have.been.calledTwice;
-      expect(res.clearCookie).to.have.been.calledWith('feathers-oauth');
-      expect(res.clearCookie).to.have.been.calledWith('feathers-session');
-      done();
+  describe('when cookies are enabled', () => {
+    it('clears cookies', done => {
+      const options = { enabled: true, name: 'feathers-jwt' };
+
+      logout(options)(req, res, () => {
+        req.logout();
+        expect(res.clearCookie).to.have.been.calledOnce;
+        expect(res.clearCookie).to.have.been.calledWith('feathers-jwt');
+        done();
+      });
+    });
+
+    describe('when cookie name is missing', () => {
+      it('it throws an error', done => {
+        const options = { enabled: true };
+
+        logout(options)(req, res, () => {
+          try {
+            req.logout();
+          }
+          catch(error) {
+            expect(error).to.not.equal(undefined);
+            done();
+          }  
+        });
+      });
     });
   });
 

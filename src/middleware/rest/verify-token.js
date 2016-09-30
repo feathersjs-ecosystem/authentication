@@ -11,7 +11,7 @@ module.exports = function verifyToken(options = {}) {
     const authOptions = req.app.get('auth') || {};
 
     // Grab the token options here
-    options = merge(authOptions.token, options);
+    options = merge({}, authOptions.token, options);
     debug('Running verifyToken middleware with options:', options);
 
     const token = req.token || req.feathers.token;
@@ -26,7 +26,7 @@ module.exports = function verifyToken(options = {}) {
     const secret = options.secret;
 
     if (!secret) {
-      throw new Error(`You need to pass 'options.secret' to the verifyToken() middleware or set 'auth.token.secret' it in your config.`);
+      next(new Error(`A 'secret' must be provided to the verifyToken() middleware or set 'auth.token.secret' in your config.`));
     }
 
     // Convert the algorithm value to an array because that's

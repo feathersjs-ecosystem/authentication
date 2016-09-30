@@ -1,27 +1,28 @@
-import omit from 'lodash.omit';
+import merge from 'lodash.merge';
 import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:middleware:populate-user');
-const defaults = {
-  user: {
-    service: 'users',
-    idField: '_id'
-  },
-  cookies: {
-    'feathers-session': true,
-    'feathers-oauth': true
-  }
-};
+
+// TODO (EK): Make generic to support any entity
 
 export default function populateUser(options = {}) {
   debug('Registering populateUser middleware');
 
   return function(req, res, next) {
     const app = req.app;
+    const authOptions = app.get('auth') || {};
 
-    options = Object.assign({}, defaults, app.get('auth'), options);
+    options = merge({ user: {}, cookie: {} }, authOptions, options);
     debug('Running populateUser middleware with options:', options);
     debug('Attempting to populate user');
+
+    if (!options.user.service) {
+      return next(new Error(`'user.service' must be provided to populateUser() middleware or set 'auth.user.service' in your config.`));
+    }
+
+    if (!options.user.idField) {
+      return next(new Error(`'user.idField' must be provided to populateUser() middleware or set 'auth.user.idField' in your config.`));
+    }
 
     if (app.locals) {
       delete app.locals.user;
@@ -63,16 +64,15 @@ export default function populateUser(options = {}) {
       if (error.code === 404) {
         debug(`User with id '${id}' not found. Clearing cookies.`);
 
-        const cookies = omit(options.cookies, 'enable');
+        if (options.cookie.enabled) {
+          const cookieName = options.cookie.name;
 
-        for (let key of Object.keys(cookies)) {
-          const cookie = cookies[key];
-          
-          // If the cookie is not disabled clear it    
-          if (cookie) {
-            debug(`Clearing '${key}' cookie`);
-            res.clearCookie(key);
+          if (!cookieName) {
+            return next(new Error(`'cookie.name' must be provided to populateUser() middleware or set 'auth.cookie.name' in your config.`));
           }
+
+          debug(`Clearing '${cookieName}' cookie`);
+          res.clearCookie(cookieName);
         }
         
         return next();

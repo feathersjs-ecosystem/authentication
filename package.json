@@ -55,6 +55,7 @@
     "lodash.isplainobject": "^4.0.6",
     "lodash.merge": "^4.6.0",
     "lodash.omit": "^4.5.0",
+    "ms": "^0.7.1",
     "passport": "^0.3.0",
     "passport-local": "^1.0.0"
   },

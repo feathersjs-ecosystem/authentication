@@ -11,28 +11,16 @@ import * as mw from './middleware';
 
 const debug = Debug('feathers-authentication:main');
 
-const THIRTY_SECONDS = 30000;  // in milliseconds
-const ONE_DAY = 60*60*24*1000; // in milliseconds
-
 // Options that apply to any provider
 const defaults = {
   header: 'Authorization',
   setupMiddleware: true, // optional - to setup middleware yourself set to false.
-  cookies: {
-    enable: false, // Set to true to enable all cookies
-    // Used for redirects where JS can pick up the JWT and
-    // store it in localStorage (ie. redirect or OAuth)
-    'feathers-oauth': { // set to false to disable this cookie
-      httpOnly: false,
-      maxAge: THIRTY_SECONDS,
-      secure: process.env.NODE_ENV === 'production'
-    },
-    // Used for server side rendering
-    'feathers-session': { // set to false to disable this cookie
-      httpOnly: true,
-      maxAge: ONE_DAY,
-      secure: process.env.NODE_ENV === 'production'
-    }
+  cookie: { // Used for redirects, server side rendering and OAuth
+    enabled: false, // Set to true to enable all cookies
+    name: 'feathers-jwt',
+    httpOnly: true,
+    maxAge: '1d',
+    secure: true
   },
   token: {
     name: 'token', // optional
@@ -70,12 +58,6 @@ export default function auth(config = {}) {
     const app = this;
     let _super = app.setup;
 
-    // If cookies are enabled then load our defaults and
-    // any passed in options
-    if (config.cookies && config.cookies.enable) {
-      config.cookies = merge(defaults.cookies, config.cookies);
-    }
-
     // Merge and flatten options
     const authOptions = merge({}, defaults, app.get('auth'), config);
 
@@ -86,6 +68,12 @@ export default function auth(config = {}) {
       throw new Error (`You must provide a token secret in your config via 'auth.token.secret'.`);
     }
 
+    // Make sure cookies don't have to be sent over HTTPS
+    // when in development or test mode.
+    if (app.env === 'development' || app.env === 'test') {
+      authOptions.cookie.secure = false;
+    }
+
     // Set the options on the app
     app.set('auth', authOptions);
 
@@ -94,7 +82,7 @@ export default function auth(config = {}) {
       debug('registering REST authentication middleware');
       
       // Be able to parse cookies it they are enabled
-      if (authOptions.cookies.enable) {
+      if (authOptions.cookie.enable) {
         app.use(mw.cookieParser());
       }
 

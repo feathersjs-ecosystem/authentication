@@ -1,27 +1,17 @@
 import Debug from 'debug';
-import omit from 'lodash.omit';
+import ms from 'ms';
 
 const debug = Debug('feathers-authentication:middleware:set-cookie');
-const defaults = {
-  cookies: {}
-};
-
-// TODO (EK): Support session cookies for server side rendering
-// need to differentiate between the JavaScript accessible JWT cookie
-// and the HTTP only session cookie.
 
 export default function setCookie(options = {}) {
   debug('Registering setCookie middleware');
 
   return function(req, res, next) {
-    options = Object.assign({}, defaults, options);
-    debug('Running setCookie middleware with options:', options);
-
-    if (options.cookies === undefined) {
-      next(new Error(`'options.cookies' must be provided to setCookie() middleware or explicitly set to 'false'`));
-    }
-
     const app = req.app;
+    const authOptions = app.get('auth') || {};
+
+    options = Object.assign({}, authOptions.cookie, options);
+    debug('Running setCookie middleware with options:', options);
 
     // NOTE (EK): If we are not dealing with a browser or it was an
     // XHR request then just skip this. This is primarily for
@@ -31,50 +21,44 @@ export default function setCookie(options = {}) {
     //   return next();
     // }
 
-    // If cookies are enabled go through each one and if it
-    // is enabled then set it with it's options.
-    if (options.cookies && options.cookies.enable) {
+    // If cookies are enabled then set it with it's options.
+    if (options.enabled) {
       debug(`Attempting to set cookies`);
 
-      const cookies = omit(options.cookies, 'enable');
-      
-      for (let name of Object.keys(cookies)) {
-        let cookie = cookies[name];
-        
-        // If the cookie is not disabled clear it    
-        if (cookie) {
-          const cookieOptions = Object.assign({}, cookie);
-          debug(`Clearing old '${name}' cookie`);
+      const cookie = options.name;
 
-          // clear any previous cookie
-          res.clearCookie(name);
-          
-          // Check HTTPS and cookie status in production.
-          if (!req.secure && app.env === 'production' && cookie.secure) {
-            console.warn('WARN: Request isn\'t served through HTTPS: JWT in the cookie is exposed.');
-            console.info('If you are behind a proxy (e.g. NGINX) you can:');
-            console.info('- trust it: http://expressjs.com/en/guide/behind-proxies.html');
-            console.info(`- set cookie['${name}'].secure false`);
-          }
+      if (cookie) {
+        debug(`Clearing old '${cookie}' cookie`);
+        res.clearCookie(cookie);
 
-          // If a custom expiry wasn't passed then set the expiration
-          // to be the default maxAge of the respective cookie otherwise it
-          // will just become a session cookie.
-          if (cookieOptions.expires === undefined && cookieOptions.maxAge) {
-            const expiry = new Date(Date.now() + cookieOptions.maxAge);
-            cookieOptions.expires = expiry;
-          }
-
-          if ( cookieOptions.expires && !(cookieOptions.expires instanceof Date) ) {
-            throw new Error('cookie.expires must be a valid Date object');
-          }
-          
-          // remove the maxAge because we have set an explicit expiry
-          delete cookieOptions.maxAge;
-
-          debug(`Setting '${name}' cookie`);
-          res.cookie(name, res.data.token, cookieOptions);
+        // Check HTTPS and cookie status in production.
+        if (!req.secure && app.env === 'production' && options.secure) {
+          console.warn('WARN: Request isn\'t served through HTTPS: JWT in the cookie is exposed.');
+          console.info('If you are behind a proxy (e.g. NGINX) you can:');
+          console.info('- trust it: http://expressjs.com/en/guide/behind-proxies.html');
+          console.info(`- set cookie['${cookie}'].secure false`);
         }
+
+        // If a custom expiry wasn't passed then set the expiration
+        // to be the default maxAge of the respective cookie otherwise it
+        // will just become a session cookie.
+        if (options.expires === undefined && options.maxAge) {
+          const expiry = new Date(Date.now() + ms(options.maxAge));
+          options.expires = expiry;
+        }
+
+        if ( options.expires && !(options.expires instanceof Date) ) {
+          throw new Error('cookie.expires must be a valid Date object');
+        }
+        
+        // remove some of our options that don't apply to express cookie creation
+        // as well as the maxAge because we have set an explicit expiry.
+        delete options.name;
+        delete options.enabled;
+        delete options.maxAge;
+
+        debug(`Setting '${cookie}' cookie`);
+        res.cookie(cookie, res.data.token, options);
       }
     }
 

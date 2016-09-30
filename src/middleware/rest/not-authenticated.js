@@ -6,6 +6,11 @@ export default function notAuthenticated(options = {}) {
   debug('Registering notAuthenticated middleware');
 
   return function(error, req, res, next) {
+    const app = req.app;
+    const authOptions = app.get('auth');
+
+    options = Object.assign({}, authOptions, options);
+
     debug('Running notAuthenticated middleware with options:', options);
     debug('An authentication error occurred.', error);
 

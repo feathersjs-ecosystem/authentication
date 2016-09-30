@@ -13,7 +13,11 @@ describe('middleware:rest:successRedirect', () => {
   let next;
 
   beforeEach(() => {
-    req = {};
+    req = {
+      app: {
+        get: () => {}
+      }
+    };
     res = {
       redirect: sinon.spy()
     };
@@ -25,7 +29,19 @@ describe('middleware:rest:successRedirect', () => {
     res.redirect.reset();
   });
 
-  describe('when successRedirect is defined', () => {
+  describe('when successRedirect is defined in global auth config', () => {
+    it('redirects to configured endpoint', () => {
+      req.app.get = () => {
+        return { successRedirect: '/app' };
+      };
+
+      successRedirect()(req, res, next);
+      expect(res.redirect).to.have.been.calledOnce;
+      expect(res.redirect).to.have.been.calledWith('/app');
+    });
+  });
+
+  describe('when successRedirect is passed as options', () => {
     it('redirects to configured endpoint', () => {
       successRedirect({ successRedirect: '/app' })(req, res, next);
       expect(res.redirect).to.have.been.calledOnce;

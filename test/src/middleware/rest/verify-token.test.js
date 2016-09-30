@@ -39,13 +39,9 @@ describe('middleware:rest:verifyToken', () => {
   describe('when secret is missing', () => {
     beforeEach(() => req.token = 'token');
 
-    it('it throws an error', () => {
-      try {
-        verifyToken()(req, res, next);
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
+    it('returns an error', () => {
+      verifyToken()(req, res, next);
+      expect(next).to.have.been.calledWith(new Error(`A 'secret' must be provided to the verifyToken() middleware or set 'auth.token.secret' in your config.`));
     });
   });
 

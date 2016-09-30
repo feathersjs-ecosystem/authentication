@@ -34,97 +34,147 @@ describe('middleware:rest:populateUser', () => {
     next.reset();
   });
 
-  describe('when app.locals exists', () => {
-    it('removes the user from locals', () => {
-      req.app.locals = { user };
-
+  describe('when user service is missing', () => {
+    it('returns an error', () => {
       populateUser()(req, res, next);
-      expect(req.app.locals.user).to.equal(undefined);
+      expect(next).to.have.been.calledWith(new Error(`'user.service' must be provided to populateUser() middleware or set 'auth.user.service' in your config.`));
     });
   });
 
-  describe('when id does not exist', () => {
-    it('calls next', () => {
-      populateUser()(req, res, next);
-      expect(next).to.have.been.calledOnce;
+  describe('when user idField is missing', () => {
+    it('returns an error', () => {
+      const options = {
+        user: {
+          service: 'users'
+        }
+      };
+      populateUser(options)(req, res, next);
+      expect(next).to.have.been.calledWith(new Error(`'user.idField' must be provided to populateUser() middleware or set 'auth.user.idField' in your config.`));
     });
   });
 
-  describe('when user exists', () => {
+  describe('when required options are present', () => {
     beforeEach(() => {
-      req.payload = { _id: 1 };
-
-      req.app.service = () => {
+      req.app.get = () => {
         return {
-          get: () => {
-            return Promise.resolve(user);
+          user: {
+            service: 'users',
+            idField: '_id'
           }
         };
       };
     });
+    
+    describe('when app.locals exists', () => {
+      it('removes the user from locals', () => {
+        req.app.locals = { user };
 
-    it('sets the user on the request object', done => {
-      populateUser()(req, res, () => {
-        expect(req.feathers.user).to.deep.equal(user);
-        expect(req.user).to.deep.equal(user);
-        done();
+        populateUser()(req, res, next);
+        expect(req.app.locals.user).to.equal(undefined);
       });
     });
 
-    it('sets the user on app.locals', done => {
-      req.app.locals = {};
-
-      populateUser()(req, res, () => {
-        expect(req.app.locals.user).to.deep.equal(user);
-        done();
+    describe('when id does not exist', () => {
+      it('calls next', () => {
+        populateUser()(req, res, next);
+        expect(next).to.have.been.calledOnce;
       });
     });
-  });
 
-  describe('when user does not exist', () => {
-    beforeEach(() => {
-      req.payload = { _id: 1 };
+    describe('when user exists', () => {
+      beforeEach(() => {
+        req.payload = { _id: 1 };
 
-      req.app.service = () => {
-        return {
-          get: () => {
-            return Promise.reject(new errors.NotFound());
-          }
+        req.app.service = () => {
+          return {
+            get: () => {
+              return Promise.resolve(user);
+            }
+          };
         };
-      };
-    });
+      });
 
-    it('clears cookies', done => {
-      populateUser()(req, res, () => {
-        expect(res.clearCookie).to.have.been.calledTwice;
-        expect(res.clearCookie).to.have.been.calledWith('feathers-oauth');
-        expect(res.clearCookie).to.have.been.calledWith('feathers-session');
-        done();
+      it('sets the user on the request object', done => {
+        populateUser()(req, res, () => {
+          expect(req.feathers.user).to.deep.equal(user);
+          expect(req.user).to.deep.equal(user);
+          done();
+        });
+      });
+
+      it('sets the user on app.locals', done => {
+        req.app.locals = {};
+
+        populateUser()(req, res, () => {
+          expect(req.app.locals.user).to.deep.equal(user);
+          done();
+        });
       });
     });
 
-    it('calls next', done => {
-      populateUser()(req, res, done);
-    });
-  });
+    describe('when user does not exist', () => {
+      beforeEach(() => {
+        req.payload = { _id: 1 };
 
-  describe('when call to fetch user errors', () => {
-    beforeEach(() => {
-      req.payload = { _id: 1 };
-
-      req.app.service = () => {
-        return {
-          get: () => {
-            return Promise.reject(new errors.GeneralError());
-          }
+        req.app.service = () => {
+          return {
+            get: () => {
+              return Promise.reject(new errors.NotFound());
+            }
+          };
         };
-      };
+      });
+
+      it('calls next', done => {
+        populateUser()(req, res, done);
+      });
+
+      describe('when cookies are enabled', () => {
+        it('clears cookies', done => {
+          const options = {
+            cookie: { enabled: true, name: 'feathers-jwt' }
+          };
+
+          populateUser(options)(req, res, () => {
+            expect(res.clearCookie).to.have.been.calledOnce;
+            expect(res.clearCookie).to.have.been.calledWith('feathers-jwt');
+            done();
+          });
+        });
+
+        describe('when cookie name is missing', () => {
+          it('it returns an error', done => {
+            const options = {
+              cookie: { enabled: true }
+            };
+
+            populateUser(options)(req, res, (error) => {
+              expect(error).to.not.equal(undefined);
+              done();
+            });
+          });
+        });
+      });
     });
 
-    it('calls next with error', done => {
-      populateUser()(req, res, error => {
-        expect(error).to.not.equal(undefined);
-        done();
+    describe('when call to fetch user errors', () => {
+      beforeEach(() => {
+        req.payload = { _id: 1 };
+
+        req.app.service = () => {
+          return {
+            get: () => {
+              return Promise.reject(new errors.GeneralError());
+            }
+          };
+        };
+      });
+
+      it('calls next with error', done => {
+        populateUser()(req, res, error => {
+          expect(error).to.not.equal(undefined);
+          done();
+        });
       });
     });
   });
