@@ -45,8 +45,7 @@ export class Service {
 
         let data = Object.assign({
           [`${options.provider}Id`]: profile.id,
-          [`${options.provider}`]: providerData
-        });
+        }, providerData );
 
         // If user found update and return them
         if (user) {
