@@ -69,7 +69,7 @@ export class OAuth2Service {
         debug(`Creating new user with ${options.provider}Id: ${profile.id}`);
 
         // No user found so we need to create one.
-        return app.service(options.userService).create(data).then(user => {
+        return app.service(options.userService).create(data, {body: req.body}).then(user => {
           debug(`Created new user: ${user[options.idField]}`);
           // TODO (EK): Handle paginated services?
           return done(null, user);
