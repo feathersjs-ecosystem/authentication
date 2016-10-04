@@ -10,20 +10,20 @@ describe('hooks', () => {
     expect(typeof hooks).to.equal('object');
   });
 
-  it('exposes associateCurrentUser hook', () => {
-    expect(typeof hooks.associateCurrentUser).to.equal('function');
+  it('exposes associateAuthenticated hook', () => {
+    expect(typeof hooks.associateAuthenticated).to.equal('function');
   });
 
   it('exposes hashPassword hook', () => {
     expect(typeof hooks.hashPassword).to.equal('function');
   });
 
-  it('exposes populateUser hook', () => {
-    expect(typeof hooks.populateUser).to.equal('function');
+  it('exposes loadAuthenticated hook', () => {
+    expect(typeof hooks.loadAuthenticated).to.equal('function');
   });
 
-  it('exposes queryWithCurrentUser hook', () => {
-    expect(typeof hooks.queryWithCurrentUser).to.equal('function');
+  it('exposes queryWithAuthenticated hook', () => {
+    expect(typeof hooks.queryWithAuthenticated).to.equal('function');
   });
 
   it('exposes isAuthenticated hook', () => {
@@ -38,7 +38,7 @@ describe('hooks', () => {
     expect(typeof hooks.checkPermissions).to.equal('function');
   });
 
-  it('exposes verifyToken hook', () => {
-    expect(typeof hooks.verifyToken).to.equal('function');
+  it('exposes parseToken hook', () => {
+    expect(typeof hooks.parseToken).to.equal('function');
   });
 });

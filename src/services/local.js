@@ -7,17 +7,6 @@ import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:services:local');
-const defaults = {
-  service: '/auth/local',
-  tokenService: '/auth/token',
-  userService: '/users',
-  idField: '_id',
-  usernameField: 'email',
-  passwordField: 'password',
-  passReqToCallback: true,
-  session: false,
-  // successHandler: null //optional - a middleware to call when successfully authenticated
-};
 
 export class LocalService {
   constructor(options = {}) {
@@ -25,7 +14,7 @@ export class LocalService {
   }
 
   comparePassword(user, password) {
-    const field = this.options.passwordField;
+    const field = this.options.user.passwordField;
     const hash = user[field];
 
     if (!hash) {
@@ -66,7 +55,7 @@ export class LocalService {
 
   verify(req, username, password, done) {
     debug('Checking credentials');
-    const usernameField = this.options.usernameField;
+    const usernameField = this.options.user.usernameField;
     const query = { [usernameField]: username };
 
     // Look up the user
@@ -80,11 +69,10 @@ export class LocalService {
   // POST /auth/local
   create(data, params) {
     const options = this.options;
-    // let app = this.app;
 
     // Validate username and password, then generate a JWT and return it
     return new Promise((resolve, reject) => {
-      let middleware = passport.authenticate('local', { session: options.session }, (error, user) => {
+      let middleware = passport.authenticate('local', { session: options.local.session }, (error, user) => {
         if (error) {
           return reject(error);
         }
@@ -97,7 +85,7 @@ export class LocalService {
         debug('User authenticated via local authentication');
 
         const tokenPayload = {
-          [options.idField]: user[options.idField]
+          [options.user.idField]: user[options.user.idField]
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
@@ -116,15 +104,21 @@ export class LocalService {
     // so that we can call other services
     this.app = app;
 
-    const tokenService = this.options.tokenService;
-    const userService = this.options.userService;
+    const tokenService = this.options.token.service;
+    const userService = this.options.user.service;
 
     this._tokenService = typeof tokenService === 'string' ? app.service(tokenService) : tokenService;
     this._userService = typeof userService === 'string' ? app.service(userService) : userService;
+    
+    const passportOptions = {
+      usernameField: this.options.user.usernameField,
+      passwordField: this.options.user.passwordField,
+      passReqToCallback: this.options.local.passReqToCallback
+    };
 
     // Register our local auth strategy and get it to use the passport callback function
     debug('registering passport-local strategy');
-    passport.use(new Strategy(this.options, this.verify.bind(this)));
+    passport.use(new Strategy(passportOptions, this.verify.bind(this)));
 
     // prevent regular service events from being dispatched
     if (typeof this.filter === 'function') {
@@ -136,31 +130,29 @@ export class LocalService {
 export default function init(options){
   return function() {
     const app = this;
-    const authConfig = Object.assign({}, app.get('auth'), options);
+    options = merge({ user: {}, local: {} }, app.get('auth'), options);
 
-    if (authConfig.token === undefined) {
+    if (options.token === undefined) {
       throw new Error('The TokenService needs to be configured before the Local auth service.');
     }
     
-    const Service = authConfig.local.Service || LocalService;
-    const userService = authConfig.user.service;
-    const tokenService = authConfig.token.service;
+    const Service = options.local.Service || LocalService;
+    const successHandler = options.local.successHandler || successRedirect;
 
-    const {
-      idField,
-      passwordField,
-      usernameField
-    } = authConfig.user;
-
-    options = merge(defaults, authConfig.local, options, { idField, passwordField, usernameField, userService, tokenService });
-
-    const successHandler = options.successHandler || successRedirect;
+    // TODO (EK): Add error checking for required fields
+    // - token.service
+    // - local.service
+    // - user.service
+    // - user.idField
+    // - user.passwordField
+    // - user.usernameField
+    // 
 
     debug('configuring local authentication service with options', options);
 
     // TODO (EK): Only enable set cookie middleware if cookies are enabled.
     // Initialize our service with any options it requires
-    app.use(options.service, new Service(options), setCookie(authConfig), successHandler(options));
+    app.use(options.local.service, new Service(options), setCookie(options), successHandler(options));
   };
 }
 

@@ -55,8 +55,7 @@ describe('Feathers Authentication', () => {
       let app;
       const options = {
         token: {
-          secret: 'secret',
-          custom: 'super custom'
+          secret: 'secret'
         }
       };
 
@@ -70,10 +69,6 @@ describe('Feathers Authentication', () => {
 
       it('sets setupMiddleware', () => {
         expect(app.get('auth').setupMiddleware).to.equal(true);
-      });
-
-      it('supports custom options', () => {
-        expect(app.get('auth').token.custom).to.equal('super custom');
       });
 
       describe('cookie', () => {
@@ -159,6 +154,28 @@ describe('Feathers Authentication', () => {
           expect(app.get('auth').user.passwordField).to.equal('password');
         });
       });
+    });
+  });
+
+  describe('when custom options are passed', () => {
+    let app;
+    const options = {
+      token: {
+        secret: 'secret',
+        custom: 'super custom'
+      }
+    };
+
+    beforeEach(() => {
+      app = feathers().configure(authentication(options));
+    });
+
+    it('sets custom option', () => {
+      expect(app.get('auth').token.custom).to.equal('super custom');
+    });
+
+    it('retains other default options', () => {
+      expect(app.get('auth').token.service).to.equal('/auth/token');
     });
   });
 

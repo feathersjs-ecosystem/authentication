@@ -6,75 +6,86 @@ import merge from 'lodash.merge';
 
 const debug = Debug('feathers-authentication:services:oauth2');
 
-// Provider specific config
-const defaults = {
-  passReqToCallback: true,
-  callbackSuffix: 'callback',
-  permissions: {
-    state: true,
-    session: false
-  }
-};
-
 export class OAuth2Service {
   constructor(options = {}) {
     this.options = options;
   }
 
-  oauthCallback(req, accessToken, refreshToken, profile, done) {
-    let app = this.app;
+  getFirstUser(users) {
+    // Paginated services return the array of results in the data attribute.
+    let user = users[0] || users.data && users.data[0];
+
+    // Handle bad username.
+    if (!user) {
+      return Promise.resolve(false);
+    }
+
+    // Handle updating mongoose models
+    if (typeof user.toObject === 'function') {
+      user = user.toObject();
+    }
+    // Handle updating Sequelize models
+    else if (typeof user.toJSON === 'function') {
+      user = user.toJSON();
+    }
+
+    debug('User found');
+    return Promise.resolve(user);
+  }
+
+  updateUser(user, data) {
+    const idField = this.options.user.idField;
+    const id = user[idField];
+
+    debug(`Updating user: ${id}`);
+
+    // Merge existing user data with new profile data
+    data = merge({}, user, data);
+
+    // TODO (EK): Handle paginated services?
+    return this._userService.patch(id, data, { oauth: true });
+  }
+
+  createUser(data) {
+    const provider = this.options.provider;
+    const id = data[`${provider}Id`];
+    debug(`Creating new user with ${provider}Id: ${id}`);
+
+    return this._userService.create(data, { oauth: true });
+  }
+
+  verify(req, accessToken, refreshToken, profile, done) {
+    debug('Checking credentials');
     const options = this.options;
-    const params = {
-      query: {
-        // facebookId: profile.id
-        [`${options.provider}Id`]: profile.id
-      }
+    const query = {
+      // facebookId: profile.id
+      [`${options.provider}Id`]: profile.id
     };
 
     // Find or create the user since they could have signed up via facebook.
-    app.service(options.userService)
-      .find(params)
-      .then(users => {
-        // Paginated services return the array of results in the data attribute.
-        let user = users[0] || users.data && users.data[0];
-
+    this._userService
+      .find({ query })
+      .then(this.getFirstUser)
+      .then(user => {
         // TODO (EK): This is where we should look at req.user and see if we
         // can consolidate profiles. We might want to give the developer a hook
         // so that they can control the consolidation strategy.
-        const providerData = Object.assign({}, profile._json, {accessToken});
+        const providerData = Object.assign({}, profile._json, { accessToken });
 
-        let data = Object.assign({
+        const data = Object.assign({
           [`${options.provider}Id`]: profile.id,
           [`${options.provider}`]: providerData
         });
 
-        // If user found update and return them
         if (user) {
-          const id = user[options.idField];
-
-          // Merge existing user data with new profile data
-          // TODO (EK): If stored profile data has been altered this might
-          // just overwrite the whole `<provider>` field when it should do a
-          // deep merge.
-          data = Object.assign({}, user, data);
-
-          debug(`Updating user: ${id}`);
-
-          return app.service(options.userService).patch(id, data).then(updatedUser => {
-            // TODO (EK): Handle paginated services?
-            return done(null, updatedUser);
-          }).catch(done);
+          return this.updateUser(user, data);
         }
 
-        debug(`Creating new user with ${options.provider}Id: ${profile.id}`);
-
-        // No user found so we need to create one.
-        return app.service(options.userService).create(data).then(user => {
-          debug(`Created new user: ${user[options.idField]}`);
-          // TODO (EK): Handle paginated services?
-          return done(null, user);
-        }).catch(done);
-      }).catch(done);
+        // Otherwise update the existing user
+        return this.createUser(data);
+      })
+      .then(user => done(null, user))
+      .catch(error => error ? done(error) : done(null, error));
   }
 
   // GET /auth/facebook
@@ -86,10 +97,8 @@ export class OAuth2Service {
   // For GET /auth/facebook/callback
   get(id, params) {
     const options = Object.assign({}, this.options, params);
-    let app = this.app;
 
-    // TODO (EK): Make this configurable
-    if (id !== options.callbackSuffix) {
+    if (`${options.service}/${id}` !== options.callbackUrl) {
       return Promise.reject(new errors.NotFound());
     }
 
@@ -106,11 +115,11 @@ export class OAuth2Service {
         }
 
         const tokenPayload = {
-          [options.idField]: user[options.idField]
+          [options.user.idField]: user[options.user.idField]
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return app.service(options.tokenService)
+        return this._tokenService
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
@@ -124,7 +133,6 @@ export class OAuth2Service {
   // This is for mobile token based authentication
   create(data, params) {
     const options = this.options;
-    let app = this.app;
 
     if (!options.tokenStrategy) {
       return Promise.reject(new errors.MethodNotAllowed());
@@ -143,11 +151,11 @@ export class OAuth2Service {
         }
 
         const tokenPayload = {
-          [options.idField]: user[options.idField]
+          [options.user.idField]: user[options.user.idField]
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return app.service(options.tokenService)
+        return this._tokenService
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
@@ -162,16 +170,22 @@ export class OAuth2Service {
     // so that we can call other services
     this.app = app;
 
+    const tokenService = this.options.token.service;
+    const userService = this.options.user.service;
+
+    this._tokenService = typeof tokenService === 'string' ? app.service(tokenService) : tokenService;
+    this._userService = typeof userService === 'string' ? app.service(userService) : userService;
+
     // Register our Passport auth strategy and get it to use our passport callback function
     const Strategy = this.options.strategy;
     const TokenStrategy = this.options.tokenStrategy;
 
     debug(`registering passport-${this.options.provider} OAuth2 strategy`);
-    passport.use(new Strategy(this.options, this.oauthCallback.bind(this)));
+    passport.use(new Strategy(this.options, this.verify.bind(this)));
 
     if (TokenStrategy) {
       debug(`registering passport-${this.options.provider}-token OAuth2 strategy`);
-      passport.use(new TokenStrategy(this.options, this.oauthCallback.bind(this)));
+      passport.use(new TokenStrategy(this.options, this.verify.bind(this)));
     }
 
     // prevent regular service events from being dispatched
@@ -187,7 +201,7 @@ export default function init (options){
   }
 
   if (!options.service) {
-    throw new Error(`You need to provide an 'service' for your ${options.provider} provider`);
+    throw new Error(`You need to provide an 'service' for your ${options.provider} provider. This can either be a string or an initialized service.`);
   }
 
   if (!options.strategy) {
@@ -204,33 +218,22 @@ export default function init (options){
 
   return function() {
     const app = this;
-    const authConfig = Object.assign({}, app.get('auth'), options);
-    const userService = authConfig.user.service;
-    const Service = options.Service || OAuth2Service;
+    options = merge({ user: {} }, app.get('auth'), app.get('auth').oauth2, options);
+    options.callbackURL = options.callbackURL || `${options.service}/callback`;
 
-    // TODO (EK): Support pulling in a user and token service directly
-    // in order to talk to remote services.
-
-    if (authConfig.token === undefined) {
+    if (options.token === undefined) {
       throw new Error('The TokenService needs to be configured before the OAuth2 service.');
     }
 
-    const tokenService = authConfig.token.service;
-
-    options = merge(defaults, authConfig[options.provider], options, { userService, tokenService });
-
+    const Service = options.Service || OAuth2Service;
     const successHandler = options.successHandler || successRedirect;
-
-    options.permissions.state = options.permissions.state === undefined ? true : options.permissions.state;
-    options.permissions.session = options.permissions.session === undefined ? false : options.permissions.session;
-    options.callbackURL = options.callbackURL || `${options.service}/${options.callbackSuffix}`;
 
     debug(`configuring ${options.provider} OAuth2 service with options`, options);
 
     // TODO (EK): throw warning if cookies are not enabled. They are required for OAuth
 
     // Initialize our service with any options it requires
-    app.use(options.service, new Service(options), setCookie(authConfig), successHandler(options));
+    app.use(options.service, new Service(options), setCookie(options), successHandler(options));
   };
 }
 

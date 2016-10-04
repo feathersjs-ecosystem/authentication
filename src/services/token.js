@@ -1,23 +1,17 @@
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
-import hooks from '../hooks';
+import merge from 'lodash.merge';
 import errors from 'feathers-errors';
 import { successRedirect, setCookie } from '../middleware';
-import merge from 'lodash.merge';
+import {
+  loadAuthenticated,
+  // checkPermissions,
+  // parseToken,
+  // isAuthenticated,
+  // isPermitted
+} from '../hooks';
 
 const debug = Debug('feathers-authentication:services:token');
-
-// Provider specific config
-const defaults = {
-  service: '/auth/token',
-  idField: '_id',
-  passwordField: 'password',
-  issuer: 'feathers',
-  subject: 'auth',
-  algorithm: 'HS256',
-  expiresIn: '1d', // 1 day
-  payload: []
-};
 
 /**
  * Verifies that a JWT token is valid. This is a private hook.
@@ -26,7 +20,7 @@ const defaults = {
  * @param {String} options.secret - The JWT secret
  */
 let _verifyToken = function(options = {}){
-  const secret = options.secret;
+  const secret = options.token.secret;
   return function(hook) {
     return new Promise(function(resolve, reject){
       // If it was an internal call just skip
@@ -39,7 +33,7 @@ let _verifyToken = function(options = {}){
 
       const token = hook.params.token;
 
-      jwt.verify(token, secret, options, function (error, payload) {
+      jwt.verify(token, secret, options.token, function (error, payload) {
         if (error) {
           // Return a 401 if the token has expired.
           return reject(new errors.NotAuthenticated(error));
@@ -80,22 +74,22 @@ export class TokenService {
   // }
 
   // GET /auth/token/refresh
-  get(id, params) {
-    if (id !== 'refresh') {
-      return Promise.reject(new errors.NotFound());
-    }
+  // get(id, params) {
+  //   if (id !== 'refresh') {
+  //     return Promise.reject(new errors.NotFound());
+  //   }
 
-    const options = this.options;
-    const data = params;
-    // Our before hook determined that we had a valid token or that this
-    // was internally called so let's generate a new token with the user
-    // id and return both the ID and the token.
-    return new Promise(function(resolve){
-      jwt.sign(data, options.secret, options, token => {
-        return resolve( Object.assign(data, { token }) );
-      });
-    });
-  }
+  //   const options = this.options.token;
+  //   const data = params;
+  //   // Our before hook determined that we had a valid token or that this
+  //   // was internally called so let's generate a new token with the user
+  //   // id and return both the ID and the token.
+  //   return new Promise(function(resolve){
+  //     jwt.sign(data, options.secret, options, token => {
+  //       return resolve( Object.assign(data, { token }) );
+  //     });
+  //   });
+  // }
 
   // POST /auth/token
   create(data, params) {
@@ -108,9 +102,9 @@ export class TokenService {
       jwtid,
       subject,
       noTimestamp
-    } = Object.assign({}, this.options, params.jwt);
-    // const payload = this.options.payload;
-    const secret = this.options.secret;
+    } = Object.assign({}, this.options.token, params.tokenOptions);
+
+    const secret = this.options.token.secret;
     const options = {
       algorithm,
       notBefore,
@@ -128,15 +122,6 @@ export class TokenService {
     if (!data.exp) {
       options.expiresIn = expiresIn;
     }
-
-    // const data = {
-    //   [this.options.idField]: payload[this.options.idField]
-    // };
-
-    // // Add any additional payload fields
-    // if (payload && Array.isArray(payload)) {
-    //   payload.forEach(field => data[field] = payload[field]);
-    // }
 
     // Our before hook determined that we had a valid token or that this
     // was internally called so let's generate a new token with the user
@@ -161,6 +146,12 @@ export class TokenService {
 
     // Set up our before hooks
     this.before({
+      // all: [
+      //   parseToken(),
+      //   isAuthenticated(),
+      //   checkPermissions({ namespace: 'users', on: 'user', field: 'permissions' }),
+      //   isPermitted()
+      // ],
       create: [_verifyToken(options)],
       find: [_verifyToken(options)],
       get: [_verifyToken(options)]
@@ -170,15 +161,18 @@ export class TokenService {
     // TODO (EK): I'm not sure these should be done automatically
     // I think this should be left up to the developer or the
     // generator.
+    // TODO (EK): Remove these and make the developer explicitly do
+    // this after we have the client check for a user and request if
+    // it didn't come in the response to authenticate.
     this.after({
       create: [
-        hooks.populateUser()
+        loadAuthenticated()
       ],
       find: [
-        hooks.populateUser()
+        loadAuthenticated()
       ],
       get: [
-        hooks.populateUser()
+        loadAuthenticated()
       ]
     });
 
@@ -192,18 +186,22 @@ export class TokenService {
 export default function init(options){
   return function() {
     const app = this;
-    const authConfig = Object.assign({}, app.get('auth'), options);
-    const { passwordField } = authConfig.user;
-
-    options = merge(defaults, authConfig.token, options, { passwordField });
-
-    const successHandler = options.successHandler || successRedirect;
+    options = merge({ token: {}, user: {} }, app.get('auth'), options);
+    const successHandler = options.token.successHandler || successRedirect;
 
     debug('configuring token authentication service with options', options);
 
+    // TODO (EK): Add error checking for required fields
+    // - token.service
+    // - local.service
+    // - user.service
+    // - user.idField
+    // - user.passwordField
+    // - user.usernameField
+
     // TODO (EK): Only enable set cookie middleware if cookies are enabled.
     // Initialize our service with any options it requires
-    app.use(options.service, new TokenService(options), setCookie(authConfig), successHandler(options));
+    app.use(options.token.service, new TokenService(options), setCookie(options), successHandler(options));
   };
 }
 

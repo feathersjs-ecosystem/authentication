@@ -1,7 +1,6 @@
 /*jshint expr: true*/
 
 import jwt from 'jsonwebtoken';
-import omit from 'lodash.omit';
 import chai, { expect } from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
@@ -17,7 +16,13 @@ describe('middleware:rest:verifyToken', () => {
   beforeEach(() => {
     req = {
       app: {
-        get: () => { return {}; }
+        get: () => {
+          return {
+            token: {
+              name: 'token'
+            }
+          };
+        }
       },
       feathers: {}
     };
@@ -50,7 +55,6 @@ describe('middleware:rest:verifyToken', () => {
       issuer: 'feathers',
       subject: 'auth',
       expiresIn: '5m',
-      secret: 'secret',
       algorithm: 'HS256'
     };
     const payload = { id: 1 };
@@ -58,7 +62,7 @@ describe('middleware:rest:verifyToken', () => {
     beforeEach(() => {
       req.app.get = () => {
         return {
-          token: { secret: 'secret' }
+          token: { secret: 'secret', name: 'token' }
         };
       };
 
@@ -81,7 +85,7 @@ describe('middleware:rest:verifyToken', () => {
 
     describe('when token is valid', () => {
       it('sets the token payload', done => {
-        req.token = jwt.sign(payload, 'secret', omit(options, 'secret'));
+        req.token = jwt.sign(payload, 'secret', options);
 
         verifyToken(options)(req, res, () => {
           expect(typeof req.feathers.payload).to.equal('object');
@@ -92,7 +96,7 @@ describe('middleware:rest:verifyToken', () => {
       });
 
       it('flags the request as authenticated', done => {
-        req.token = jwt.sign(payload, 'secret', omit(options, 'secret'));
+        req.token = jwt.sign(payload, 'secret', options);
         
         verifyToken(options)(req, res, () => {
           expect(req.feathers.authenticated).to.equal(true);

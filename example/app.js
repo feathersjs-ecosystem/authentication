@@ -6,7 +6,7 @@ var memory = require('feathers-memory');
 var bodyParser = require('body-parser');
 var errorHandler = require('feathers-errors/handler');
 var authentication = require('../lib/index');
-var token = authentication.TokenService;
+var token = authentication.TokenService.Service;
 var local = authentication.LocalService;
 
 // Initialize the application

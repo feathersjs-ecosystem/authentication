@@ -1,20 +1,20 @@
-import associateCurrentUser from './associate-current-user';
+import associateAuthenticated from './associate-authenticated';
 import hashPassword from './hash-password';
-import populateUser from './populate-user';
-import queryWithCurrentUser from './query-with-current-user';
+import loadAuthenticated from './load-authenticated';
+import queryWithAuthenticated from './query-with-authenticated';
 import isAuthenticated from './is-authenticated';
 import isPermitted from './is-permitted';
-import verifyToken from './verify-token';
+import parseToken from './parse-token';
 import checkPermissions from './check-permissions';
 
 let hooks = {
-  associateCurrentUser,
+  associateAuthenticated,
   hashPassword,
-  populateUser,
-  queryWithCurrentUser,
+  loadAuthenticated,
+  queryWithAuthenticated,
   isAuthenticated,
   isPermitted,
-  verifyToken,
+  parseToken,
   checkPermissions
 };
 

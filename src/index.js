@@ -3,7 +3,7 @@ import passport from 'passport';
 import merge from 'lodash.merge';
 
 // Exposed modules
-import h from './hooks';
+import hooks from './hooks';
 import token from './services/token';
 import local from './services/local';
 import oauth2 from './services/oauth2';
@@ -25,6 +25,7 @@ const defaults = {
   token: {
     name: 'token', // optional
     service: '/auth/token', // optional string or Service
+    subject: 'auth', // optional
     issuer: 'feathers', // optional
     algorithm: 'HS256', // optional
     expiresIn: '1d', // optional
@@ -37,7 +38,9 @@ const defaults = {
     service: '/auth/local', // optional string or Service
     successRedirect: null, // optional - no default. If set the default success handler will redirect to location
     failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    successHandler: null // optional - a middleware to handle things once authentication succeeds
+    successHandler: null, // optional - a middleware to handle things once authentication succeeds
+    passReqToCallback: true, // optional - whether request should be passed to callback
+    session: false // optional - whether we should use a session
   },
   user: {
     service: '/users', // optional string or Service
@@ -45,12 +48,15 @@ const defaults = {
     usernameField: 'email', // optional
     passwordField: 'password' // optional
   },
-  // oauth: {
-  //   service: '/auth/<provider>', // optional string or Service
-  //   idField: '_id', // optional
-  //   usernameField: 'email', // optional
-  //   passwordField: 'password' // optional
-  // }
+  oauth2: {
+    // service: '/auth/facebook', // required - the service path or initialized service
+    passReqToCallback: true, // optional - whether request should be passed to callback
+    // callbackUrl: 'callback', // optional - the callback url, by default this gets set to /<service>/callback
+    permissions: {
+      state: true,
+      session: false
+    }
+  }
 };
 
 export default function auth(config = {}) {
@@ -131,7 +137,7 @@ export default function auth(config = {}) {
 }
 
 // Exposed Modules
-auth.hooks = h;
+auth.hooks = hooks;
 auth.middleware = mw;
 auth.LocalService = local;
 auth.TokenService = token;

@@ -14,10 +14,11 @@ module.exports = function verifyToken(options = {}) {
     options = merge({}, authOptions.token, options);
     debug('Running verifyToken middleware with options:', options);
 
-    const token = req.token || req.feathers.token;
+    const token = req[options.name] || req.feathers[options.name];
 
     // If no token present then move along
     if (!token) {
+      debug(`No token was found with name '${options.name}'. Skipping verifyToken middleware.`);
       return next();
     }
 
