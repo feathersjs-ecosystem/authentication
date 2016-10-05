@@ -53,7 +53,7 @@ const auth = require('feathers-authentication').hooks;
 userService.before({
     all: [
         auth.isAuthenticated(),
-        auth.checkPermissions({entity: 'user', has: 'users', field: 'permissions'}),
+        auth.checkPermissions({namespace: 'users', on: 'user', field: 'permissions'}),
         auth.isPermitted()
     ]
 });
@@ -67,8 +67,7 @@ const permissions = ['users:*', 'admin']; // whatever permissions you want
 app.get(
     '/protected',
     mw.checkPermissions({
-        entity: 'user',
-        has: 'admin',
+        on: 'user',
         field: 'permissions',
         permissions
     }),
@@ -86,7 +85,7 @@ const auth = require('feathers-authentication').hooks;
 userService.before({
     all: [
         auth.isAuthenticated(),
-        auth.hasPermissions('admin', { field: 'role'})
+        auth.checkPermissions({namespace: 'admin', on: 'user', field: 'role'})
     ]
 });
 ```
@@ -201,7 +200,26 @@ app.configure(authentication(options))
 
 ### You must configure register all middleware explicitly (WIP)
 
-TODO
+TODO (EK): We currently set them up automatically by default but may enforce middleware to be registered explicitly.
+
+### All cookies are httpOnly
+
+There is no longer a JS accessible cookie. in most cases this is an implementation detail and not something you were likely aware of. However, if you were relying on accessing the JWT access token inside the JS accessible cookie then it is no more.
+
+We've found that all authentication can happen using an `httpOnly` cookie instead of having the short lived JS accessible cookie. This is not only more secure as you are no longer susceptible to XSS attacks but are also more flexible.
+
+Scenarios where you need to use a cookie:
+
+- OAuth
+- Universal app server side rendering
+- Old school server side template rendering
+- Redirects to other domains or apps after authentication
+
+To support all of these use cases we needed to encode the auth token a cookie. The other option is to put the token in the query string (which is insecure).
+
+Previously we had the feathers client parse the token from a short lived JS accessible cookie. However, we've since realized that if you make an ajax call the cookie will be sent along in the header and we can verify it on the server side. If you make a socket call the initial socket connection will also have the cookie and we can verify it. So in all cases we can simply use an `httpOnly` cookie and parse the token out of it server side.
+
+If you are doing your authentication over AJAX or sockets in the first place then there is no need for a cookie at all and the client will just store the token in localstorage and use it until logged out or expired.
 
 ### You no longer register some hooks
 
@@ -236,17 +254,16 @@ Much better! :smile:
 
 This shouldn't really affect you unless you are testing, modifying or wrapping existing hooks but they **always** return promises now. This makes the interface more consistent, making it easier to test and reason as to what a hook does.
 
-### Response to `app.uthenticate()` returns `user`
+### Response to `app.uthenticate()` does not return `user`
 
-The authenticate call is not a typical service call. It doesn't support batch calls as you can't authenticate multiple users and it returns both the token and the authenticated user. Assigning the user object to `response.data` doesn't makes it harder for you to add your own custom data to the authentication response. For those reasons and to make it easier for people to find the logged in `user` in the response, `response.data` is now `response.user` when authenticating.
+We made the poor assumption that when you authenticate you are always authenticating a user. This may not always be the case or your app may not care about the current user as you have their id or can encode some details in the JWT.  Therefore, if you need to get the current user you need to request it explicitly after authentication.
 
 ### Removed Configuration Options
 
 TODO (EK)
 
-We've changed up some of the possible authentication options.
+We've changed up some of the possible authentication options. You can view all the available options in the main [`index.js`](./src/index.js) file.
 
-- `cookie`
 - 
 
 ### Options specific to hooks need to be passed explicitly
