@@ -1,4 +1,5 @@
 import { OAuth2Service as oauth2 } from '../../../src';
+import { normalizeCallbackURL } from '../../../src/services/oauth2';
 // import feathers from 'feathers';
 // import hooks from 'feathers-hooks';
 // import rest from 'feathers-rest';
@@ -16,6 +17,14 @@ describe('service:oauth2', () => {
   it('exposes the raw Service class', () => {
     expect(typeof oauth2.Service).to.equal('function');
     expect(oauth2.Service.name).to.equal('OAuth2Service');
+  });
+
+  it('assures that callbackURL is absolute or relative to root', () => {
+    expect(normalizeCallbackURL(undefined, 'auth/github')).to.equal('/auth/github/callback');
+    expect(normalizeCallbackURL(undefined, '/auth/github')).to.equal('/auth/github/callback');
+    expect(normalizeCallbackURL('test', '/auth/github')).to.equal('/test');
+    expect(normalizeCallbackURL('/auth/github/custom', '/auth/github')).to.equal('/auth/github/custom');
+    expect(normalizeCallbackURL('http://feathersjs.com/callback', '/auth/github')).to.equal('http://feathersjs.com/callback');
   });
 
   describe('config options', () => {

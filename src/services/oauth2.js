@@ -3,6 +3,8 @@ import errors from 'feathers-errors';
 import passport from 'passport';
 import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
+import url from 'url';
+import {stripSlashes} from 'feathers-commons';
 
 const debug = Debug('feathers-authentication:services:oauth2');
 
@@ -195,6 +197,21 @@ export class OAuth2Service {
   }
 }
 
+/*
+ * Make sure the callbackURL is an absolute URL or relative to the root.
+ */
+export function normalizeCallbackURL(callbackURL, servicePath){
+  if(callbackURL){
+    var parsed = url.parse(callbackURL);
+    if(!parsed.protocol){
+      callbackURL = '/' + stripSlashes(callbackURL);
+    }
+  } else {
+    callbackURL = callbackURL || `/${stripSlashes(servicePath)}/callback`;
+  }
+  return callbackURL;
+}
+
 export default function init (options){
   if (!options.provider) {
     throw new Error('You need to pass a `provider` for your authentication provider');
@@ -219,7 +236,7 @@ export default function init (options){
   return function() {
     const app = this;
     options = merge({ user: {} }, app.get('auth'), app.get('auth').oauth2, options);
-    options.callbackURL = options.callbackURL || `${options.service}/callback`;
+    options.callbackURL = normalizeCallbackURL(options.callbackURL, options.service);
 
     if (options.token === undefined) {
       throw new Error('The TokenService needs to be configured before the OAuth2 service.');
