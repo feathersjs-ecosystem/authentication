@@ -272,7 +272,7 @@ We've changed up some of the possible authentication options. You can view all t
 
 We have removed some of the authentication hooks, specifically around authorization permissions.
 
-The following hooks have been remove:
+The following hooks have been removed:
 
 - `restrictToOwner`
 - `restrictToRoles`
