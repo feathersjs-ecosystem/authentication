@@ -254,9 +254,9 @@ Much better! :smile:
 
 This shouldn't really affect you unless you are testing, modifying or wrapping existing hooks but they **always** return promises now. This makes the interface more consistent, making it easier to test and reason as to what a hook does.
 
-### Response to `app.uthenticate()` does not return `user`
+### Response to `app.authenticate()` does not return `user`
 
-We made the poor assumption that when you authenticate you are always authenticating a user. This may not always be the case or your app may not care about the current user as you have their id or can encode some details in the JWT.  Therefore, if you need to get the current user you need to request it explicitly after authentication.
+We previously made the assumption that you are always authenticating a user. This may not always be the case, or your app may not care about the current user as you have their id or can encode some details in the JWT.  Therefore, if you need to get the current user you need to request it explicitly after authentication.
 
 ### Removed Configuration Options
 
