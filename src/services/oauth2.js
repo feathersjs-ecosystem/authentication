@@ -98,6 +98,8 @@ export class OAuth2Service {
 
   // For GET /auth/facebook/callback
   get(id, params) {
+    // Make sure the provider plugin name doesn't overwrite the OAuth provider name.
+    delete params.provider;
     const options = Object.assign({}, this.options, params);
 
     if (`${options.service}/${id}` !== options.callbackUrl) {
