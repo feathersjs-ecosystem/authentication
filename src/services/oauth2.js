@@ -38,6 +38,7 @@ export class OAuth2Service {
   updateUser(user, data) {
     const idField = this.options.user.idField;
     const id = user[idField];
+    const userService = typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
 
     debug(`Updating user: ${id}`);
 
@@ -45,15 +46,16 @@ export class OAuth2Service {
     data = merge({}, user, data);
 
     // TODO (EK): Handle paginated services?
-    return this._userService.patch(id, data, { oauth: true });
+    return userService.patch(id, data, { oauth: true });
   }
 
   createUser(data) {
     const provider = this.options.provider;
     const id = data[`${provider}Id`];
+    const userService = typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
     debug(`Creating new user with ${provider}Id: ${id}`);
 
-    return this._userService.create(data, { oauth: true });
+    return userService.create(data, { oauth: true });
   }
 
   verify(req, accessToken, refreshToken, profile, done) {
@@ -63,9 +65,10 @@ export class OAuth2Service {
       // facebookId: profile.id
       [`${options.provider}Id`]: profile.id
     };
+    const userService = typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
 
     // Find or create the user since they could have signed up via facebook.
-    this._userService
+    userService
       .find({ query })
       .then(this.getFirstUser)
       .then(user => {
@@ -100,6 +103,7 @@ export class OAuth2Service {
   get(id, params) {
     // Make sure the provider plugin name doesn't overwrite the OAuth provider name.
     delete params.provider;
+    const tokenService = typeof this._tokenService === 'string' ? this.app.service(this._tokenService) : this._tokenService;
     const options = Object.assign({}, this.options, params);
 
     if (`/${stripSlashes(options.service)}/${id}` !== options.callbackURL) {
@@ -108,7 +112,7 @@ export class OAuth2Service {
 
     return new Promise(function(resolve, reject){
 
-      let middleware = passport.authenticate(options.provider, options.permissions, function(error, user) {
+      let middleware = passport.authenticate(options.provider, options.permissions, (error, user) => {
         if (error) {
           return reject(error);
         }
@@ -123,7 +127,7 @@ export class OAuth2Service {
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return this._tokenService
+        return tokenService
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
@@ -137,6 +141,7 @@ export class OAuth2Service {
   // This is for mobile token based authentication
   create(data, params) {
     const options = this.options;
+    const tokenService = typeof this._tokenService === 'string' ? this.app.service(this._tokenService) : this._tokenService;
 
     if (!options.tokenStrategy) {
       return Promise.reject(new errors.MethodNotAllowed());
@@ -159,11 +164,11 @@ export class OAuth2Service {
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return this._tokenService
+        return tokenService
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
-      });
+      }).bind(this);
 
       middleware(params.req, params.res);
     });
@@ -174,11 +179,8 @@ export class OAuth2Service {
     // so that we can call other services
     this.app = app;
 
-    const tokenService = this.options.token.service;
-    const userService = this.options.user.service;
-
-    this._tokenService = typeof tokenService === 'string' ? app.service(tokenService) : tokenService;
-    this._userService = typeof userService === 'string' ? app.service(userService) : userService;
+    this._tokenService = this.options.token.service;
+    this._userService = this.options.user.service;
 
     // Register our Passport auth strategy and get it to use our passport callback function
     const Strategy = this.options.strategy;
