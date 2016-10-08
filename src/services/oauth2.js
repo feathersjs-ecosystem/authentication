@@ -102,7 +102,7 @@ export class OAuth2Service {
     delete params.provider;
     const options = Object.assign({}, this.options, params);
 
-    if (`${options.service}/${id}` !== options.callbackUrl) {
+    if (`/${stripSlashes(options.service)}/${id}` !== options.callbackURL) {
       return Promise.reject(new errors.NotFound());
     }
 
