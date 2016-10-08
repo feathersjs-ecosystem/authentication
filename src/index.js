@@ -51,7 +51,7 @@ const defaults = {
   oauth2: {
     // service: '/auth/facebook', // required - the service path or initialized service
     passReqToCallback: true, // optional - whether request should be passed to callback
-    // callbackUrl: 'callback', // optional - the callback url, by default this gets set to /<service>/callback
+    // callbackURL: 'callback', // optional - the callback url, by default this gets set to /<service>/callback
     permissions: {
       state: true,
       session: false
