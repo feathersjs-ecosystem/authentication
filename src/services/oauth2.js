@@ -230,7 +230,11 @@ export default function init (options){
   }
 
   if (!options.service) {
-    throw new Error(`You need to provide an 'service' for your ${options.provider} provider. This can either be a string or an initialized service.`);
+    throw new Error(`You need to provide an 'service' for your ${options.provider} OAuth provider. This can either be a string or an initialized service.`);
+  }
+
+  if (!options.successHandler && !options.successRedirect) {
+    throw new Error(`You need to provide a 'successRedirect' URL for your ${options.provider} OAuth provider when using the default successHandler.`);
   }
 
   if (!options.strategy) {
