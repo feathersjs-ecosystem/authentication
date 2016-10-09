@@ -38,7 +38,7 @@ export class OAuth2Service {
   updateUser(user, data) {
     const idField = this.options.user.idField;
     const id = user[idField];
-    const userService = typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
+    const userService = this.getUserService();
 
     debug(`Updating user: ${id}`);
 
@@ -52,7 +52,7 @@ export class OAuth2Service {
   createUser(data) {
     const provider = this.options.provider;
     const id = data[`${provider}Id`];
-    const userService = typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
+    const userService = this.getUserService();
     debug(`Creating new user with ${provider}Id: ${id}`);
 
     return userService.create(data, { oauth: true });
@@ -65,7 +65,7 @@ export class OAuth2Service {
       // facebookId: profile.id
       [`${options.provider}Id`]: profile.id
     };
-    const userService = typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
+    const userService = this.getUserService();
 
     // Find or create the user since they could have signed up via facebook.
     userService
@@ -93,6 +93,14 @@ export class OAuth2Service {
       .catch(error => error ? done(error) : done(null, error));
   }
 
+  getUserService(){
+    return typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
+  }
+
+  getTokenService(){
+    return typeof this._tokenService === 'string' ? this.app.service(this._tokenService) : this._tokenService;
+  }
+
   // GET /auth/facebook
   find(params) {
     // Authenticate via your provider. This will redirect you to authorize the application.
@@ -103,7 +111,7 @@ export class OAuth2Service {
   get(id, params) {
     // Make sure the provider plugin name doesn't overwrite the OAuth provider name.
     delete params.provider;
-    const tokenService = typeof this._tokenService === 'string' ? this.app.service(this._tokenService) : this._tokenService;
+    const tokenService = this.getTokenService();
     const options = Object.assign({}, this.options, params);
 
     if (`/${stripSlashes(options.service)}/${id}` !== options.callbackURL) {
@@ -141,7 +149,7 @@ export class OAuth2Service {
   // This is for mobile token based authentication
   create(data, params) {
     const options = this.options;
-    const tokenService = typeof this._tokenService === 'string' ? this.app.service(this._tokenService) : this._tokenService;
+    const tokenService = this.getTokenService();
 
     if (!options.tokenStrategy) {
       return Promise.reject(new errors.MethodNotAllowed());
