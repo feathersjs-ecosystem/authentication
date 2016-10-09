@@ -207,7 +207,7 @@ describe('Feathers Authentication', () => {
         const options = {
           token: {
             secret: 'secret'
-          } 
+          }
         };
 
         app = feathers()
@@ -275,7 +275,7 @@ describe('Feathers Authentication', () => {
         const options = {
           token: {
             secret: 'secret'
-          } 
+          }
         };
 
         app = feathers()
@@ -302,7 +302,7 @@ describe('Feathers Authentication', () => {
         const options = {
           token: {
             secret: 'secret'
-          } 
+          }
         };
 
         app = feathers()
@@ -338,7 +338,7 @@ describe('Feathers Authentication', () => {
         setupMiddleware: false,
         token: {
           secret: 'secret'
-        } 
+        }
       };
 
       app = feathers()
