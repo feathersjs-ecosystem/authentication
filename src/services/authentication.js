@@ -4,13 +4,13 @@ export class Authentication {
       return Promise.reject(new Error(`External ${params.provider} requests need to run through an authentication provider`));
     }
 
-    return this.authentication.create(data.payload);
+    return this.authentication.createJWT(data.payload);
   }
 
   remove(id, params) {
     const token = id !== null ? id : params.token;
 
-    return this.authentication.verify({ token });
+    return this.authentication.verifyJWT({ token });
   }
 
   setup(app) {
