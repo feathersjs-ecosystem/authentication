@@ -38,14 +38,6 @@ describe('middleware', () => {
     expect(typeof mw.isAuthenticated).to.equal('function');
   });
 
-  it('exposes checkPermissions', () => {
-    expect(typeof mw.checkPermissions).to.equal('function');
-  });
-
-  it('exposes isPermitted', () => {
-    expect(typeof mw.isPermitted).to.equal('function');
-  });
-
   it('exposes tokenParser', () => {
     expect(typeof mw.tokenParser).to.equal('function');
   });
