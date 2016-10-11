@@ -6,6 +6,10 @@ const debug = Debug('feathers-authentication:middleware:set-cookie');
 export default function setCookie(options = {}) {
   debug('Registering setCookie middleware');
 
+  function makeExpiry(timeframe){
+    return new Date(Date.now() + ms(timeframe));
+  }
+  
   return function(req, res, next) {
     const app = req.app;
     const authOptions = app.get('auth') || {};
@@ -43,8 +47,12 @@ export default function setCookie(options = {}) {
         // to be the default maxAge of the respective cookie otherwise it
         // will just become a session cookie.
         if (options.expires === undefined && options.maxAge) {
-          const expiry = new Date(Date.now() + ms(options.maxAge));
-          options.expires = expiry;
+          options.expires = makeExpiry(options.maxAge);
+        }
+
+        // By default, the cookie will expire with the token.
+        if(options.expires === undefined && options.maxAge === undefined){
+          options.expires = makeExpiry(options.token.expiresIn);
         }
 
         if ( options.expires && !(options.expires instanceof Date) ) {

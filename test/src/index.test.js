@@ -81,11 +81,11 @@ describe('Feathers Authentication', () => {
         });
 
         it('makes the cookie as httpOnly', () => {
-          expect(app.get('auth').cookie.httpOnly).to.equal(true);
+          expect(app.get('auth').cookie.httpOnly).to.equal(false);
         });
 
         it('sets the maxAge', () => {
-          expect(app.get('auth').cookie.maxAge).to.equal('1d');
+          expect(app.get('auth').cookie.maxAge).to.equal(undefined);
         });
 
         it('sets the cookie as secure', () => {
