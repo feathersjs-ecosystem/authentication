@@ -3,6 +3,8 @@ import errors from 'feathers-errors';
 import passport from 'passport';
 import { successRedirect, setCookie } from '../middleware';
 import merge from 'lodash.merge';
+import url from 'url';
+import {stripSlashes} from 'feathers-commons';
 
 const debug = Debug('feathers-authentication:services:oauth2');
 
@@ -36,6 +38,7 @@ export class OAuth2Service {
   updateUser(user, data) {
     const idField = this.options.user.idField;
     const id = user[idField];
+    const userService = this.getUserService();
 
     debug(`Updating user: ${id}`);
 
@@ -43,15 +46,16 @@ export class OAuth2Service {
     data = merge({}, user, data);
 
     // TODO (EK): Handle paginated services?
-    return this._userService.patch(id, data, { oauth: true });
+    return userService.patch(id, data, { oauth: true });
   }
 
   createUser(data) {
     const provider = this.options.provider;
     const id = data[`${provider}Id`];
+    const userService = this.getUserService();
     debug(`Creating new user with ${provider}Id: ${id}`);
 
-    return this._userService.create(data, { oauth: true });
+    return userService.create(data, { oauth: true });
   }
 
   verify(req, accessToken, refreshToken, profile, done) {
@@ -61,9 +65,10 @@ export class OAuth2Service {
       // facebookId: profile.id
       [`${options.provider}Id`]: profile.id
     };
+    const userService = this.getUserService();
 
     // Find or create the user since they could have signed up via facebook.
-    this._userService
+    userService
       .find({ query })
       .then(this.getFirstUser)
       .then(user => {
@@ -88,6 +93,14 @@ export class OAuth2Service {
       .catch(error => error ? done(error) : done(null, error));
   }
 
+  getUserService(){
+    return typeof this._userService === 'string' ? this.app.service(this._userService) : this._userService;
+  }
+
+  getTokenService(){
+    return typeof this._tokenService === 'string' ? this.app.service(this._tokenService) : this._tokenService;
+  }
+
   // GET /auth/facebook
   find(params) {
     // Authenticate via your provider. This will redirect you to authorize the application.
@@ -96,15 +109,18 @@ export class OAuth2Service {
 
   // For GET /auth/facebook/callback
   get(id, params) {
+    // Make sure the provider plugin name doesn't overwrite the OAuth provider name.
+    delete params.provider;
+    const tokenService = this.getTokenService();
     const options = Object.assign({}, this.options, params);
 
-    if (`${options.service}/${id}` !== options.callbackUrl) {
+    if (`/${stripSlashes(options.service)}/${id}` !== options.callbackURL) {
       return Promise.reject(new errors.NotFound());
     }
 
     return new Promise(function(resolve, reject){
 
-      let middleware = passport.authenticate(options.provider, options.permissions, function(error, user) {
+      let middleware = passport.authenticate(options.provider, options.permissions, (error, user) => {
         if (error) {
           return reject(error);
         }
@@ -119,7 +135,7 @@ export class OAuth2Service {
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return this._tokenService
+        return tokenService
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
@@ -133,6 +149,7 @@ export class OAuth2Service {
   // This is for mobile token based authentication
   create(data, params) {
     const options = this.options;
+    const tokenService = this.getTokenService();
 
     if (!options.tokenStrategy) {
       return Promise.reject(new errors.MethodNotAllowed());
@@ -155,11 +172,11 @@ export class OAuth2Service {
         };
 
         // Get a new JWT and the associated user from the Auth token service and send it back to the client.
-        return this._tokenService
+        return tokenService
           .create(tokenPayload, { user })
           .then(resolve)
           .catch(reject);
-      });
+      }).bind(this);
 
       middleware(params.req, params.res);
     });
@@ -170,11 +187,8 @@ export class OAuth2Service {
     // so that we can call other services
     this.app = app;
 
-    const tokenService = this.options.token.service;
-    const userService = this.options.user.service;
-
-    this._tokenService = typeof tokenService === 'string' ? app.service(tokenService) : tokenService;
-    this._userService = typeof userService === 'string' ? app.service(userService) : userService;
+    this._tokenService = this.options.token.service;
+    this._userService = this.options.user.service;
 
     // Register our Passport auth strategy and get it to use our passport callback function
     const Strategy = this.options.strategy;
@@ -195,13 +209,32 @@ export class OAuth2Service {
   }
 }
 
+/*
+ * Make sure the callbackURL is an absolute URL or relative to the root.
+ */
+export function normalizeCallbackURL(callbackURL, servicePath){
+  if(callbackURL){
+    var parsed = url.parse(callbackURL);
+    if(!parsed.protocol){
+      callbackURL = '/' + stripSlashes(callbackURL);
+    }
+  } else {
+    callbackURL = callbackURL || `/${stripSlashes(servicePath)}/callback`;
+  }
+  return callbackURL;
+}
+
 export default function init (options){
   if (!options.provider) {
     throw new Error('You need to pass a `provider` for your authentication provider');
   }
 
   if (!options.service) {
-    throw new Error(`You need to provide an 'service' for your ${options.provider} provider. This can either be a string or an initialized service.`);
+    throw new Error(`You need to provide an 'service' for your ${options.provider} OAuth provider. This can either be a string or an initialized service.`);
+  }
+
+  if (!options.successHandler && !options.successRedirect) {
+    throw new Error(`You need to provide a 'successRedirect' URL for your ${options.provider} OAuth provider when using the default successHandler.`);
   }
 
   if (!options.strategy) {
@@ -219,7 +252,7 @@ export default function init (options){
   return function() {
     const app = this;
     options = merge({ user: {} }, app.get('auth'), app.get('auth').oauth2, options);
-    options.callbackURL = options.callbackURL || `${options.service}/callback`;
+    options.callbackURL = normalizeCallbackURL(options.callbackURL, options.service);
 
     if (options.token === undefined) {
       throw new Error('The TokenService needs to be configured before the OAuth2 service.');

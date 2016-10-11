@@ -49,6 +49,7 @@
     "bcryptjs": "^2.3.0",
     "cookie-parser": "^1.4.3",
     "debug": "^2.2.0",
+    "feathers-commons": "^0.7.5",
     "feathers-errors": "^2.4.0",
     "jsonwebtoken": "^7.1.9",
     "lodash.intersection": "^4.4.0",
