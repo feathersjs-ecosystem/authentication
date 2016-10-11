@@ -1,6 +1,5 @@
 import Debug from 'debug';
 import passport from 'passport';
-import merge from 'lodash.merge';
 
 // Exposed modules
 import hooks from './hooks';
@@ -8,70 +7,26 @@ import token from './services/token';
 import local from './services/local';
 import oauth2 from './services/oauth2';
 import * as mw from './middleware';
+import getOptions from './options';
+import Authentication from './base';
 
 const debug = Debug('feathers-authentication:main');
 
-// Options that apply to any provider
-const defaults = {
-  header: 'Authorization',
-  setupMiddleware: true, // optional - to setup middleware yourself set to false.
-  cookie: { // Used for redirects, server side rendering and OAuth
-    enabled: false, // Set to true to enable all cookies
-    name: 'feathers-jwt',
-    httpOnly: true,
-    maxAge: '1d',
-    secure: true
-  },
-  token: {
-    name: 'token', // optional
-    service: '/auth/token', // optional string or Service
-    subject: 'auth', // optional
-    issuer: 'feathers', // optional
-    algorithm: 'HS256', // optional
-    expiresIn: '1d', // optional
-    secret: null, // required
-    successRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    successHandler: null // optional - a middleware to handle things once authentication succeeds
-  },
-  local: {
-    service: '/auth/local', // optional string or Service
-    successRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    failureRedirect: null, // optional - no default. If set the default success handler will redirect to location
-    successHandler: null, // optional - a middleware to handle things once authentication succeeds
-    passReqToCallback: true, // optional - whether request should be passed to callback
-    session: false // optional - whether we should use a session
-  },
-  user: {
-    service: '/users', // optional string or Service
-    idField: '_id', // optional
-    usernameField: 'email', // optional
-    passwordField: 'password' // optional
-  },
-  oauth2: {
-    // service: '/auth/facebook', // required - the service path or initialized service
-    passReqToCallback: true, // optional - whether request should be passed to callback
-    // callbackURL: 'callback', // optional - the callback url, by default this gets set to /<service>/callback
-    permissions: {
-      state: true,
-      session: false
-    }
-  }
-};
+export default function init(config = {}) {
+  const middleware = [];
 
-export default function auth(config = {}) {
-  return function() {
+  function authentication() {
     const app = this;
     let _super = app.setup;
 
     // Merge and flatten options
-    const authOptions = merge({}, defaults, app.get('auth'), config);
+    const authOptions = getOptions(app.get('auth'), config);
 
     // NOTE (EK): Currently we require token based auth so
     // if the developer didn't provide a config for our token
     // provider then we'll set up a sane default for them.
-    if (!authOptions.token.secret) {
-      throw new Error (`You must provide a token secret in your config via 'auth.token.secret'.`);
+    if (!authOptions.secret && !authOptions.token.secret) {
+      throw new Error (`You must provide a 'secret' in your authentication configuration`);
     }
 
     // Make sure cookies don't have to be sent over HTTPS
@@ -86,7 +41,7 @@ export default function auth(config = {}) {
     // REST middleware
     if (app.rest && authOptions.setupMiddleware) {
       debug('registering REST authentication middleware');
-      
+
       // Be able to parse cookies it they are enabled
       if (authOptions.cookie.enable) {
         app.use(mw.cookieParser());
@@ -96,7 +51,7 @@ export default function auth(config = {}) {
       app.use(mw.exposeRequestResponse(authOptions));
       // Parse token from header, cookie, or request objects
       app.use(mw.tokenParser(authOptions));
-      // Verify and decode a JWT if it is present 
+      // Verify and decode a JWT if it is present
       app.use(mw.verifyToken(authOptions));
       // Make the Passport user available for REST services.
       app.use(mw.populateUser(authOptions));
@@ -133,12 +88,23 @@ export default function auth(config = {}) {
 
       return result;
     };
+
+    app.authentication = new Authentication(app, authOptions);
+    app.authentication.use(... middleware);
+  }
+
+  authentication.use = function(... mw) {
+    middleware.push(... mw);
+
+    return authentication;
   };
+
+  return authentication;
 }
 
 // Exposed Modules
-auth.hooks = hooks;
-auth.middleware = mw;
-auth.LocalService = local;
-auth.TokenService = token;
-auth.OAuth2Service = oauth2;
+init.hooks = hooks;
+init.middleware = mw;
+init.LocalService = local;
+init.TokenService = token;
+init.OAuth2Service = oauth2;
