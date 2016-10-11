@@ -6,6 +6,10 @@ const debug = Debug('feathers-authentication:middleware:set-cookie');
 export default function setCookie(options = {}) {
   debug('Registering setCookie middleware');
 
+  function makeExpiry(timeframe){
+    return new Date(Date.now() + ms(timeframe));
+  }
+  
   return function(req, res, next) {
     const app = req.app;
     const authOptions = app.get('auth') || {};
