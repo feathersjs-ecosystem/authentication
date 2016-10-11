@@ -8,7 +8,6 @@ export const defaults = {
     enabled: false, // Set to true to enable all cookies
     name: 'feathers-jwt',
     httpOnly: false,
-    maxAge: '1d',
     secure: true
   },
   jwt: {
