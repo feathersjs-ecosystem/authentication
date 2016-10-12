@@ -22,17 +22,23 @@ export default function(opts = {}) {
   return function() {
     const app = this;
 
-    if(!app.get('storage')) {
-      app.set('storage', getStorage(config.storage));
+    if (!app.get('storage')) {
+      const storage = getStorage(config.storage);
+      app.set('storage', storage);
     }
 
+    // load any pre-existing JWT from localStorage
+    getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
+      app.set('token', token);
+      app.get('storage').setItem(config.tokenKey, token);
+    });
+
     app.authenticate = function(options = {}) {
-      const storage = this.get('storage');
       let getOptions = Promise.resolve(options);
 
       // If no type was given let's try to authenticate with a stored JWT
       if (!options.type) {
-        getOptions = getJWT(config.tokenKey, config.cookie, this.get('storage')).then(token => {
+        getOptions = getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
           if (!token) {
             return Promise.reject(new errors.NotAuthenticated(`Could not find stored JWT and no authentication type was given`));
           }
@@ -43,9 +49,9 @@ export default function(opts = {}) {
 
       const handleResponse = function (response) {
         app.set('token', response.token);
-        app.set('user', response.data);
+        app.set('user', response.user);
 
-        return Promise.resolve(storage.setItem(config.tokenKey, response.token))
+        return Promise.resolve(app.get('storage').setItem(config.tokenKey, response.token))
           .then(() => response);
       };
 
@@ -100,7 +106,7 @@ export default function(opts = {}) {
         throw new Error(`It looks like feathers-hooks isn't configured. It is required before running feathers-authentication.`);
       }
 
-      service.before(hooks.populateParams(config));
+      service.before(hooks.populateParams());
     });
 
     // Set up hook that adds authorization header for REST provider

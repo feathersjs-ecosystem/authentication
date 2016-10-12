@@ -6,6 +6,8 @@ var memory = require('feathers-memory');
 var bodyParser = require('body-parser');
 var errorHandler = require('feathers-errors/handler');
 var authentication = require('../lib/index');
+var token = authentication.TokenService.Service;
+var local = authentication.LocalService;
 
 // Initialize the application
 var app = feathers()
@@ -17,8 +19,15 @@ var app = feathers()
   .use(bodyParser.urlencoded({ extended: true }))
   // Configure feathers-authentication
   .configure(authentication({
-    idField: 'id'
+    user: {
+      idField: 'id'
+    },
+    token: {
+      secret: 'super secret'
+    }
   }))
+  .configure(token())
+  .configure(local())
   // Initialize a user service
   .use('/users', memory())
   // A simple Message service that we can used for testing
@@ -28,7 +37,6 @@ var app = feathers()
       max: 25
     }
   }))
-  .use('/approved-messages', memory())
   .use('/', feathers.static(__dirname + '/public'))
   .use(errorHandler());
 
@@ -39,42 +47,10 @@ messageService.create({text: 'Bar declared massive success'}, {}, function(){});
 
 messageService.before({
   all: [
-    authentication.hooks.verifyToken(),
-    authentication.hooks.populateUser(),
-    authentication.hooks.restrictToAuthenticated()
+    authentication.hooks.isAuthenticated(),
+    authentication.hooks.hasPermissions('messages')
   ]
-})
-
-var approvedMessageService = app.service('/approved-messages');
-approvedMessageService.create({text: 'A million people walk into a Silicon Valley bar', approved: false, author: 'James'}, {}, function(){});
-approvedMessageService.create({text: 'Nobody buys anything', approved: true, author: 'Todd'}, {}, function(){});
-approvedMessageService.create({text: 'Bar declared massive success', approved: true, author: 'James'}, {}, function(){});
-
-
-// Will merge this restriction with the query params
-var restriction = { restrict: {approved: true} };
-
-approvedMessageService.before({
-  all: [
-    // Necessary since restrict must always use find and hook id is a string when the memory service expects it as a number
-    function(hook) {
-      if(hook.id) {
-        hook.id = parseInt(hook.id, 10);
-      }
-    }
-  ],
-  find: [
-    authentication.hooks.verifyOrRestrict(restriction),
-    authentication.hooks.populateOrRestrict(restriction),
-    authentication.hooks.hasRoleOrRestrict(Object.assign({roles: ['admin']}, restriction))
-  ],
-  get: [
-    authentication.hooks.verifyOrRestrict(restriction),
-    authentication.hooks.populateOrRestrict(restriction),
-    authentication.hooks.hasRoleOrRestrict(Object.assign({roles: ['admin']}, restriction))
-  ]
-})
-
+});
 
 var userService = app.service('users');
 
@@ -88,11 +64,19 @@ userService.before({
 var User = {
   email: 'admin@feathersjs.com',
   password: 'admin',
-  roles: ['admin']
+  permissions: ['*']
 };
 
 userService.create(User, {}).then(function(user) {
   console.log('Created default user', user);
+});
+
+app.on('login', function(data) {
+  console.log('User logged in', data);
+});
+
+app.on('logout', function(data) {
+  console.log('User logged out', data);
 });
 
 app.listen(3030);

@@ -6,6 +6,8 @@ export function populateParams() {
       user: app.get('user'),
       token: app.get('token')
     });
+
+    return Promise.resolve(hook);
   };
 }
 
@@ -16,5 +18,7 @@ export function populateHeader(options = {}) {
         [options.header || 'authorization']: hook.params.token
       }, hook.params.headers);
     }
+
+    return Promise.resolve(hook);
   };
 }

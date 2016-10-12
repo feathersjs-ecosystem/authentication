@@ -1,169 +1,110 @@
 import Debug from 'debug';
-import path from 'path';
-import crypto from 'crypto';
 import passport from 'passport';
+
+// Exposed modules
 import hooks from './hooks';
 import token from './services/token';
 import local from './services/local';
 import oauth2 from './services/oauth2';
-import * as middleware from './middleware';
-
-function isObject (item) {
-  return (typeof item === 'object' && !Array.isArray(item) && item !== null);
-}
+import * as mw from './middleware';
+import getOptions from './options';
+import Authentication from './base';
 
 const debug = Debug('feathers-authentication:main');
-const PROVIDERS = {
-  token,
-  local
-};
 
-// Options that apply to any provider
-const defaults = {
-  idField: '_id',
-  shouldSetupSuccessRoute: true,
-  shouldSetupFailureRoute: true,
-  successRedirect: '/auth/success',
-  failureRedirect: '/auth/failure',
-  tokenEndpoint: '/auth/token',
-  localEndpoint: '/auth/local',
-  userEndpoint: '/users',
-  header: 'authorization',
-  cookie: {
-    name: 'feathers-jwt',
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production'
-  }
-};
+export default function init(config = {}) {
+  const middleware = [];
 
-export default function auth(config = {}) {
-  return function() {
+  function authentication() {
     const app = this;
     let _super = app.setup;
+
+    // Merge and flatten options
+    const authOptions = getOptions(app.get('auth'), config);
 
     // NOTE (EK): Currently we require token based auth so
     // if the developer didn't provide a config for our token
     // provider then we'll set up a sane default for them.
-    if (!config.token) {
-      config.token = {
-        secret: crypto.randomBytes(64).toString('base64')
-      };
+    if (!authOptions.secret && !authOptions.token.secret) {
+      throw new Error (`You must provide a 'secret' in your authentication configuration`);
     }
 
-    // If they didn't pass in a local provider let's set one up
-    // for them with the default options.
-    if (config.local === undefined) {
-      config.local = {};
-    }
-
-    if (config.cookie ){
-      config.cookie = Object.assign({}, defaults.cookie, config.cookie);
-    }
-
-    // Merge and flatten options
-    const authOptions = Object.assign({}, defaults, app.get('auth'),config);
-
-    // If a custom success redirect is passed in or it is disabled then we
-    // won't setup the default route handler.
-    if (authOptions.successRedirect !== defaults.successRedirect) {
-      authOptions.shouldSetupSuccessRoute = false;
-    }
-
-    // If a custom failure redirect is passed in or it is disabled then we
-    // won't setup the default route handler.
-    if (authOptions.failureRedirect !== defaults.failureRedirect) {
-      authOptions.shouldSetupFailureRoute = false;
+    // Make sure cookies don't have to be sent over HTTPS
+    // when in development or test mode.
+    if (app.env === 'development' || app.env === 'test') {
+      authOptions.cookie.secure = false;
     }
 
     // Set the options on the app
     app.set('auth', authOptions);
 
     // REST middleware
-    if (app.rest) {
+    if (app.rest && authOptions.setupMiddleware) {
       debug('registering REST authentication middleware');
-      // Make the Passport user available for REST services.
-      // app.use( middleware.exposeAuthenticatedUser() );
 
-      // Get the token and expose it to REST services.
-      app.use( middleware.normalizeAuthToken(authOptions) );
+      // Be able to parse cookies it they are enabled
+      if (authOptions.cookie.enable) {
+        app.use(mw.cookieParser());
+      }
+
+      // Expose Express req & res objects to hooks and services
+      app.use(mw.exposeRequestResponse(authOptions));
+      // Parse token from header, cookie, or request objects
+      app.use(mw.tokenParser(authOptions));
+      // Verify and decode a JWT if it is present
+      app.use(mw.verifyToken(authOptions));
+      // Make the Passport user available for REST services.
+      app.use(mw.populateUser(authOptions));
+      // Register server side logout middleware
+      app.use(mw.logout(authOptions));
+    }
+    else if (app.rest) {
+      debug('Not registering REST authentication middleware. Did you disable it on purpose?');
     }
 
+    debug('registering passport middleware');
     app.use(passport.initialize());
 
     app.setup = function() {
       let result = _super.apply(this, arguments);
 
       // Socket.io middleware
-      if (app.io) {
+      if (app.io && authOptions.setupMiddleware) {
         debug('registering Socket.io authentication middleware');
-        app.io.on('connection', middleware.setupSocketIOAuthentication(app, authOptions));
+        app.io.on('connection', mw.setupSocketIOAuthentication(app, authOptions));
+      }
+      else if (app.primus) {
+        debug('Not registering Socket.io authentication middleware. Did you disable it on purpose?');
       }
 
       // Primus middleware
-      if (app.primus) {
+      if (app.primus && authOptions.setupMiddleware) {
         debug('registering Primus authentication middleware');
-        app.primus.on('connection', middleware.setupPrimusAuthentication(app, authOptions));
+        app.primus.on('connection', mw.setupPrimusAuthentication(app, authOptions));
+      }
+      else if (app.primus) {
+        debug('Not registering Primus authentication middleware. Did you disable it on purpose?');
       }
 
       return result;
     };
 
-    // Merge all of our options and configure the appropriate service
-    Object.keys(config).forEach(function (key) {
+    app.authentication = new Authentication(app, authOptions);
+    app.authentication.use(... middleware);
+  }
 
-      // Because we are iterating through all the keys we might
-      // be dealing with a config param and not a provider config
-      // If that's the case we don't need to merge params and we
-      // shouldn't try to set up a service for this key.
-      if (!isObject(config[key]) || key === 'cookie') {
-        return;
-      }
+  authentication.use = function(... mw) {
+    middleware.push(... mw);
 
-      // Check to see if the key is a local or token provider
-      let provider = PROVIDERS[key];
-      let providerOptions = config[key];
-
-      // If it's not one of our own providers then determine whether it is oauth1 or oauth2
-      if (!provider && isObject(providerOptions)) {
-        // Check to see if it is an oauth2 provider
-        if (providerOptions.clientID && providerOptions.clientSecret) {
-          provider = oauth2;
-        }
-        // Check to see if it is an oauth1 provider
-        else if (providerOptions.consumerKey && providerOptions.consumerSecret){
-          throw new Error(`Sorry we don't support OAuth1 providers right now. Try using a ${key} OAuth2 provider.`);
-        }
-
-        providerOptions = Object.assign({ provider: key, endPoint: `/auth/${key}` }, providerOptions);
-      }
-
-      const options = Object.assign({}, authOptions, providerOptions);
-
-      app.configure( provider(options) );
-    });
-
-    // Register error handling middleware for redirecting to support
-    // redirecting on authentication failure.
-    app.use(middleware.failedLogin(authOptions));
-
-    // Setup route handler for default success redirect
-    if (authOptions.shouldSetupSuccessRoute) {
-      debug(`Setting up successRedirect route: ${authOptions.successRedirect}`);
-
-      app.get(authOptions.successRedirect, function(req, res){
-        res.sendFile(path.resolve(__dirname, 'public', 'auth-success.html'));
-      });
-    }
-
-    // Setup route handler for default failure redirect
-    if (authOptions.shouldSetupFailureRoute) {
-      debug(`Setting up failureRedirect route: ${authOptions.failureRedirect}`);
-
-      app.get(authOptions.failureRedirect, function(req, res){
-        res.sendFile(path.resolve(__dirname, 'public', 'auth-fail.html'));
-      });
-    }
+    return authentication;
   };
+
+  return authentication;
 }
 
-auth.hooks = hooks;
+// Exposed Modules
+init.hooks = hooks;
+init.middleware = mw;
+init.LocalService = local;
+init.TokenService = token;
+init.OAuth2Service = oauth2;
