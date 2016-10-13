@@ -36,6 +36,15 @@ const setupTests = initApp => {
     app = initApp();
   });
 
+  it('config available at app.get("authentication")', () => {
+    expect(app.get('authentication')).to.deep.equal({
+      cookie: 'feathers-jwt',
+      tokenKey: 'feathers-jwt',
+      localEndpoint: '/auth/local',
+      tokenEndpoint: '/auth/token'
+    });
+  });
+
   it('local username password authentication', () => {
     return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);
