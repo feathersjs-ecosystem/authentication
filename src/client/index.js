@@ -21,7 +21,7 @@ export default function(opts = {}) {
 
   return function() {
     const app = this;
-    app.config = config;
+    app.set('authentication', config);
 
     if (!app.get('storage')) {
       const storage = getStorage(config.storage);
