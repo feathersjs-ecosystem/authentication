@@ -1,3 +1,5 @@
+import decode from 'jwt-decode';
+
 // Returns a promise that resolves when the socket is connected
 export function connected(app) {
   return new Promise((resolve, reject) => {
@@ -75,13 +77,13 @@ export function clearCookie(name) {
 // Tries the JWT from the given key either from a storage or the cookie
 export function getJWT(tokenKey, cookieKey, storage) {
   return Promise.resolve(storage.getItem(tokenKey)).then(jwt => {
-    const cookieToken = getCookie(cookieKey);
-
-    if (cookieToken) {
-      return cookieToken;
+    let token = jwt || getCookie(cookieKey);
+    if (token) {
+      if (decode(token).exp * 1000 < new Date().getTime()) {
+        token = undefined;
+      }
     }
-
-    return jwt;
+    return token;
   });
 }
 
