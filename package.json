@@ -36,8 +36,9 @@
     "compile": "rm -rf lib/ && babel -d lib/ src/",
     "watch": "babel --watch -d lib/ src/",
     "jshint": "jshint src/. test/. --config",
-    "mocha": "mocha --recursive test/ --compilers js:babel-core/register",
-    "test": "npm run compile && npm run jshint && npm run mocha && nsp check"
+    "mocha": "mocha --opts mocha.opts",
+    "coverage": "istanbul cover _mocha -- --opts mocha.opts",
+    "test": "npm run compile && npm run jshint && npm run coverage && nsp check"
   },
   "directories": {
     "lib": "lib"
@@ -74,6 +75,7 @@
     "feathers-primus": "^1.3.2",
     "feathers-rest": "^1.5.0",
     "feathers-socketio": "^1.3.2",
+    "istanbul": "^1.1.0-alpha.1",
     "jshint": "^2.9.3",
     "localstorage-memory": "^1.0.2",
     "mocha": "^3.0.2",

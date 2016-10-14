@@ -3,3 +3,5 @@ node_js:
   - 'node'
   - 'iojs'
   - '0.12'
+code_climate:
+  repo_token: 02ea69f85221efd3051a19e882c87cebc07522bf321374186bb6116301569e5e

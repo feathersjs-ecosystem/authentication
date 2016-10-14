@@ -28,4 +28,5 @@ node_modules
 .lock-wscript
 
 lib/
+coverage/
 data.db
