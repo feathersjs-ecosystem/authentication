@@ -45,6 +45,15 @@ const setupTests = initApp => {
     });
   });
 
+  it('Can decode a passed-in token', () => {
+    return app.authenticate(options).then(response => {
+      let payload = app.decodeJWT(response.token);
+      expect(payload.id).to.equal(0);
+      expect(payload.iss).to.equal('feathers');
+      expect(payload.sub).to.equal('auth');
+    });
+  });
+
   it('local username password authentication', () => {
     return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);

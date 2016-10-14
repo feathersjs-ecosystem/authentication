@@ -6,7 +6,8 @@ import {
   logoutSocket,
   getJWT,
   getStorage,
-  clearCookie
+  clearCookie,
+  decodeJWT
 } from './utils';
 
 const defaults = {
@@ -80,6 +81,9 @@ export default function(opts = {}) {
         });
       });
     };
+
+    // Expose the decodeJWT function on the app object.
+    app.decodeJWT = decodeJWT;
 
     // Set our logout method with the correct socket context
     app.logout = function() {
