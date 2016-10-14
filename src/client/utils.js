@@ -74,14 +74,29 @@ export function clearCookie(name) {
   return null;
 }
 
-// Tries the JWT from the given key either from a storage or the cookie
+// Pass a jwt token, get back a payload if it's valid.
+export function decodeJWT(token){
+  let payload;
+  if (token) {
+    let tempPayload = decode(token); 
+    if(payloadIsValid(tempPayload)){
+      payload = tempPayload;
+    }
+  }
+  return payload;
+}
+
+// Pass a decoded payload and it will return a boolean based on if it's still good
+export function payloadIsValid(payload){
+  return payload && payload.exp * 1000 > new Date().getTime() ? true: false; 
+}
+
+// Tries the JWT from the given key either from a storage or the cookie.
 export function getJWT(tokenKey, cookieKey, storage) {
   return Promise.resolve(storage.getItem(tokenKey)).then(jwt => {
     let token = jwt || getCookie(cookieKey);
-    if (token) {
-      if (decode(token).exp * 1000 < new Date().getTime()) {
-        token = undefined;
-      }
+    if (token && !payloadIsValid(decode(token))) {
+      token = undefined;
     }
     return token;
   });
