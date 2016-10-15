@@ -30,14 +30,6 @@ describe('hooks', () => {
     expect(typeof hooks.isAuthenticated).to.equal('function');
   });
 
-  it('exposes isPermitted hook', () => {
-    expect(typeof hooks.isPermitted).to.equal('function');
-  });
-
-  it('exposes checkPermissions hook', () => {
-    expect(typeof hooks.checkPermissions).to.equal('function');
-  });
-
   it('exposes parseToken hook', () => {
     expect(typeof hooks.parseToken).to.equal('function');
   });
