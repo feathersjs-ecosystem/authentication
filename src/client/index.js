@@ -6,7 +6,8 @@ import {
   logoutSocket,
   getJWT,
   getStorage,
-  clearCookie
+  clearCookie,
+  verifyJWT
 } from './utils';
 
 const defaults = {
@@ -21,14 +22,13 @@ export default function(opts = {}) {
 
   return function() {
     const app = this;
-    app.set('authentication', config);
 
     if (!app.get('storage')) {
       const storage = getStorage(config.storage);
       app.set('storage', storage);
     }
 
-    // load any pre-existing JWT from localStorage
+    // auto-load any existing JWT from storage
     getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
       app.set('token', token);
       app.get('storage').setItem(config.tokenKey, token);
@@ -50,7 +50,6 @@ export default function(opts = {}) {
 
       const handleResponse = function (response) {
         app.set('token', response.token);
-        app.set('user', response.user);
 
         return Promise.resolve(app.get('storage').setItem(config.tokenKey, response.token))
           .then(() => response);
@@ -81,9 +80,16 @@ export default function(opts = {}) {
       });
     };
 
+    app.authentication = {
+      options: config,
+      verifyJWT,
+      getJWT(){
+        return app.get('token');
+      }
+    };
+
     // Set our logout method with the correct socket context
     app.logout = function() {
-      app.set('user', null);
       app.set('token', null);
 
       clearCookie(config.cookie);

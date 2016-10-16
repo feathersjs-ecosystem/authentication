@@ -1,3 +1,5 @@
+import decode from 'jwt-decode';
+
 // Returns a promise that resolves when the socket is connected
 export function connected(app) {
   return new Promise((resolve, reject) => {
@@ -72,16 +74,36 @@ export function clearCookie(name) {
   return null;
 }
 
-// Tries the JWT from the given key either from a storage or the cookie
+// Pass a jwt token, get back a payload if it's valid.
+export function verifyJWT(data){
+  const token = typeof data === 'string' ? data : data.token;
+  let payload;
+  if (token) {
+    try {
+      let tempPayload = decode(token); 
+      if(payloadIsValid(tempPayload)){
+        payload = tempPayload;
+      }
+    } catch (error) {
+      console.error('Cannot decode malformed token.');   
+    }
+  }
+  return payload;
+}
+
+// Pass a decoded payload and it will return a boolean based on if it hasn't expired.
+export function payloadIsValid(payload){
+  return payload && payload.exp * 1000 > new Date().getTime() ? true: false; 
+}
+
+// Tries the JWT from the given key either from a storage or the cookie.
 export function getJWT(tokenKey, cookieKey, storage) {
   return Promise.resolve(storage.getItem(tokenKey)).then(jwt => {
-    const cookieToken = getCookie(cookieKey);
-
-    if (cookieToken) {
-      return cookieToken;
+    let token = jwt || getCookie(cookieKey);
+    if (token && token !== 'null' && !payloadIsValid(decode(token))) {
+      token = undefined;
     }
-
-    return jwt;
+    return token;
   });
 }
 
