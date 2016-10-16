@@ -51,7 +51,6 @@ export default function(opts = {}) {
 
       const handleResponse = function (response) {
         app.set('token', response.token);
-        app.set('user', response.user);
 
         return Promise.resolve(app.get('storage').setItem(config.tokenKey, response.token))
           .then(() => response);
@@ -87,7 +86,6 @@ export default function(opts = {}) {
 
     // Set our logout method with the correct socket context
     app.logout = function() {
-      app.set('user', null);
       app.set('token', null);
 
       clearCookie(config.cookie);

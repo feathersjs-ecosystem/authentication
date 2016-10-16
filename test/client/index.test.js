@@ -57,18 +57,13 @@ const setupTests = initApp => {
   it('local username password authentication', () => {
     return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);
-      expect(response.user).to.not.equal(undefined);
-
       expect(app.get('token')).to.deep.equal(response.token);
-      expect(app.get('user')).to.deep.equal(response.user);
     });
   });
 
   it('local username password authentication and access to protected service', () => {
     return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);
-      expect(response.user).to.not.equal(undefined);
-
       return app.service('messages').create({ text: 'auth test message' })
         .then(msg => {
           expect(typeof msg.id).to.not.equal(undefined);
@@ -104,11 +99,9 @@ const setupTests = initApp => {
   it('token is stored and re-authentication with stored token works', () => {
     return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);
-      expect(response.user).to.not.equal(undefined);
 
       return app.authenticate().then(response => {
         expect(app.get('token')).to.equal(response.token);
-        expect(app.get('user')).to.deep.equal(response.user);
       });
     });
   });
@@ -116,14 +109,10 @@ const setupTests = initApp => {
   it('.logout works, does not grant access to protected service and token is removed from localstorage', () => {
     return app.authenticate(options).then(response => {
       expect(response.token).to.not.equal(undefined);
-      expect(response.user).to.not.equal(undefined);
-
       return app.logout();
     })
     .then(() => {
       expect(app.get('token')).to.equal(null);
-      expect(app.get('user')).to.equal(null);
-
       return Promise.resolve(app.get('storage').getItem('feathers-jwt'));
     })
     .then(token => {
