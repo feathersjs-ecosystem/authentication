@@ -46,14 +46,14 @@ const setupTests = initApp => {
     });
   });
 
-  it('Can use getJWT to get the token', () => {
+  it('can use getJWT to get the token', () => {
     return app.authenticate(options).then(response => {
       let token = app.authentication.getJWT();
       expect(token).to.equal(response.token);
     });
   });
 
-  it('Can decode a passed-in token', () => {
+  it('can decode a passed-in token', () => {
     return app.authenticate(options).then(response => {
       let payload = app.authentication.verifyJWT(response);
       expect(payload.id).to.equal(0);
