@@ -1,6 +1,9 @@
 # feathers-authentication
 
 [![Build Status](https://travis-ci.org/feathersjs/feathers-authentication.png?branch=master)](https://travis-ci.org/feathersjs/feathers-authentication)
+[![Code Climate](https://codeclimate.com/github/feathersjs/feathers-authentication/badges/gpa.svg)](https://codeclimate.com/github/feathersjs/feathers-authentication)
+[![Test Coverage](https://codeclimate.com/github/feathersjs/feathers-authentication/badges/coverage.svg)](https://codeclimate.com/github/feathersjs/feathers-authentication/coverage)
+[![Issue Count](https://codeclimate.com/github/feathersjs/feathers-authentication/badges/issue_count.svg)](https://codeclimate.com/github/feathersjs/feathers-authentication)
 
 > Add Authentication to your FeathersJS app.
 
