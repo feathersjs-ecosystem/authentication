@@ -36,8 +36,9 @@ const setupTests = initApp => {
     app = initApp();
   });
 
-  it('config available at app.get("authentication")', () => {
-    expect(app.get('authentication')).to.deep.equal({
+  it('app.authentication object', () => {
+    expect(typeof app.authentication.getJWT).to.equal('function');
+    expect(app.authentication.options).to.deep.equal({
       cookie: 'feathers-jwt',
       tokenKey: 'feathers-jwt',
       localEndpoint: '/auth/local',
@@ -45,9 +46,16 @@ const setupTests = initApp => {
     });
   });
 
+  it('Can use getJWT to get the token', () => {
+    return app.authenticate(options).then(response => {
+      let token = app.authentication.getJWT();
+      expect(token).to.equal(response.token);
+    });
+  });
+
   it('Can decode a passed-in token', () => {
     return app.authenticate(options).then(response => {
-      let payload = app.decodeJWT(response.token);
+      let payload = app.authentication.verifyJWT(response);
       expect(payload.id).to.equal(0);
       expect(payload.iss).to.equal('feathers');
       expect(payload.sub).to.equal('auth');

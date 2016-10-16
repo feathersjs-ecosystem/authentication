@@ -75,18 +75,23 @@ export function clearCookie(name) {
 }
 
 // Pass a jwt token, get back a payload if it's valid.
-export function decodeJWT(token){
+export function verifyJWT(data){
+  const token = typeof data === 'string' ? data : data.token;
   let payload;
   if (token) {
-    let tempPayload = decode(token); 
-    if(payloadIsValid(tempPayload)){
-      payload = tempPayload;
+    try {
+      let tempPayload = decode(token); 
+      if(payloadIsValid(tempPayload)){
+        payload = tempPayload;
+      }
+    } catch (error) {
+      console.error('Cannot decode malformed token.');   
     }
   }
   return payload;
 }
 
-// Pass a decoded payload and it will return a boolean based on if it's still good
+// Pass a decoded payload and it will return a boolean based on if it hasn't expired.
 export function payloadIsValid(payload){
   return payload && payload.exp * 1000 > new Date().getTime() ? true: false; 
 }
@@ -95,7 +100,7 @@ export function payloadIsValid(payload){
 export function getJWT(tokenKey, cookieKey, storage) {
   return Promise.resolve(storage.getItem(tokenKey)).then(jwt => {
     let token = jwt || getCookie(cookieKey);
-    if (token && !payloadIsValid(decode(token))) {
+    if (token && token !== 'null' && !payloadIsValid(decode(token))) {
       token = undefined;
     }
     return token;

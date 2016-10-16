@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getJWT, decodeJWT } from '../../src/client/utils';
+import { getJWT, verifyJWT } from '../../src/client/utils';
 
 describe('getJWT', () => {
   it(`get unexpired token from storage`, () => {
@@ -27,10 +27,10 @@ describe('getJWT', () => {
 });
 
 
-describe('decodeJWT', () => {
-  it('decodes a token properly', () => {
+describe('verifyJWT', () => {
+  it('decodes a token string properly', () => {
     let token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZXhwIjozNDc2MzkyNDgwLCJpYXQiOjE0NzYzOTI0ODAsImlzcyI6ImZlYXRoZXJzIn0.0V6NKoNszBPeIA72xWs2FDW6aPxOnHzEmskulq20uyo`;
-    let payload = decodeJWT(token);
+    let payload = verifyJWT(token);
     expect(payload).to.deep.equal({
       id: 1,
       exp: 3476392480,
@@ -39,9 +39,28 @@ describe('decodeJWT', () => {
     });
   });
 
+  it('decodes a token from an object properly', () => {
+    let data = {
+      token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZXhwIjozNDc2MzkyNDgwLCJpYXQiOjE0NzYzOTI0ODAsImlzcyI6ImZlYXRoZXJzIn0.0V6NKoNszBPeIA72xWs2FDW6aPxOnHzEmskulq20uyo` 
+    };
+    let payload = verifyJWT(data);
+    expect(payload).to.deep.equal({
+      id: 1,
+      exp: 3476392480,
+      iat: 1476392480,
+      iss: 'feathers'
+    });
+  });
+
+  it('gracefully handles an invalid token', () => {
+    let token = `lily`;
+    let payload = verifyJWT(token);
+    expect(payload).to.equal(undefined);
+  });
+
   it('decodes an expired token as undefined', () => {
     let token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJleHAiOjE0NzYzOTI0ODAsImlhdCI6MTQ3NjM5MjQ4MCwiaXNzIjoiZmVhdGhlcnMifQ.6rzpXFqWSmNEotnWo8f-SQ2Ey4rbar3f0pQKNTHdq9A`;
-    let payload = decodeJWT(token);
+    let payload = verifyJWT(token);
     expect(payload).to.equal(undefined);
   });
 });
