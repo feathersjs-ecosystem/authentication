@@ -15,7 +15,7 @@ export default function(options) {
     const idField = user.idField || service.id;
 
     if(typeof idField !== 'string') {
-      throw new Error(`'user.idField' needs to be set in authentication options or the '${user.service}' service needs to provide an 'id' field.`);
+      throw new Error(`'user.idField' needs to be set in authentication options or the '${user.service}' service needs to provide an 'id' property.`);
     }
 
     if(typeof service.get !== 'function') {

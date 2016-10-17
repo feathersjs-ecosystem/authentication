@@ -8,9 +8,10 @@ describe('Token Middleware fromRequest', () => {
     .configure(authentication({
       secret: 'supersecrect',
       user: {
-        idField: 'name'
+        idField: 'name',
+        service: '/users'
       }
-    }).use(populateUser))
+    }))
     .use('/users', {
       get(name) {
         if(name === 'error') {
@@ -20,7 +21,7 @@ describe('Token Middleware fromRequest', () => {
         return Promise.resolve({ name, username: `Test ${name}` });
       }
     });
-  const auth = app.authentication;
+  const auth = app.authentication.use(populateUser);
 
   it('populates the user from id in payload', () => {
     auth.authenticate({

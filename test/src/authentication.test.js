@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import Authentication from '../../src/base';
+import Authentication from '../../src/authentication';
 import getOptions from '../../src/options';
 
 function timeout(callback, timeout) {

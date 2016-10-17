@@ -9,10 +9,10 @@ export default function setCookie(options = {}) {
   function makeExpiry(timeframe){
     return new Date(Date.now() + ms(timeframe));
   }
-  
+
   return function(req, res, next) {
     const app = req.app;
-    const authOptions = app.get('auth') || {};
+    const authOptions = app.authentication.options || {};
 
     options = Object.assign({}, authOptions.cookie, options);
     debug('Running setCookie middleware with options:', options);
@@ -58,7 +58,7 @@ export default function setCookie(options = {}) {
         if ( options.expires && !(options.expires instanceof Date) ) {
           throw new Error('cookie.expires must be a valid Date object');
         }
-        
+
         // remove some of our options that don't apply to express cookie creation
         // as well as the maxAge because we have set an explicit expiry.
         delete options.name;

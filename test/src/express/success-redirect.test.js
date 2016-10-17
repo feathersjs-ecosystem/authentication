@@ -3,7 +3,7 @@
 import chai, { expect } from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
-import { successRedirect } from '../../../../src/middleware';
+import { successRedirect } from '../../../src/express';
 
 chai.use(sinonChai);
 
@@ -14,9 +14,7 @@ describe('middleware:rest:successRedirect', () => {
 
   beforeEach(() => {
     req = {
-      app: {
-        get: () => {}
-      }
+      app: {}
     };
     res = {
       redirect: sinon.spy()
@@ -27,18 +25,6 @@ describe('middleware:rest:successRedirect', () => {
   afterEach(() => {
     next.reset();
     res.redirect.reset();
-  });
-
-  describe('when successRedirect is defined in global auth config', () => {
-    it('redirects to configured endpoint', () => {
-      req.app.get = () => {
-        return { successRedirect: '/app' };
-      };
-
-      successRedirect()(req, res, next);
-      expect(res.redirect).to.have.been.calledOnce;
-      expect(res.redirect).to.have.been.calledWith('/app');
-    });
   });
 
   describe('when successRedirect is passed as options', () => {

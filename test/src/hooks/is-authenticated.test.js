@@ -19,7 +19,7 @@ describe('hooks:isAuthenticated', () => {
       hook.type = 'after';
 
       return isAuthenticated()(hook).catch(error => {
-        expect(error).to.not.equal(undefined);  
+        expect(error).to.not.equal(undefined);
       });
     });
   });

@@ -7,8 +7,8 @@ describe('Token Middleware verifyToken', () => {
   const app = feathers()
     .configure(authentication({
       secret: 'supersecrect'
-    }).use(verifyToken));
-  const auth = app.authentication;
+    }));
+  const auth = app.authentication.use(verifyToken);
 
   it('passes through when nothing useful is passed', () => {
     const dummy = { test: 'me' };

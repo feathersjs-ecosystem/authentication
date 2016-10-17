@@ -7,8 +7,8 @@ describe('Token Middleware fromRequest', () => {
   const app = feathers()
     .configure(authentication({
       secret: 'supersecrect'
-    }).use(fromRequest));
-  const auth = app.authentication;
+    }));
+  const auth = app.authentication.use(fromRequest);
 
   it('throws an error when header name is not set', () => {
     try {

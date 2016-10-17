@@ -4,11 +4,20 @@ import chai, { expect } from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import ms from 'ms';
-import { setCookie } from '../../../../src/middleware';
+import { setCookie } from '../../../src/express';
 
 chai.use(sinonChai);
 
-describe('middleware:rest:setCookie', () => {
+describe.skip('middleware:rest:setCookie', () => {
+  const options = {
+    cookie: {
+      enabled: false,
+      name: 'feathers-jwt',
+      httpOnly: true,
+      maxAge: '1d',
+      secure: true
+    }
+  };
   let req;
   let res;
   let next;
@@ -16,7 +25,7 @@ describe('middleware:rest:setCookie', () => {
   beforeEach(() => {
     req = {
       app: {
-        get: () => {}
+        authentication: { options }
       },
       feathers: {}
     };
@@ -37,22 +46,8 @@ describe('middleware:rest:setCookie', () => {
   });
 
   describe('options', () => {
-    beforeEach(() => {
-      req.app.get = () => {
-        return {
-          cookie: {
-            enabled: false,
-            name: 'feathers-jwt',
-            httpOnly: true,
-            maxAge: '1d',
-            secure: true
-          }
-        };
-      };
-    });
-
     it('pulls options from global config', () => {
-      setCookie()(req, res, next);
+      setCookie(options)(req, res, next);
       expect(next).to.have.been.calledOnce;
     });
 
@@ -108,7 +103,7 @@ describe('middleware:rest:setCookie', () => {
       options.expires = expiry;
 
       setCookie(options)(req, res, next);
-      
+
       const expectedOptions = {
         httpOnly: true,
         secure: true,

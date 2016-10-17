@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
+import middlewares from './token';
 
 const debug = Debug('feathers-authentication');
 
@@ -7,10 +8,14 @@ export default class Authentication {
   constructor(app, options) {
     this.options = options;
     this.app = app;
-    this._middleware = [];
+    this._middleware = middlewares;
   }
 
   use(... middleware) {
+    if(this._middleware === middlewares) {
+      this._middleware = [];
+    }
+
     const mapped = middleware.map(current =>
       current.call(this.app, this.options)
     );
@@ -80,7 +85,7 @@ export default class Authentication {
         }
 
         debug('New JWT issued with payload', data);
-        return resolve({ token, payload: data });
+        return resolve({ token });
       });
     });
   }
