@@ -75,29 +75,33 @@ export function clearCookie(name) {
 }
 
 // Pass a jwt token, get back a payload if it's valid.
-export function verifyJWT(data){
-  const token = typeof data === 'string' ? data : data.token;
-  let payload;
-  if (token) {
-    try {
-      let tempPayload = decode(token); 
-      if(payloadIsValid(tempPayload)){
-        payload = tempPayload;
+export function verifyJWT (data) {
+  return new Promise((resolve, reject) => {
+    const token = typeof data === 'string' ? data : data.token;
+    if (token) {
+      try {
+        let payload = decode(token);
+        if (payloadIsValid(payload)) {
+          resolve(payload);
+        } else {
+          reject(new Error('Invalid token: expired'));
+        }
+      } catch (error) {
+        reject(new Error('Cannot decode malformed token.'));
       }
-    } catch (error) {
-      console.error('Cannot decode malformed token.');   
+    } else {
+      reject(new Error('No token provided to verifyJWT'));
     }
-  }
-  return payload;
+  });
 }
 
 // Pass a decoded payload and it will return a boolean based on if it hasn't expired.
-export function payloadIsValid(payload){
-  return payload && payload.exp * 1000 > new Date().getTime() ? true: false; 
+export function payloadIsValid (payload) {
+  return payload && payload.exp * 1000 > new Date().getTime();
 }
 
 // Tries the JWT from the given key either from a storage or the cookie.
-export function getJWT(tokenKey, cookieKey, storage) {
+export function retrieveJWT (tokenKey, cookieKey, storage) {
   return Promise.resolve(storage.getItem(tokenKey)).then(jwt => {
     let token = jwt || getCookie(cookieKey);
     if (token && token !== 'null' && !payloadIsValid(decode(token))) {
@@ -108,7 +112,7 @@ export function getJWT(tokenKey, cookieKey, storage) {
 }
 
 // Returns a storage implementation
-export function getStorage(storage) {
+export function getStorage (storage) {
   if (storage) {
     return storage;
   }

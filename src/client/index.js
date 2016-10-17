@@ -4,7 +4,7 @@ import {
   connected,
   authenticateSocket,
   logoutSocket,
-  getJWT,
+  retrieveJWT,
   getStorage,
   clearCookie,
   verifyJWT
@@ -23,13 +23,24 @@ export default function(opts = {}) {
   return function() {
     const app = this;
 
+
     if (!app.get('storage')) {
       const storage = getStorage(config.storage);
       app.set('storage', storage);
     }
 
+    function getJWT () {
+      return new Promise((resolve, reject) => {
+        const token = app.get('token');
+        if (token) {
+          return resolve(token);
+        }
+        retrieveJWT(config.tokenKey, config.cookie, app.get('storage')).then(resolve);
+      });
+    }
+
     // auto-load any existing JWT from storage
-    getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
+    getJWT().then(token => {
       app.set('token', token);
       app.get('storage').setItem(config.tokenKey, token);
     });
@@ -39,7 +50,7 @@ export default function(opts = {}) {
 
       // If no type was given let's try to authenticate with a stored JWT
       if (!options.type) {
-        getOptions = getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
+        getOptions = getJWT().then(token => {
           if (!token) {
             return Promise.reject(new errors.NotAuthenticated(`Could not find stored JWT and no authentication type was given`));
           }
@@ -83,9 +94,7 @@ export default function(opts = {}) {
     app.authentication = {
       options: config,
       verifyJWT,
-      getJWT(){
-        return app.get('token');
-      }
+      getJWT
     };
 
     // Set our logout method with the correct socket context
