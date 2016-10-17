@@ -30,7 +30,7 @@ export default function(opts = {}) {
     }
 
     function getJWT () {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const token = app.get('token');
         if (token) {
           return resolve(token);
