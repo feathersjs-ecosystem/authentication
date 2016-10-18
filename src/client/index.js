@@ -41,8 +41,10 @@ export default function(opts = {}) {
 
     // auto-load any existing JWT from storage
     getJWT().then(token => {
-      app.set('token', token);
-      app.get('storage').setItem(config.tokenKey, token);
+      if (token) {
+        app.set('token', token);
+        app.get('storage').setItem(config.tokenKey, token);
+      }
     });
 
     app.authenticate = function(options = {}) {
@@ -60,10 +62,11 @@ export default function(opts = {}) {
       }
 
       const handleResponse = function (response) {
-        app.set('token', response.token);
-
-        return Promise.resolve(app.get('storage').setItem(config.tokenKey, response.token))
-          .then(() => response);
+        if (response.token) {
+          app.set('token', response.token);
+          app.get('storage').setItem(config.tokenKey, response.token);
+        }
+        return Promise.resolve(response);
       };
 
       return getOptions.then(options => {
