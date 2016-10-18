@@ -2,7 +2,7 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import middlewares from '../token';
 
-const debug = Debug('feathers-authentication');
+const debug = Debug('feathers-authentication:authentication:base');
 
 export default class Authentication {
   constructor(app, options) {

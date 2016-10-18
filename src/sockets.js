@@ -3,115 +3,87 @@ import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:middleware:socket');
 
-function setupSocketHandler(feathersParams, provider, emit, disconnect, app, options) {
-  return function(socket) {
-    let errorHandler = function(error) {
-      socket[emit]('unauthorized', error, function(){
-        // TODO (EK): Maybe we support disconnecting the socket
-        // if a certain number of authorization attempts have failed
-        // for brute force protection
-        // socket.disconnect('unauthorized');
-      });
+function setupSocketHandler(app, options, {
+  feathersParams, provider, emit, disconnect
+}) {
 
-      throw error;
+  const service = app.service(options.service);
+
+  if(!service) {
+    throw new Error(`Could not find authentication service '${options.service}'`);
+  }
+
+  return function(socket) {
+    const authenticate = (data, callback = () => {}) => {
+      service.create(data, { provider })
+        .then( ({ token, authenticated }) => {
+
+          if(!authenticated){
+            throw new errors.NotAuthenticated('You are not authenticated.');
+          }
+
+          debug(`Successfully authenticated socket with token`, token);
+
+          feathersParams(socket).token = token;
+
+          return { token, authenticated };
+        })
+        .then(data => callback(null, data))
+        .catch(error => {
+          debug(`Socket authentication error`, error);
+          callback(error);
+        });
+    };
+    const logout = (callback = () => {}) => {
+      const params = feathersParams(socket);
+      const { token } = params;
+
+      if(token) {
+        debug('Authenticated socket disconnected', token);
+
+        delete params.token;
+
+        service.remove(token)
+          .then(data => callback(null, data))
+          .catch(error => {
+            debug(`Error logging out socket`, error);
+            callback(error);
+          });
+      }
     };
 
-    // Expose the request object to services and hooks
-    // for Passport. This is normally a big no no.
-    feathersParams(socket).req = socket.request;
-
-    socket.on('authenticate', function(data) {
-
-      function successHandler(response) {
-        feathersParams(socket).token = response.token;
-        feathersParams(socket).user = response.user;
-        feathersParams(socket).authenticated = true;
-        socket[emit]('authenticated', response);
-        app[emit]('login', response);
-      }
-
-      // Authenticate the user using token strategy
-      if (data.token) {
-        if (typeof data.token !== 'string') {
-          return errorHandler(new errors.BadRequest('Invalid token data type.'));
-        }
-
-        const params = Object.assign({ provider }, data);
-
-        // The token gets normalized in hook.params for REST so we'll stay with
-        // convention and pass it as params using sockets.
-        app.service(options.token.service)
-          .create({}, params)
-          .then(successHandler)
-          .catch(errorHandler);
-      }
-      // Authenticate the user using local auth strategy
-      else {
-        // Put our data in a fake req.body object to get local auth
-        // with Passport to work because it checks res.body for the
-        // username and password.
-        let params = { provider, req: socket.request };
-
-        params.req.body = data;
-
-        app.service(options.local.service)
-          .create(data, params)
-          .then(successHandler)
-          .catch(errorHandler);
-      }
-    });
-
-    socket.on(disconnect, function() {
-      debug('Socket disconnected');
-
-      const params = feathersParams(socket);
-      const { token, user } = params;
-
-      app.emit('logout', { token, user });
-      delete params.token;
-      delete params.user;
-      delete params.permitted;
-      delete params.authenticated;
-    });
-
-    socket.on('logout', function(callback = () => {}) {
-      // TODO (EK): Blacklist token
-      // TODO (EK): Maybe we need to delete any cookies.
-      // Can we send the request object this socket is tied to?
-      debug('Socket log out');
-
-      try {
-        const params = feathersParams(socket);
-        const { token, user } = params;
-
-        app.emit('logout', { token, user });
-        delete params.token;
-        delete params.user;
-        delete params.permitted;
-        delete params.authenticated;
-      }
-      catch(error) {
-        debug('There was an error logging out', error);
-        return callback(new Error('There was an error logging out'));
-      }
-
-      callback();
-    });
+    socket.on('authenticate', authenticate);
+    socket.on(disconnect, logout);
+    socket.on('logout', logout);
   };
 }
 
-export function setupSocketIOAuthentication(app, options = {}) {
+export function socketio(app, options = {}) {
   debug('Setting up Socket.io authentication middleware with options:', options);
 
-  return setupSocketHandler(
-    socket => socket.feathers, 'socketio', 'emit', 'disconnect', app, options
-  );
+  const providerSettings = {
+    feathersParams(socket) {
+      return socket.feathers;
+    },
+    provider: 'socketio',
+    emit: 'emit',
+    disconnect: 'disconnect'
+  };
+
+  return setupSocketHandler(app, options, providerSettings);
 }
 
-export function setupPrimusAuthentication(app, options = {}) {
+export function primus(app, options = {}) {
   debug('Setting up Primus authentication middleware with options:', options);
 
-  return setupSocketHandler(
-    socket => socket.request.feathers, 'primus', 'send', 'disconnection', app, options
-  );
+  const providerSettings = {
+    feathersParams(socket) {
+      return socket.request.feathers;
+    },
+    provider: 'primus',
+    emit: 'send',
+    disconnect: 'disconnection'
+  };
+
+  return setupSocketHandler(app, options, providerSettings);
 }

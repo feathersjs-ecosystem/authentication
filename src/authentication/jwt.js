@@ -3,14 +3,16 @@ import omit from 'lodash.omit';
 export function tokenAuthHook(hook) {
   const { data } = hook;
 
-  if(data.token) {
+  if(data.jwt) {
     return hook.app.authentication
-      .verifyJWT(data.token)
+      .verifyJWT(data.jwt)
       .then(result => {
-        const payload = omit(result.payload, 'iss', 'sub', 'exp');
+        const tokenPayload = omit(result.payload, 'iss', 'sub', 'exp');
 
         // Make sure that existing token payload can not get overwritten
-        hook.data.payload = Object.assign({}, hook.data.payload, payload);
+        hook.data.payload = Object.assign(
+          {}, hook.data.payload, tokenPayload
+        );
       });
   }
 

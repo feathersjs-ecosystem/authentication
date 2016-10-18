@@ -25,7 +25,6 @@ describe('Token Middleware verifyToken', () => {
       auth.authenticate(data)
     ).then(data => {
       expect(data.payload.test).to.equal(payload.test);
-      expect(data.authenticated).to.equal(true);
     });
   });
 
@@ -36,7 +35,6 @@ describe('Token Middleware verifyToken', () => {
       auth.authenticate(data.token)
     ).then(data => {
       expect(data.payload.test).to.equal(payload.test);
-      expect(data.authenticated).to.equal(true);
     });
   });
 });

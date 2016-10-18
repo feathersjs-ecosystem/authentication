@@ -26,12 +26,13 @@ describe('Token Middleware fromRequest', () => {
   it('populates the user from id in payload', () => {
     auth.authenticate({
       payload: { name: 'testing' }
-    }).then(data =>
+    }).then(data => {
+      expect(data.authenticated).to.equal(true);
       expect(data.user).to.deep.equal({
         name: 'testing',
         username: 'Test testing'
-      })
-    );
+      });
+    });
   });
 
   it('errors when id exists but user is not found', () => {

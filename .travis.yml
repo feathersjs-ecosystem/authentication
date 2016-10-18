@@ -1,7 +1,13 @@
+sudo: false
 language: node_js
 node_js:
   - 'node'
-  - 'iojs'
-  - '0.12'
-code_climate:
-  repo_token: 02ea69f85221efd3051a19e882c87cebc07522bf321374186bb6116301569e5e
+  - '6'
+  - '4'
+addons:
+  code_climate:
+    repo_token: '02ea69f85221efd3051a19e882c87cebc07522bf321374186bb6116301569e5e'
+before_script:
+  - npm install -g codeclimate-test-reporter
+after_script:
+  - codeclimate-test-reporter < coverage/lcov.info

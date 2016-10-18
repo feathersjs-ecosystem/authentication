@@ -11,7 +11,7 @@ export default function() {
       debug('Verifying token', token);
 
       return app.authentication.verifyJWT(token)
-        .then(result => Object.assign({ authenticated: true }, data, result));
+        .then(result => Object.assign({}, data, result));
     }
 
     return Promise.resolve(data);

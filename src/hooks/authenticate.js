@@ -7,9 +7,8 @@ export default function() {
     const { token } = hook.params;
 
     if(token) {
-      return hook.app.authenticate(token).then(result => {
-        // TODO use map
-        Object.assign(hook.params, result);
+      return hook.app.authenticate(hook.params).then(result => {
+        hook.params = Object.assign({}, hook.params, result);
 
         return hook;
       });

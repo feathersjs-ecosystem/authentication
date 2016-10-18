@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { successRedirect, setCookie } from '../express';
 
-const debug = Debug('feathers-authentication:service');
+const debug = Debug('feathers-authentication:authentication:service');
 
 class Service {
   constructor(app) {
