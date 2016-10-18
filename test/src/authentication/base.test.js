@@ -1,6 +1,7 @@
 import { expect } from 'chai';
-import Authentication from '../../src/authentication';
-import getOptions from '../../src/options';
+import Authentication from '../../../src/authentication/base';
+import tokenMiddleware from '../../../src/token';
+import getOptions from '../../../src/options';
 
 function timeout(callback, timeout) {
   return new Promise(resolve =>
@@ -24,6 +25,16 @@ describe('Feathers Authentication Base Class', () => {
 
       return data;
     };
+  });
+
+  it('initially has default middleware and replaces it', () => {
+    const a = new Authentication(app, options);
+
+    expect(a._middleware).to.equal(tokenMiddleware);
+
+    a.use(function() {});
+    expect(a._middleware).to.not.equal(tokenMiddleware);
+    expect(a._middleware.length).to.equal(1);
   });
 
   it('.authenticate runs middleware', () => {

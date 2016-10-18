@@ -1,14 +1,11 @@
 import Debug from 'debug';
 
 // Exposed modules
-// import hooks from './hooks';
-// import token from './services/token';
-// import local from './services/local';
-// import oauth2 from './services/oauth2';
-// import * as mw from './middleware';
+import hooks from './hooks';
+import express from './express';
 import getOptions from './options';
-import Authentication from './authentication';
-import service from './service';
+import Authentication from './authentication/base';
+import service from './authentication/service';
 
 const debug = Debug('feathers-authentication:index');
 
@@ -19,9 +16,6 @@ export default function init(config = {}) {
     // Merge and flatten options
     const options = getOptions(config);
 
-    // NOTE (EK): Currently we require token based auth so
-    // if the developer didn't provide a config for our token
-    // provider then we'll set up a sane default for them.
     if (!options.secret) {
       throw new Error (`You must provide a 'secret' in your authentication configuration`);
     }
@@ -32,52 +26,40 @@ export default function init(config = {}) {
       options.cookie.secure = false;
     }
 
+    // Express middleware
+    if (app.rest && options.setupMiddleware) {
+      debug('registering Express authentication middleware');
+
+      app.use(
+        express.authenticate(options),
+        express.logout(options)
+      );
+    } else if (app.rest) {
+      debug('Not registering Express authentication middleware. Did you disable it on purpose?');
+    }
+
     app.authentication = new Authentication(app, options);
     app.configure(service(options));
-
-    // REST middleware
-    if (app.rest && options.setupMiddleware) {
-      debug('registering REST authentication middleware');
-
-      // // Be able to parse cookies it they are enabled
-      // if (authOptions.cookie.enable) {
-      //   app.use(mw.cookieParser());
-      // }
-
-      // // Expose Express req & res objects to hooks and services
-      // app.use(mw.exposeRequestResponse(authOptions));
-      // // Parse token from header, cookie, or request objects
-      // app.use(mw.tokenParser(authOptions));
-      // // Verify and decode a JWT if it is present
-      // app.use(mw.verifyToken(authOptions));
-      // // Make the Passport user available for REST services.
-      // app.use(mw.populateUser(authOptions));
-      // // Register server side logout middleware
-      // app.use(mw.logout(authOptions));
-    } else if (app.rest) {
-      debug('Not registering REST authentication middleware. Did you disable it on purpose?');
-    }
 
     app.setup = function() {
       let result = _super.apply(this, arguments);
 
-    //   // Socket.io middleware
-    //   if (app.io && authOptions.setupMiddleware) {
-    //     debug('registering Socket.io authentication middleware');
-    //     app.io.on('connection', mw.setupSocketIOAuthentication(app, authOptions));
-    //   }
-    //   else if (app.primus) {
-    //     debug('Not registering Socket.io authentication middleware. Did you disable it on purpose?');
-    //   }
+      // // Socket.io middleware
+      // if (app.io && authOptions.setupMiddleware) {
+      //   debug('registering Socket.io authentication middleware');
+      //   app.io.on('connection', mw.setupSocketIOAuthentication(app, authOptions));
+      // }
+      // else if (app.io) {
+      //   debug('Not registering Socket.io authentication middleware. Did you disable it on purpose?');
+      // }
 
-    //   // Primus middleware
-    //   if (app.primus && authOptions.setupMiddleware) {
-    //     debug('registering Primus authentication middleware');
-    //     app.primus.on('connection', mw.setupPrimusAuthentication(app, authOptions));
-    //   }
-    //   else if (app.primus) {
-    //     debug('Not registering Primus authentication middleware. Did you disable it on purpose?');
-    //   }
+      // // Primus middleware
+      // if (app.primus && authOptions.setupMiddleware) {
+      //   debug('registering Primus authentication middleware');
+      //   app.primus.on('connection', mw.setupPrimusAuthentication(app, authOptions));
+      // } else if (app.primus) {
+      //   debug('Not registering Primus authentication middleware. Did you disable it on purpose?');
+      // }
 
       return result;
     };
@@ -85,8 +67,9 @@ export default function init(config = {}) {
 }
 
 // Exposed Modules
-// init.hooks = hooks;
-// init.middleware = mw;
-// init.LocalService = local;
-// init.TokenService = token;
-// init.OAuth2Service = oauth2;
+Object.assign(init, {
+  hooks,
+  express,
+  service,
+  Authentication
+});

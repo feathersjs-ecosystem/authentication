@@ -7,19 +7,21 @@ import { logout } from '../../../src/express';
 
 chai.use(sinonChai);
 
-describe.skip('middleware:rest:logout', () => {
-  let req;
-  let res;
-  let next;
+describe('middleware:rest:logout', () => {
+  let req, res, next, service;
 
   beforeEach(() => {
+    service = {
+      remove: sinon.spy()
+    };
+
     req = {
       app: {
-        locals: {
-          user: { id: 1 }
-        },
-        get: () => {}
+        service() {
+          return service;
+        }
       },
+      token: 'testing',
       feathers: {}
     };
     res = {
@@ -42,9 +44,22 @@ describe.skip('middleware:rest:logout', () => {
     expect(next).to.have.been.calledOnce;
   });
 
+  it('removes token from service if set', done => {
+    logout({
+      service: 'users'
+    })(req, res, () => {
+      req.logout();
+      expect(service.remove).to.have.been.calledOnce;
+      expect(service.remove).to.have.been.calledWith('testing');
+      done();
+    });
+  });
+
   describe('when cookies are enabled', () => {
     it('clears cookies', done => {
-      const options = { enabled: true, name: 'feathers-jwt' };
+      const options = {
+        cookie: { enabled: true, name: 'feathers-jwt' }
+      };
 
       logout(options)(req, res, () => {
         req.logout();
@@ -54,30 +69,17 @@ describe.skip('middleware:rest:logout', () => {
       });
     });
 
-    describe('when cookie name is missing', () => {
-      it('it throws an error', done => {
-        const options = { enabled: true };
+    it('throws an error when no name is set', () => {
+        const options = {
+          cookie: { enabled: true }
+        };
 
-        logout(options)(req, res, () => {
-          try {
-            req.logout();
-          }
-          catch(error) {
-            expect(error).to.not.equal(undefined);
-            done();
-          }
-        });
+        try {
+          logout(options);
+          expect(false);
+        } catch(e) {
+          expect(e.message).to.equal(`'cookie.name' must be provided to logout() middleware in authentication options`);
+        }
       });
-    });
-  });
-
-  describe('when app.locals exists', () => {
-    it('removes the user from locals', done => {
-      logout()(req, res, () => {
-        req.logout();
-        expect(req.app.locals.user).to.equal(undefined);
-        done();
-      });
-    });
   });
 });

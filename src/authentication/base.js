@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
-import middlewares from './token';
+import middlewares from '../token';
 
 const debug = Debug('feathers-authentication');
 
@@ -9,6 +9,20 @@ export default class Authentication {
     this.options = options;
     this.app = app;
     this._middleware = middlewares;
+  }
+
+  get(name) {
+    return this.options[name];
+  }
+
+  set(name, value) {
+    if(name === undefined) {
+      return this.options;
+    }
+
+    this.options[name] = value;
+
+    return this;
   }
 
   use(... middleware) {

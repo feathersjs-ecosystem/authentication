@@ -1,6 +1,6 @@
 import { expect, assert } from 'chai';
 import feathers from 'feathers';
-import authentication from '../../src';
+import authentication from '../../../src';
 
 describe('/authentication service', () => {
   const app = feathers().configure(authentication({

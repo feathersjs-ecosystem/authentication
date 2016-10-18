@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { successRedirect, setCookie } from './express';
+import { successRedirect, setCookie } from '../express';
 
 const debug = Debug('feathers-authentication:service');
 

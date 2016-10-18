@@ -3,35 +3,34 @@ import Debug from 'debug';
 const debug = Debug('feathers-authentication:middleware:logout');
 
 export default function logout(options = {}) {
-  debug('Registering logout middleware');
+  const cookieOptions = options.cookie || {};
+
+  debug('Registering logout middleware with options:', cookieOptions);
+
+  if(cookieOptions.enabled && !cookieOptions.name) {
+    throw new Error(`'cookie.name' must be provided to logout() middleware in authentication options`);
+  }
 
   return function(req, res, next) {
-    const app = req.app;
-    const authOptions = app.get('auth') || {};
-
-    options = Object.assign({}, authOptions.cookie, options);
-
-    debug('Running logout middleware with options:', options);
-
     req.logout = function() {
       debug('Logging out');
 
-      if (options.enabled) {
-        const cookieName = options.name;
+      // Remove the token from the auth service
+      if(req.token && options.service) {
+        const service = req.app.service(options.service);
 
-        if (!cookieName) {
-          throw new Error(`'cookie.name' must be provided to logout() middleware or set 'auth.cookie.name' in your config.`);
-        }
+        service.remove(req.token);
+      }
+
+      // Remove the cookie
+      if (cookieOptions.enabled) {
+        const cookieName = cookieOptions.name;
 
         debug(`Clearing '${cookieName}' cookie`);
         res.clearCookie(cookieName);
       }
-
-      if (req.app.locals) {
-        delete req.app.locals.user;
-      }
     };
-    
+
     next();
   };
 }
