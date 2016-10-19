@@ -17,7 +17,8 @@ export const defaults = {
     expiresIn: '1d'
   },
   user: {
-    service: 'users'
+    service: 'users',
+    payloadField: 'userId'
   }
 };
 

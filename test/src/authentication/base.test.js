@@ -13,7 +13,8 @@ describe('Feathers Authentication Base Class', () => {
   const original = { name: 'Feathers' };
   const app = {};
   const options = getOptions({
-    secret: 'supersecret'
+    secret: 'supersecret',
+    header: 'Authorization'
   });
   const auth = new Authentication(app, options);
 
@@ -62,34 +63,89 @@ describe('Feathers Authentication Base Class', () => {
     );
   });
 
-  it('create and verify', () => {
-    return auth.createJWT({
-      name: 'Eric'
-    }).then(data =>
-      auth.verifyJWT(data).then(result => {
-        const { payload } = result;
-        expect(payload.name).to.equal('Eric');
-        expect(payload.exp);
-        expect(payload.iss).to.equal('feathers');
-      })
-    );
+  describe('getJWT', () => {
+    it('gets token from string', () => {
+      const token = 'testing';
+
+      return auth.getJWT(token).then(data => {
+        expect(data).to.deep.equal({ token });
+      });
+    });
+
+    it('gets token from object', () => {
+      const token = 'othertest';
+      const data = { token, original: true };
+
+      return auth.getJWT(data).then(result => {
+        expect(result).to.deep.equal({ token });
+      });
+    });
+
+    it('passes undefined for non token data', () => {
+      return auth.getJWT({}).then(result => {
+        expect(result).to.equal(undefined);
+      });
+    });
+
+    describe('from request like object', () => {
+      it('parses basic authorization header', () => {
+        const mockRequest = {
+          headers: {
+            authorization: 'sometoken'
+          }
+        };
+
+        return auth.getJWT(mockRequest).then(data => {
+          expect(data.req).to.equal(mockRequest);
+          expect(data.token).to.equal('sometoken');
+        });
+      });
+
+      it('parses `Bearer` authorization header', () => {
+        const mockRequest = {
+          headers: {
+            authorization: 'BeaRer sometoken'
+          }
+        };
+
+        return auth.getJWT(mockRequest).then(data => {
+          expect(data.req).to.equal(mockRequest);
+          expect(data.token).to.equal('sometoken');
+        });
+      });
+    });
   });
 
-  it('verify errors with malformed token', () => {
-    auth.verifyJWT('invalid token').catch(e =>
-      expect(e.message).to.equal('jwt mlaformed')
-    );
-  });
+  describe('createJWT and verifyJWT', () => {
+    it('basics', () => {
+      return auth.createJWT({
+        name: 'Eric'
+      }).then(data =>
+        auth.verifyJWT(data).then(result => {
+          const { payload } = result;
+          expect(payload.name).to.equal('Eric');
+          expect(payload.exp);
+          expect(payload.iss).to.equal('feathers');
+        })
+      );
+    });
 
-  it('create can set options and verify fails with expired token', () => {
-    return auth.createJWT({
-      name: 'Eric'
-    }, {
-      expiresIn: '50ms'
-    }).then(data =>
-      timeout(() => auth.verifyJWT(data), 100)
-    ).catch(error =>
-      expect(error.message).to.equal('jwt expired')
-    );
+    it('verify errors with malformed token', () => {
+      auth.verifyJWT('invalid token').catch(e =>
+        expect(e.message).to.equal('jwt mlaformed')
+      );
+    });
+
+    it('create can set options and verify fails with expired token', () => {
+      return auth.createJWT({
+        name: 'Eric'
+      }, {
+        expiresIn: '50ms'
+      }).then(data =>
+        timeout(() => auth.verifyJWT(data), 100)
+      ).catch(error =>
+        expect(error.message).to.equal('jwt expired')
+      );
+    });
   });
 });

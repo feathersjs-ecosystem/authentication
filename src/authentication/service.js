@@ -26,7 +26,7 @@ class Service {
 export default function configureService(options){
   return function() {
     const app = this;
-    const path = options.user && options.user.service;
+    const path = options.service;
 
     if (typeof path !== 'string') {
       throw new Error(`Authentication option for 'service' needs to be set`);

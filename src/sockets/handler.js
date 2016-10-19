@@ -1,9 +1,9 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 
-const debug = Debug('feathers-authentication:middleware:socket');
+const debug = Debug('feathers-authentication:sockets:handler');
 
-function setupSocketHandler(app, options, {
+export default function setupSocketHandler(app, options, {
   feathersParams, provider, emit, disconnect
 }) {
 
@@ -56,34 +56,4 @@ function setupSocketHandler(app, options, {
     socket.on(disconnect, logout);
     socket.on('logout', logout);
   };
-}
-
-export function socketio(app, options = {}) {
-  debug('Setting up Socket.io authentication middleware with options:', options);
-
-  const providerSettings = {
-    feathersParams(socket) {
-      return socket.feathers;
-    },
-    provider: 'socketio',
-    emit: 'emit',
-    disconnect: 'disconnect'
-  };
-
-  return setupSocketHandler(app, options, providerSettings);
-}
-
-export function primus(app, options = {}) {
-  debug('Setting up Primus authentication middleware with options:', options);
-
-  const providerSettings = {
-    feathersParams(socket) {
-      return socket.request.feathers;
-    },
-    provider: 'primus',
-    emit: 'send',
-    disconnect: 'disconnection'
-  };
-
-  return setupSocketHandler(app, options, providerSettings);
 }

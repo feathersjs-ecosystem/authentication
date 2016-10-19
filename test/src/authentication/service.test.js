@@ -4,15 +4,14 @@ import authentication from '../../../src';
 
 describe('/authentication service', () => {
   const app = feathers().configure(authentication({
-    secret: 'supersecret',
-    user: { service: '/authentication' }
+    secret: 'supersecret'
   }));
 
   it('throws an error when service option is not set', () => {
     try {
       feathers().configure(authentication({
         secret: 'dummy',
-        user: null
+        service: null
       }));
       assert.ok(false, 'Should never get here');
     } catch(e) {

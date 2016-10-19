@@ -8,7 +8,7 @@ describe('Token Middleware fromRequest', () => {
     .configure(authentication({
       secret: 'supersecrect',
       user: {
-        idField: 'name',
+        payloadField: 'name',
         service: '/users'
       }
     }))

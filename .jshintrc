@@ -19,6 +19,7 @@
     "smarttabs": true,
     "white": false,
     "node": true,
+    "expr": true,
     "globals": {
       "window": true,
       "it": true,

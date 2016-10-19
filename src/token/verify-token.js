@@ -4,10 +4,10 @@ const debug = Debug('feathers-authentication:token:verifyToken');
 
 export default function() {
   return function verifyToken(data) {
-    const token = typeof data === 'string' ? data : (data && data.token);
-    const app = this;
+    if(data && data.token) {
+      const app = this;
+      const { token } = data;
 
-    if(token) {
       debug('Verifying token', token);
 
       return app.authentication.verifyJWT(token)
