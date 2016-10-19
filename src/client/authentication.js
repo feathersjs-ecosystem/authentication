@@ -13,10 +13,23 @@ export default class Authentication {
   constructor (app, options) {
     this.options = options;
     this.app = app;
+
+    if (!app.get('storage')) {
+      const storage = getStorage(options.storage);
+      app.set('storage', storage);
+    }
+
+    this.getJWT().then(token => {
+      if (token) {
+        app.set('token', token);
+        app.get('storage').setItem(options.tokenKey, token);
+      }
+    });
   }
 
   authenticate (options = {}) {
     const app = this.app;
+    const globalOptions = this.options;
     let getOptions = Promise.resolve(options);
 
     // If no type was given let's try to authenticate with a stored JWT
@@ -36,18 +49,18 @@ export default class Authentication {
     const handleResponse = function (response) {
       if (response.token) {
         app.set('token', response.token);
-        app.get('storage').setItem(this.options.tokenKey, response.token);
+        app.get('storage').setItem(globalOptions.tokenKey, response.token);
       }
       return Promise.resolve(response);
     };
 
     return getOptions.then(options => {
-      let endPoint;
+      let endpoint;
 
       if (options.type === 'local') {
-        endPoint = this.options.localEndpoint;
+        endpoint = globalOptions.localEndpoint;
       } else if (options.type === 'token') {
-        endPoint = this.options.tokenEndpoint;
+        endpoint = globalOptions.tokenEndpoint;
       } else {
         throw new Error(`Unsupported authentication 'type': ${options.type}`);
       }
@@ -56,7 +69,7 @@ export default class Authentication {
         // TODO (EK): Handle OAuth logins
         // If we are using a REST client
         if (app.rest) {
-          return app.service(endPoint).create(options).then(handleResponse);
+          return app.service(endpoint).create(options).then(handleResponse);
         }
 
         const method = app.io ? 'emit' : 'send';
@@ -78,7 +91,7 @@ export default class Authentication {
   }
 
   verifyJWT (data) {
-
+    return verifyJWT(data);
   }
 
   logout () {
