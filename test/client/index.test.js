@@ -46,19 +46,21 @@ const setupTests = initApp => {
     });
   });
 
-  it('can use getJWT to get the token', () => {
+  it('can use app.authentication.getJWT() to get the token', () => {
     return app.authenticate(options).then(response => {
-      let token = app.authentication.getJWT();
-      expect(token).to.equal(response.token);
+      app.authentication.getJWT().then(token => {
+        expect(token).to.equal(response.token);
+      });
     });
   });
 
-  it('can decode a passed-in token', () => {
+  it('can decode a token with app.authentication.verifyToken()', () => {
     return app.authenticate(options).then(response => {
-      let payload = app.authentication.verifyJWT(response);
-      expect(payload.id).to.equal(0);
-      expect(payload.iss).to.equal('feathers');
-      expect(payload.sub).to.equal('auth');
+      return app.authentication.verifyJWT(response).then(payload => {
+        expect(payload.id).to.equal(0);
+        expect(payload.iss).to.equal('feathers');
+        expect(payload.sub).to.equal('auth');
+      });
     });
   });
 

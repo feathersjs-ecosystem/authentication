@@ -1,14 +1,5 @@
-import errors from 'feathers-errors';
 import * as hooks from './hooks';
-import {
-  connected,
-  authenticateSocket,
-  logoutSocket,
-  getJWT,
-  getStorage,
-  clearCookie,
-  verifyJWT
-} from './utils';
+import Authentication from './authentication';
 
 const defaults = {
   cookie: 'feathers-jwt',
@@ -17,98 +8,19 @@ const defaults = {
   tokenEndpoint: '/auth/token'
 };
 
-export default function(opts = {}) {
-  const config = Object.assign({}, defaults, opts);
+export default function (opts = {}) {
+  const options = Object.assign({}, defaults, opts);
 
-  return function() {
+  return function () {
     const app = this;
 
-    if (!app.get('storage')) {
-      const storage = getStorage(config.storage);
-      app.set('storage', storage);
-    }
-
-    // auto-load any existing JWT from storage
-    getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
-      app.set('token', token);
-      app.get('storage').setItem(config.tokenKey, token);
-    });
-
-    app.authenticate = function(options = {}) {
-      let getOptions = Promise.resolve(options);
-
-      // If no type was given let's try to authenticate with a stored JWT
-      if (!options.type) {
-        getOptions = getJWT(config.tokenKey, config.cookie, app.get('storage')).then(token => {
-          if (!token) {
-            return Promise.reject(new errors.NotAuthenticated(`Could not find stored JWT and no authentication type was given`));
-          }
-
-          return { type: 'token', token };
-        });
-      }
-
-      const handleResponse = function (response) {
-        app.set('token', response.token);
-
-        return Promise.resolve(app.get('storage').setItem(config.tokenKey, response.token))
-          .then(() => response);
-      };
-
-      return getOptions.then(options => {
-        let endPoint;
-
-        if (options.type === 'local') {
-          endPoint = config.localEndpoint;
-        } else if (options.type === 'token') {
-          endPoint = config.tokenEndpoint;
-        } else {
-          throw new Error(`Unsupported authentication 'type': ${options.type}`);
-        }
-
-        return connected(app).then(socket => {
-          // TODO (EK): Handle OAuth logins
-          // If we are using a REST client
-          if (app.rest) {
-            return app.service(endPoint).create(options).then(handleResponse);
-          }
-
-          const method = app.io ? 'emit' : 'send';
-
-          return authenticateSocket(options, socket, method).then(handleResponse);
-        });
-      });
-    };
-
-    app.authentication = {
-      options: config,
-      verifyJWT,
-      getJWT(){
-        return app.get('token');
-      }
-    };
-
-    // Set our logout method with the correct socket context
-    app.logout = function() {
-      app.set('token', null);
-
-      clearCookie(config.cookie);
-
-      // remove the token from localStorage
-      return Promise.resolve(app.get('storage').removeItem(config.tokenKey)).then(() => {
-        // If using sockets de-authenticate the socket
-        if (app.io || app.primus) {
-          const method = app.io ? 'emit' : 'send';
-          const socket = app.io ? app.io : app.primus;
-
-          return logoutSocket(socket, method);
-        }
-      });
-    };
+    app.authentication = new Authentication(app, options);
+    app.authenticate = app.authentication.authenticate.bind(app.authentication);
+    app.logout = app.authentication.logout.bind(app.authentication);
 
     // Set up hook that adds token and user to params so that
     // it they can be accessed by client side hooks and services
-    app.mixins.push(function(service) {
+    app.mixins.push(function (service) {
       if (typeof service.before !== 'function' || typeof service.after !== 'function') {
         throw new Error(`It looks like feathers-hooks isn't configured. It is required before running feathers-authentication.`);
       }
@@ -118,8 +30,8 @@ export default function(opts = {}) {
 
     // Set up hook that adds authorization header for REST provider
     if (app.rest) {
-      app.mixins.push(function(service) {
-        service.before(hooks.populateHeader(config));
+      app.mixins.push(function (service) {
+        service.before(hooks.populateHeader(options));
       });
     }
   };
