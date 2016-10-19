@@ -6,7 +6,7 @@ export default function() {
 
     const { token } = hook.params;
 
-    if(token) {
+    if (token) {
       return hook.app.authenticate(hook.params).then(result => {
         hook.params = Object.assign({}, hook.params, result);
 
