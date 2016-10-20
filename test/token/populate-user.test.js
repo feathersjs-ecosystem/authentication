@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import feathers from 'feathers';
-import authentication from '../../../src';
-import populateUser from '../../../src/token/populate-user';
+import authentication from '../../src';
+import populateUser from '../../src/token/populate-user';
 
 describe('Token Middleware fromRequest', () => {
   const app = feathers()

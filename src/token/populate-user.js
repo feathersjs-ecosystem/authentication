@@ -33,7 +33,9 @@ export default function(options) {
     return service.get(id).then(result => {
       const user = result.toJSON ? result.toJSON() : result;
 
-      return Object.assign({ authenticated: true }, data, { user });
+      return Object.assign({}, data, {
+        user, authenticated: true
+      });
     });
   };
 }

@@ -47,7 +47,7 @@
     "./lib/index": "./lib/client/index"
   },
   "dependencies": {
-    "cookie-parser": "^1.4.3",
+    "cookie": "^0.3.1",
     "debug": "^2.2.0",
     "feathers-commons": "^0.7.5",
     "feathers-errors": "^2.4.0",

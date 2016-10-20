@@ -6,7 +6,7 @@ import errorHandler from 'feathers-errors/handler';
 import hooks from 'feathers-hooks';
 import bodyParser from 'body-parser';
 import memory from 'feathers-memory';
-import authentication from '../../src/';
+import authentication from '../src/';
 
 export default function(settings, useSocketio = true) {
   const app = feathers();
@@ -22,7 +22,17 @@ export default function(settings, useSocketio = true) {
     }))
     .configure(authentication(settings))
     .use('/users', memory())
-    .use('/messages', memory())
+    .use('/todos', {
+      get(id, params) {
+        return Promise.resolve({
+          id, description: `You have to do ${id}`,
+          user: params.user
+        });
+      }
+    })
+    .get('/get-jwt', function(req, res) {
+      res.json({ token: req.token });
+    })
     .use(errorHandler());
 
 
@@ -39,14 +49,14 @@ export default function(settings, useSocketio = true) {
     }
   });
 
-  app.service('messages').before({
+  app.service('todos').before({
     all: [
       authentication.hooks.authenticate(),
       authentication.hooks.isAuthenticated()
     ]
   });
 
-  app.service('/users').create({
+  app.service('users').create({
     id: 0,
     name: 'Tester'
   });
