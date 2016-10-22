@@ -28,7 +28,7 @@ describe('Socket.io authentication', function() {
     socket.emit('authenticate', {
       login: 'testing'
     }, function() {
-      // console.log(arguments);
+      console.log(arguments);
       done();
     });
   });

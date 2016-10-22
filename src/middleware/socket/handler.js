@@ -1,7 +1,21 @@
 import Debug from 'debug';
-import errors from 'feathers-errors';
+// import errors from 'feathers-errors';
 
 const debug = Debug('feathers-authentication:sockets:handler');
+
+export function normalizeError(e) {
+  let result = {};
+
+  Object.getOwnPropertyNames(e).forEach(key => result[key] = e[key]);
+
+  if(process.env.NODE_ENV === 'production') {
+    delete result.stack;
+  }
+
+  delete result.hook;
+
+  return result;
+}
 
 export default function setupSocketHandler(app, options, {
   feathersParams, provider, emit, disconnect
@@ -16,22 +30,17 @@ export default function setupSocketHandler(app, options, {
   return function(socket) {
     const authenticate = (data, callback = () => {}) => {
       service.create(data, { provider })
-        .then( ({ token, authenticated }) => {
-
-          if(!authenticated){
-            throw new errors.NotAuthenticated('You are not authenticated.');
-          }
-
+        .then( ({ token }) => {
           debug(`Successfully authenticated socket with token`, token);
 
           feathersParams(socket).token = token;
 
-          return { token, authenticated };
+          return { token };
         })
         .then(data => callback(null, data))
         .catch(error => {
           debug(`Socket authentication error`, error);
-          callback(error);
+          callback(normalizeError(error));
         });
     };
     const logout = (callback = () => {}) => {

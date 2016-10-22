@@ -37,7 +37,7 @@ export default function init(config = {}) {
 
     debug('registering Express authentication middleware');
     app.use(express.getJWT(options));
-    
+
     app.configure(service(options));
     // app.configure(tokenAuth(options));
 
