@@ -6,7 +6,7 @@ import errorHandler from 'feathers-errors/handler';
 import hooks from 'feathers-hooks';
 import bodyParser from 'body-parser';
 import memory from 'feathers-memory';
-import authentication from '../src/';
+import authentication from '../../src/';
 
 export default function(settings, useSocketio = true) {
   const app = feathers();

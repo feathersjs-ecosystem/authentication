@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import rp from 'request-promise';
-import createApplication from './server';
+import createApplication from '../fixtures/server';
 
 describe('REST authentication', function() {
   this.timeout(10000);

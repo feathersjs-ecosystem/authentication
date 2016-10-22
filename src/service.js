@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { successRedirect, setCookie } from '../express';
+import { successRedirect, setCookie } from './middleware/express';
 
 const debug = Debug('feathers-authentication:authentication:service');
 
@@ -13,12 +13,18 @@ class Service {
       return Promise.reject(new Error(`External ${params.provider} requests need to run through an authentication provider`));
     }
 
-    this.emit('login', { token });
+    return this.authentication.createJWT(data.payload || {}).then(result => {
+      this.emit('login', result);
 
-    return this.authentication.createJWT(data.payload || {});
+      return result;
+    });
   }
 
   remove(id, params) {
+    if (params.provider && !params.authentication) {
+      return Promise.reject(new Error(`External ${params.provider} requests need to run through an authentication provider`));
+    }
+
     const token = id !== null ? id : params.token;
 
     this.emit('logout', { token });
@@ -27,7 +33,7 @@ class Service {
   }
 }
 
-export default function configureService(options){
+export default function init(options){
   return function() {
     const app = this;
     const path = options.service;
@@ -38,10 +44,8 @@ export default function configureService(options){
 
     debug('Configuring authentication service at path', path);
 
-    app.use(path, new Service(app, options),
-      setCookie(options), successRedirect(options)
-    );
+    app.use(path, new Service(app, options), setCookie(options), successRedirect(options));
   };
 }
 
-configureService.Service = Service;
+init.Service = Service;

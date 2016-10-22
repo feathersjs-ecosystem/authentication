@@ -4,7 +4,7 @@ const debug = Debug('feathers-authentication:token:verifyToken');
 
 export default function() {
   return function verifyToken(data) {
-    if(data && data.token) {
+    if (data && data.token) {
       const app = this;
       const { token } = data;
 

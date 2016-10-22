@@ -3,7 +3,7 @@ import omit from 'lodash.omit';
 export function tokenAuthHook(hook) {
   const { data } = hook;
 
-  if(data.jwt) {
+  if (data.jwt) {
     return hook.app.authentication
       .verifyJWT(data.jwt)
       .then(result => {
@@ -12,9 +12,7 @@ export function tokenAuthHook(hook) {
         hook.params.authentication = 'jwt';
 
         // Make sure that existing token payload can not get overwritten
-        hook.data.payload = Object.assign(
-          {}, hook.data.payload, tokenPayload
-        );
+        hook.data.payload = Object.assign({}, hook.data.payload, tokenPayload);
 
         return hook;
       });
@@ -31,7 +29,7 @@ export default function(options) {
       throw new Error(`Authentication service '${options.service}' does not exist`);
     }
 
-    if(typeof service.before === 'function') {
+    if (typeof service.before === 'function') {
       service.before({
         create: tokenAuthHook
       });

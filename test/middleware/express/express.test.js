@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import rp from 'request-promise';
 import cookie from 'cookie';
 import ms from 'ms';
-import createServer from './server';
+import createServer from '../../fixtures/server';
 
 describe('Express middleware tests', function() {
   const PORT = 7887;

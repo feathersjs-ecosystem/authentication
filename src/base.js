@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
-import middlewares from '../token';
+import middlewares from './middleware/authentication';
 
 const debug = Debug('feathers-authentication:authentication:base');
 
@@ -49,9 +49,10 @@ export default class Authentication {
   getJWT(data) {
     const { header } = this.options;
 
-    if(typeof data === 'string') {
+    if (typeof data === 'string') {
       return Promise.resolve({ token: data });
-    } else if (typeof data === 'object' && data.headers) {
+    }
+    else if (typeof data === 'object' && data.headers) {
       const req = data;
 
       debug('Parsing token from request');
@@ -70,7 +71,8 @@ export default class Authentication {
       }
 
       return Promise.resolve({ token, req });
-    } else if(typeof data === 'object' && data.token) {
+    }
+    else if (typeof data === 'object' && data.token) {
       return Promise.resolve({ token: data.token });
     }
 
