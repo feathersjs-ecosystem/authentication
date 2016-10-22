@@ -9,15 +9,19 @@ class Service {
   }
 
   create(data, params) {
-    if(params.provider && !params.authentication) {
+    if (params.provider && !params.authentication) {
       return Promise.reject(new Error(`External ${params.provider} requests need to run through an authentication provider`));
     }
+
+    this.emit('login', { token });
 
     return this.authentication.createJWT(data.payload || {});
   }
 
   remove(id, params) {
     const token = id !== null ? id : params.token;
+
+    this.emit('logout', { token });
 
     return this.authentication.verifyJWT({ token });
   }
@@ -26,7 +30,7 @@ class Service {
 export default function configureService(options){
   return function() {
     const app = this;
-    const path = options.user && options.user.service;
+    const path = options.service;
 
     if (typeof path !== 'string') {
       throw new Error(`Authentication option for 'service' needs to be set`);

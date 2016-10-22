@@ -1,11 +1,13 @@
 import logout from './logout';
 import setCookie from './set-cookie';
 import successRedirect from './success-redirect';
-import authenticate from './authenticate';
+import isAuthenticated from './is-authenticated';
+import getJWT from './get-jwt';
 
 export default {
   logout,
-  authenticate,
+  getJWT,
+  isAuthenticated,
   setCookie,
   successRedirect
 };

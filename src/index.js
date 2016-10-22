@@ -3,7 +3,7 @@ import Debug from 'debug';
 // Exposed modules
 import hooks from './hooks';
 import express from './express';
-import sockets from './sockets';
+import { socketioHandler, primusHandler } from './sockets';
 import getOptions from './options';
 import Authentication from './authentication/base';
 import service from './authentication/service';
@@ -21,6 +21,10 @@ export default function init(config = {}) {
       throw new Error (`You must provide a 'secret' in your authentication configuration`);
     }
 
+    if (!options.header) {
+      throw new Error(`'header' property must be set in authentication options`);
+    }
+
     // Make sure cookies don't have to be sent over HTTPS
     // when in development or test mode.
     if (app.env === 'development' || app.env === 'test') {
@@ -31,8 +35,7 @@ export default function init(config = {}) {
     if (app.rest && options.setupMiddleware) {
       debug('registering Express authentication middleware');
 
-      app.use(express.authenticate(options));
-      app.use(express.logout(options));
+      app.use(express.getJWT(options));
     } else if (app.rest) {
       debug('Not registering Express authentication middleware. Did you disable it on purpose?');
     }
@@ -46,7 +49,7 @@ export default function init(config = {}) {
       // Socket.io middleware
       if (app.io && options.setupMiddleware) {
         debug('registering Socket.io authentication middleware');
-        app.io.on('connection', sockets.socketio(app, options));
+        app.io.on('connection', socketioHandler(app, options));
       } else if (app.io) {
         debug('Not registering Socket.io authentication middleware. Did you disable it on purpose?');
       }
@@ -54,7 +57,7 @@ export default function init(config = {}) {
       // Primus middleware
       if (app.primus && options.setupMiddleware) {
         debug('registering Primus authentication middleware');
-        app.primus.on('connection', sockets.primus(app, options));
+        app.primus.on('connection', primusHandler(app, options));
       } else if (app.primus) {
         debug('Not registering Primus authentication middleware. Did you disable it on purpose?');
       }
@@ -68,7 +71,7 @@ export default function init(config = {}) {
 Object.assign(init, {
   hooks,
   express,
-  sockets,
   service,
-  Authentication
+  Authentication,
+  sockets: { socketioHandler, primusHandler }
 });

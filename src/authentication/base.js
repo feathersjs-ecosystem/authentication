@@ -11,20 +11,6 @@ export default class Authentication {
     this._middleware = middlewares;
   }
 
-  get(name) {
-    return this.options[name];
-  }
-
-  set(name, value) {
-    if(name === undefined) {
-      return this.options;
-    }
-
-    this.options[name] = value;
-
-    return this;
-  }
-
   use(... middleware) {
     if(this._middleware === middlewares) {
       this._middleware = [];
@@ -50,7 +36,39 @@ export default class Authentication {
       )
     );
 
+    promise.catch(error => console.error(error.stack));
     return promise;
+  }
+
+  getJWT(data) {
+    const { header } = this.options;
+
+    if(typeof data === 'string') {
+      return Promise.resolve({ token: data });
+    } else if (typeof data === 'object' && data.headers) {
+      const req = data;
+
+      debug('Parsing token from request');
+
+      // Normalize header capitalization the same way Node.js does
+      let token = req.headers && req.headers[header.toLowerCase()];
+
+      // Check the header for the token (preferred method)
+      if (token) {
+        // if the value contains "bearer" or "Bearer" then cut that part out
+        if (/bearer/i.test(token)) {
+          token = token.split(' ')[1];
+        }
+
+        debug('Token found in header', token);
+      }
+
+      return Promise.resolve({ token, req });
+    } else if(typeof data === 'object' && data.token) {
+      return Promise.resolve({ token: data.token });
+    }
+
+    return Promise.resolve();
   }
 
   verifyJWT(data, params) {
@@ -76,18 +94,6 @@ export default class Authentication {
   createJWT(data, params) {
     const settings = Object.assign({}, this.options.jwt, params);
     const { secret } = this.options;
-
-    if(data.iss) {
-      delete settings.issuer;
-    }
-
-    if(data.sub) {
-      delete settings.subject;
-    }
-
-    if(data.exp) {
-      delete settings.expiresIn;
-    }
 
     return new Promise((resolve, reject) => {
       debug('Creating JWT using options', settings);

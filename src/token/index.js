@@ -1,11 +1,10 @@
-import fromRequest from './from-request';
 import verifyToken from './verify-token';
 import populateUser from './populate-user';
 
-const middlewares = [ fromRequest, verifyToken, populateUser ];
+const middlewares = [ verifyToken, populateUser ];
 
 Object.assign(middlewares, {
-  fromRequest, verifyToken, populateUser
+  verifyToken, populateUser
 });
 
 export default middlewares;

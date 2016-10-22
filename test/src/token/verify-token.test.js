@@ -27,14 +27,4 @@ describe('Token Middleware verifyToken', () => {
       expect(data.payload.test).to.equal(payload.test);
     });
   });
-
-  it('.authenticate verifies a string token', () => {
-    const payload = { test: 'data' };
-
-    return auth.createJWT(payload).then(data =>
-      auth.authenticate(data.token)
-    ).then(data => {
-      expect(data.payload.test).to.equal(payload.test);
-    });
-  });
 });
