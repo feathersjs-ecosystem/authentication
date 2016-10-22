@@ -24,7 +24,7 @@ describe('REST authentication', function() {
 
   it('returns not authenticated error for protected endpoint', () => {
     return request({
-      url: '/messages'
+      url: '/todos/laundry'
     }).catch(error => {
       expect(error.error).to.deep.equal({
         name: 'NotAuthenticated',
@@ -56,7 +56,7 @@ describe('REST authentication', function() {
     });
   });
 
-  it.skip('allows access to protected endpoint with valid token', () => {
+  it('allows access to protected service with valid token, populates user', () => {
     return request({
       url: '/authentication',
       method: 'POST',
@@ -65,13 +65,17 @@ describe('REST authentication', function() {
       }
     }).then(login =>
       request({
-        url: '/messages',
+        url: '/todos/dishes',
         headers: {
           'Authorization': login.token
         }
       })
     ).then(data => {
-      console.log(data);
+      expect(data).to.deep.equal({
+        id: 'dishes',
+        description: 'You have to do dishes',
+        user: { id: 0, name: 'Tester' }
+      });
     });
   });
 });

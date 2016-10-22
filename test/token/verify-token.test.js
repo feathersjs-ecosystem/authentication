@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import feathers from 'feathers';
-import authentication from '../../../src';
-import verifyToken from '../../../src/token/verify-token';
+import authentication from '../../src';
+import verifyToken from '../../src/token/verify-token';
 
 describe('Token Middleware verifyToken', () => {
   const app = feathers()

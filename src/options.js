@@ -3,7 +3,6 @@ import merge from 'lodash.merge';
 export const defaults = {
   service: '/authentication',
   header: 'Authorization',
-  setupMiddleware: true,
   successRedirect: null,
   cookie: {
     enabled: false,

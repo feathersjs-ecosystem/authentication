@@ -1,11 +1,13 @@
 import { expect, assert } from 'chai';
 import feathers from 'feathers';
-import authentication from '../../../src';
+import hooks from 'feathers-hooks';
+import authentication from '../../src';
 
 describe('/authentication service', () => {
-  const app = feathers().configure(authentication({
-    secret: 'supersecret'
-  }));
+  const app = feathers().configure(hooks())
+    .configure(authentication({
+      secret: 'supersecret'
+    }));
 
   it('throws an error when service option is not set', () => {
     try {

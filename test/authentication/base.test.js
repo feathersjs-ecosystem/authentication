@@ -1,7 +1,6 @@
 import { expect } from 'chai';
-import Authentication from '../../../src/authentication/base';
-import tokenMiddleware from '../../../src/token';
-import getOptions from '../../../src/options';
+import Authentication from '../../src/authentication/base';
+import getOptions from '../../src/options';
 
 function timeout(callback, timeout) {
   return new Promise(resolve =>
@@ -28,13 +27,13 @@ describe('Feathers Authentication Base Class', () => {
     };
   });
 
-  it('initially has default middleware and replaces it', () => {
+  it('initially has default middleware .use replaces it', () => {
     const a = new Authentication(app, options);
 
-    expect(a._middleware).to.equal(tokenMiddleware);
+    expect(a._middleware.isInitial).to.be.ok;
 
     a.use(function() {});
-    expect(a._middleware).to.not.equal(tokenMiddleware);
+    expect(a._middleware.isInitial).to.not.be.ok;
     expect(a._middleware.length).to.equal(1);
   });
 
@@ -128,6 +127,16 @@ describe('Feathers Authentication Base Class', () => {
           expect(payload.iss).to.equal('feathers');
         })
       );
+    });
+
+    it('createJWT errors with wrong options', () => {
+      return auth.createJWT({
+        name: 'Eric'
+      }, {
+        algorithm: 'blaalgo'
+      }).catch(e => {
+        expect(e.message).to.equal(`child "algorithm" fails because ["algorithm" must be one of [RS256, RS384, RS512, ES256, ES384, ES512, HS256, HS384, HS512, none]]`);
+      });
     });
 
     it('verify errors with malformed token', () => {

@@ -7,6 +7,7 @@ import { socketioHandler, primusHandler } from './sockets';
 import getOptions from './options';
 import Authentication from './authentication/base';
 import service from './authentication/service';
+import tokenAuth from './authentication/token-auth';
 
 const debug = Debug('feathers-authentication:index');
 
@@ -31,35 +32,28 @@ export default function init(config = {}) {
       options.cookie.secure = false;
     }
 
-    // Express middleware
-    if (app.rest && options.setupMiddleware) {
-      debug('registering Express authentication middleware');
-
-      app.use(express.getJWT(options));
-    } else if (app.rest) {
-      debug('Not registering Express authentication middleware. Did you disable it on purpose?');
-    }
-
+    debug('Intializing Authentication base');
     app.authentication = new Authentication(app, options);
+
+    debug('registering Express authentication middleware');
+
+    app.use(express.getJWT(options));
     app.configure(service(options));
+    app.configure(tokenAuth(options));
 
     app.setup = function() {
       let result = _super.apply(this, arguments);
 
       // Socket.io middleware
-      if (app.io && options.setupMiddleware) {
+      if (app.io) {
         debug('registering Socket.io authentication middleware');
         app.io.on('connection', socketioHandler(app, options));
-      } else if (app.io) {
-        debug('Not registering Socket.io authentication middleware. Did you disable it on purpose?');
       }
 
       // Primus middleware
-      if (app.primus && options.setupMiddleware) {
+      if (app.primus) {
         debug('registering Primus authentication middleware');
         app.primus.on('connection', primusHandler(app, options));
-      } else if (app.primus) {
-        debug('Not registering Primus authentication middleware. Did you disable it on purpose?');
       }
 
       return result;
@@ -73,5 +67,7 @@ Object.assign(init, {
   express,
   service,
   Authentication,
-  sockets: { socketioHandler, primusHandler }
+  sockets: {
+    socketioHandler, primusHandler
+  }
 });

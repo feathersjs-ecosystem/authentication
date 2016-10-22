@@ -8,11 +8,17 @@ export default class Authentication {
   constructor(app, options) {
     this.options = options;
     this.app = app;
-    this._middleware = middlewares;
+    this._middleware = [];
+    this.use(... middlewares);
+    // Flag it as the initial middleware chain
+    // so that we can reset it when someone else
+    // calls .use
+    this._middleware.isInitial = true;
   }
 
   use(... middleware) {
-    if(this._middleware === middlewares) {
+    // Reset the default middleware chain
+    if(this._middleware.isInitial) {
       this._middleware = [];
     }
 

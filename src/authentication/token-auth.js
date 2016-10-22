@@ -9,10 +9,14 @@ export function tokenAuthHook(hook) {
       .then(result => {
         const tokenPayload = omit(result.payload, 'iss', 'sub', 'exp');
 
+        hook.params.authentication = 'jwt';
+
         // Make sure that existing token payload can not get overwritten
         hook.data.payload = Object.assign(
           {}, hook.data.payload, tokenPayload
         );
+
+        return hook;
       });
   }
 
@@ -24,15 +28,13 @@ export default function(options) {
     const service = this.service(options.service);
 
     if(!service) {
-      throw new Error(`Authentication service '${options.service} does not exist`);
+      throw new Error(`Authentication service '${options.service}' does not exist`);
     }
 
-    if(!service.before) {
-      throw new Error(`Authentication service '${options.service} does not have a '.before' method. Did you configure 'feathers-hooks' before authentication?`);
+    if(typeof service.before === 'function') {
+      service.before({
+        create: tokenAuthHook
+      });
     }
-
-    service.before({
-      create: tokenAuthHook
-    });
   };
 }
