@@ -4,6 +4,8 @@ import middlewares from './middleware/authentication';
 
 const debug = Debug('feathers-authentication:authentication:base');
 
+// A basic Authentication class that allows to create and verify JWTs
+// and also run through
 export default class Authentication {
   constructor(app, options) {
     this.options = options;
@@ -16,6 +18,7 @@ export default class Authentication {
     this._middleware.isInitial = true;
   }
 
+  // Register on or more handlers for the JWT verification chain
   use(... middleware) {
     // Reset the default middleware chain
     if(this._middleware.isInitial) {
@@ -31,6 +34,7 @@ export default class Authentication {
     return this;
   }
 
+  // Run the JWT verification chain against data
   authenticate(data) {
     let promise = Promise.resolve(data);
 
@@ -46,6 +50,8 @@ export default class Authentication {
     return promise;
   }
 
+  // Returns a { token } object either from a string,
+  // an HTTP request object or another object with a `.token` property
   getJWT(data) {
     const { header } = this.options;
 
@@ -70,7 +76,7 @@ export default class Authentication {
         debug('Token found in header', token);
       }
 
-      return Promise.resolve({ token, req });
+      return Promise.resolve({ token });
     }
     else if (typeof data === 'object' && data.token) {
       return Promise.resolve({ token: data.token });

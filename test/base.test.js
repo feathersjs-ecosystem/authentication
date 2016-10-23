@@ -95,7 +95,6 @@ describe('Feathers Authentication Base Class', () => {
         };
 
         return auth.getJWT(mockRequest).then(data => {
-          expect(data.req).to.equal(mockRequest);
           expect(data.token).to.equal('sometoken');
         });
       });
@@ -108,7 +107,6 @@ describe('Feathers Authentication Base Class', () => {
         };
 
         return auth.getJWT(mockRequest).then(data => {
-          expect(data.req).to.equal(mockRequest);
           expect(data.token).to.equal('sometoken');
         });
       });
