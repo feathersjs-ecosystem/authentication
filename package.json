@@ -51,6 +51,7 @@
     "debug": "^2.2.0",
     "feathers-commons": "^0.7.5",
     "feathers-errors": "^2.4.0",
+    "feathers-socket-commons": "^2.3.1",
     "jsonwebtoken": "^7.1.9",
     "lodash.merge": "^4.6.0",
     "lodash.omit": "^4.5.0",

@@ -3,6 +3,7 @@ import Debug from 'debug';
 const debug = Debug('feathers-authentication:token:populate-user');
 
 export default function(options) {
+  const app = this;
   const { user } = options;
 
   if (!user.service) {
@@ -14,7 +15,6 @@ export default function(options) {
   }
 
   return function populateUser(data) {
-    const app = this;
     const service = typeof user.service === 'string' ? app.service(user.service) : user.service;
     const { payloadField } = user;
 

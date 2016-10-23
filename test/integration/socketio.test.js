@@ -1,4 +1,4 @@
-// import { expect } from 'chai';
+import { expect } from 'chai';
 import io from 'socket.io-client';
 import createApplication from '../fixtures/server';
 
@@ -25,54 +25,83 @@ describe('Socket.io authentication', function() {
   });
 
   it('returns not authenticated error for protected endpoint', done => {
-    socket.emit('authenticate', {
-      login: 'testing'
-    }, function() {
-      console.log(arguments);
+    socket.emit('todos::get', 'laundry', e => {
+      delete e.stack;
+      delete e.type;
+
+      expect(e).to.deep.equal({
+        name: 'NotAuthenticated',
+        message: 'You are not authenticated.',
+        code: 401,
+        className: 'not-authenticated',
+        errors: {}
+      });
       done();
     });
   });
 
-  // it('creates a valid token via HTTP with custom auth', () => {
-  //   return request({
-  //     url: '/authentication',
-  //     method: 'POST',
-  //     body: {
-  //       login: 'testing'
-  //     }
-  //   }).then(body => {
-  //     expect(body.token).to.exist;
-  //     return app.authentication.verifyJWT(body);
-  //   }).then(verifiedToken => {
-  //     const p = verifiedToken.payload;
+  it('creates a valid token using the `authenticate` event', done => {
+    socket.emit('authenticate', {
+      login: 'testing'
+    }, function(error, data) {
+      expect(error).to.not.be.ok;
+      expect(data.token).to.exist;
+      done();
+    });
+  });
 
-  //     expect(p).to.exist;
-  //     expect(p.iss).to.equal('feathers');
-  //     expect(p.userId).to.equal(0);
-  //     expect(p.authentication).to.equal('test-auth');
-  //   });
-  // });
+  it('authenticated socket allows accesss and populates user', done => {
+    socket.emit('authenticate', {
+      login: 'testing'
+    }, function(error) {
+      if(error) {
+        return done(error);
+      }
 
-  // it('allows access to protected service with valid token, populates user', () => {
-  //   return request({
-  //     url: '/authentication',
-  //     method: 'POST',
-  //     body: {
-  //       login: 'testing'
-  //     }
-  //   }).then(login =>
-  //     request({
-  //       url: '/todos/dishes',
-  //       headers: {
-  //         'Authorization': login.token
-  //       }
-  //     })
-  //   ).then(data => {
-  //     expect(data).to.deep.equal({
-  //       id: 'dishes',
-  //       description: 'You have to do dishes',
-  //       user: { id: 0, name: 'Tester' }
-  //     });
-  //   });
-  // });
+      socket.emit('todos::get', 'laundry', function(error, data) {
+        expect(data).to.deep.equal({
+          id: 'laundry',
+          description: 'You have to do laundry',
+          user: { id: 0, name: 'Tester' }
+        });
+        done();
+      });
+    });
+  });
+
+  it('app login and logout events', done => {
+    app.once('login', function(result, info) {
+      expect(result.token).to.exist;
+      expect(result.payload).to.exist;
+      expect(result.payload.userId).to.equal(0);
+      expect(result.authenticated).to.be.ok;
+      expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
+
+      expect(info.provider).to.equal('socketio');
+      expect(info.connection.token).to.equal(result.token);
+      expect(info.socket).to.exist;
+
+      socket.emit('logout', function() {
+        done();
+      });
+    });
+
+    app.once('logout', function(result, info) {
+      expect(result.token).to.exist;
+      expect(result.payload).to.exist;
+      expect(result.payload.userId).to.equal(0);
+      expect(result.authenticated).to.be.ok;
+      expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
+
+      expect(info.provider).to.equal('socketio');
+      expect(info.connection.token).to.equal(result.token);
+      expect(info.socket).to.exist;
+
+      done();
+    });
+
+    socket.emit('authenticate', {
+      login: 'testing'
+    });
+  });
 });

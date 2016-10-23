@@ -21,10 +21,6 @@ class Service {
   }
 
   remove(id, params) {
-    if (params.provider && !params.authentication) {
-      return Promise.reject(new Error(`External ${params.provider} requests need to run through an authentication provider`));
-    }
-
     const token = id !== null ? id : params.token;
 
     this.emit('logout', { token });

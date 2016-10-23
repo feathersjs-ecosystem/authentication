@@ -1,21 +1,8 @@
 import Debug from 'debug';
-// import errors from 'feathers-errors';
+import errors from 'feathers-errors';
+import { normalizeError } from 'feathers-socket-commons/lib/utils';
 
 const debug = Debug('feathers-authentication:sockets:handler');
-
-export function normalizeError(e) {
-  let result = {};
-
-  Object.getOwnPropertyNames(e).forEach(key => result[key] = e[key]);
-
-  if(process.env.NODE_ENV === 'production') {
-    delete result.stack;
-  }
-
-  delete result.hook;
-
-  return result;
-}
 
 export default function setupSocketHandler(app, options, {
   feathersParams, provider, emit, disconnect
@@ -28,12 +15,25 @@ export default function setupSocketHandler(app, options, {
   }
 
   return function(socket) {
-    const authenticate = (data, callback = () => {}) => {
+    const authenticate = function (data, callback = () => {}) {
       service.create(data, { provider })
-        .then( ({ token }) => {
+        .then(jwt => app.authentication.authenticate(jwt))
+        .then(result => {
+          if(!result.authenticated) {
+            throw new errors.NotAuthenticated('Authentication was not successful');
+          }
+
+          const { token } = result;
+          const connection = feathersParams(socket);
+
           debug(`Successfully authenticated socket with token`, token);
 
-          feathersParams(socket).token = token;
+          // Add the token to the connection so that it shows up as `params.token`
+          connection.token = token;
+
+          app.emit('login', result, {
+            provider, socket, connection
+          });
 
           return { token };
         })
@@ -43,20 +43,30 @@ export default function setupSocketHandler(app, options, {
           callback(normalizeError(error));
         });
     };
-    const logout = (callback = () => {}) => {
-      const params = feathersParams(socket);
-      const { token } = params;
+    const logout = function (callback = () => {}) {
+      const connection = feathersParams(socket);
+      const { token } = connection;
 
       if(token) {
-        debug('Authenticated socket disconnected', token);
+        debug('Logging out socket with token', token);
 
-        delete params.token;
+        delete connection.token;
 
-        service.remove(token)
+        service.remove(token, { provider })
+          .then(jwt => app.authentication.authenticate(jwt))
+          .then(result => {
+            debug(`Successfully logged out socket with token`, token);
+
+            app.emit('logout', result, {
+              provider, socket, connection
+            });
+
+            return result;
+          })
           .then(data => callback(null, data))
           .catch(error => {
             debug(`Error logging out socket`, error);
-            callback(error);
+            callback(normalizeError(error));
           });
       }
     };
