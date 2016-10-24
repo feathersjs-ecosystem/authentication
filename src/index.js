@@ -7,7 +7,6 @@ import { socketioHandler, primusHandler } from './middleware/socket';
 import getOptions from './options';
 import Authentication from './base';
 import service from './service';
-// import tokenAuth from './token-auth';
 
 const debug = Debug('feathers-authentication:index');
 
@@ -32,14 +31,12 @@ export default function init(config = {}) {
       options.cookie.secure = false;
     }
 
-    debug('Initializing base Authentication class');
+    debug('Setting up Authentication class and Express middleware');
+
     app.authentication = new Authentication(app, options);
-
-    debug('registering Express authentication middleware');
+    app.authenticate = app.authentication.authenticate.bind(app.authenticate);
     app.use(express.getJWT(options));
-
     app.configure(service(options));
-    // app.configure(tokenAuth(options));
 
     app.setup = function() {
       let result = _super.apply(this, arguments);

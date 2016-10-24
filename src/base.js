@@ -5,7 +5,7 @@ import middlewares from './middleware/authentication';
 const debug = Debug('feathers-authentication:authentication:base');
 
 // A basic Authentication class that allows to create and verify JWTs
-// and also run through
+// and also run through a token authentication chain
 export default class Authentication {
   constructor(app, options) {
     this.options = options;
@@ -18,7 +18,7 @@ export default class Authentication {
     this._middleware.isInitial = true;
   }
 
-  // Register on or more handlers for the JWT verification chain
+  // Register one or more handlers for the JWT verification chain
   use(... middleware) {
     // Reset the default middleware chain
     if(this._middleware.isInitial) {
