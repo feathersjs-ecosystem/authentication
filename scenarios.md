@@ -5,9 +5,13 @@
 - `Client` - A browser, mobile device, IoT device, or other server that makes requests to the your authentication server.
 - `Server` - Your server that authenticates entities, issues and verifies tokens.
 - `ClientID` - A unique client identifier that is encoded in the payload of a JWT access token.
-- `ClientSecret` - A private key shared between a client and server.
+- `ClientSecret` - A private key shared between a client and server. **Can't be used on an insecure client. Keep this private!**
 - `Entity` - A thing requesting API access (this could be a user, organization, device, etc.)
-- `API Key` - A unique hash that is associated to an entity (this could really be an access token)
+- `Authentication Provider` - A 3rd party authentication provider (ie. Facebook, Twitter, etc.). They could expect users to authenticate via OAuth1/1a/2, SAML, API Key, Username + Password, LDAP, etc.
+
+### Authorization
+An entity can be granted an authorization, which can contain an any types of tokens. I think we should norm on an access token (JWT) and a refresh token. The access token would have the Entity ID, Authorization ID, and the Client ID in the payload. These are all stored in a datastore or cache. This allows us to revoke tokens for an entire Entity, an individual token, or a client.
+
 - `Access token (JWT)` - A JWT that sent by the client in:
     - the message body on a Socket `authenticate` event; or
     - every HTTP request as an `Authorization` header.
@@ -20,7 +24,10 @@
 
 - `Refresh Token` - A secret token (could be a JWT, could be just a hash) that can be used to request a new access token.
 - `Permissions/Scopes` - Series of access permissions that are associated to an access token.
-- `Cookie` - A browser header that contains a signed access token (JWT). Used for server side templated or universal apps (used similarly to a session).
+- `Cookie` - A browser header that contains a signed access token (JWT). Used for server side templated, universal apps, or headless browser clients (used similarly to a session). The only difference between this and an Authorization header is the server sets it after successful authentication. It is mainly meant for when you do not have JavaScript enabled on the client.
+
+#### These might not make sense
+
 - `Blacklist` - A list of access tokens that are not expired but flagged as invalid or revoked.
 - `Whitelist` - A list of access tokens that are not expired and currently valid for your API.
 
@@ -124,4 +131,10 @@ This utilizes a cookie.
 Utilizes putting token in the querystring or a cookie scoped to the subdomain.
 
 ### API Key Authentication
+
+### Regular OAuth
+
+### Access Token Based OAuth
+
+In most cases this is for IoT devices or mobile devices. The user has already granted your application access to their profile through another mechanism that the regular OAuth HTTP redirects (ie. via a mobile app or CLI). The client sends their profile, OAuth `access_token` and possibly `refresh_token` to your server. The server verifies these with the OAuth authentication provider (ie. Facebook).
 
