@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { successRedirect, setCookie } from './middleware/express';
+import { successRedirect, setCookie, events } from './middleware/express';
 
 const debug = Debug('feathers-authentication:authentication:service');
 
@@ -40,7 +40,9 @@ export default function init(options){
 
     debug('Configuring authentication service at path', path);
 
-    app.use(path, new Service(app, options), setCookie(options), successRedirect(options));
+    app.use(path, new Service(app, options),
+      events(options), setCookie(options), successRedirect(options)
+    );
   };
 }
 
