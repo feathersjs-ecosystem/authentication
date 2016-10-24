@@ -2,7 +2,7 @@
 
 ## Definitions
 
-- `Client` - A browser, mobile or IoT device, or other server that makes requests to the server.
+- `Client` - A browser, mobile device, IoT device, or other server that makes requests to the your authentication server.
 - `Server` - Your server that authenticates entities, issues and verifies tokens.
 - `ClientID` - A unique client identifier that is encoded in the payload of a JWT access token.
 - `ClientSecret` - A private key shared between a client and server.
