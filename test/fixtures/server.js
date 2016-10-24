@@ -45,6 +45,12 @@ export default function(settings, useSocketio = true) {
           userId: 0,
           authentication: 'test-auth'
         };
+      } else if(hook.data.login === 'testing-fail') {
+        hook.params.authentication = 'test-auth';
+
+        hook.data.payload = {
+          authentication: 'test-auth'
+        };
       }
     }
   });

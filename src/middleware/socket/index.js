@@ -24,7 +24,7 @@ export function primusHandler(app, options = {}) {
   const providerSettings = {
     provider: 'primus',
     emit: 'send',
-    disconnect: 'disconnection',
+    disconnect: 'end',
     feathersParams(socket) {
       return socket.request.feathers;
     }

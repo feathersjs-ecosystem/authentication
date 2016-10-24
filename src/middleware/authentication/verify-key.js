@@ -4,7 +4,7 @@ const debug = Debug('feathers-authentication:token:verifyKey');
 
 export default function(options) {
   return function verifyKey(data) {
-    if (data && data.token) {
+    if (data && data[options.keyfield]) {
       const app = this;
       const key = data[options.keyfield];
 
