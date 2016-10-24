@@ -27,16 +27,9 @@ describe('Socket.io authentication', function() {
 
   it('returns not authenticated error for protected endpoint', done => {
     socket.emit('todos::get', 'laundry', e => {
-      delete e.stack;
-      delete e.type;
+      expect(e.name).to.equal('NotAuthenticated');
+      expect(e.code).to.equal(401);
 
-      expect(e).to.deep.equal({
-        name: 'NotAuthenticated',
-        message: 'You are not authenticated.',
-        code: 401,
-        className: 'not-authenticated',
-        errors: {}
-      });
       done();
     });
   });
@@ -147,16 +140,9 @@ describe('Socket.io authentication', function() {
   it('no access allowed after logout', done => {
     app.once('logout', function() {
       socket.emit('todos::get', 'laundry', e => {
-        delete e.stack;
-        delete e.type;
+        expect(e.name).to.equal('NotAuthenticated');
+        expect(e.code).to.equal(401);
 
-        expect(e).to.deep.equal({
-          name: 'NotAuthenticated',
-          message: 'You are not authenticated.',
-          code: 401,
-          className: 'not-authenticated',
-          errors: {}
-        });
         done();
       });
     });
