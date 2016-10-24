@@ -163,7 +163,7 @@ This utilizes an `httpOnly` cookie with the same expiration as the access token.
 
 This utilizes a cookie.
 
-1.
+TODO
 
 ### Authenticating and Redirecting to another domain
 
@@ -171,7 +171,11 @@ Utilizes putting token in the querystring or a cookie scoped to the subdomain.
 
 ### API Key Authentication
 
+TODO: Might not be needed or would simply be a ClientID
+
 ### Regular OAuth
+
+TODO
 
 ### Access Token Based OAuth
 
