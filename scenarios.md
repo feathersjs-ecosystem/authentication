@@ -9,9 +9,7 @@
 - `Entity` - A thing requesting API access (this could be a user, organization, device, etc.)
 - `Authentication Provider` - A 3rd party authentication provider (ie. Facebook, Twitter, etc.). They could expect users to authenticate via OAuth1/1a/2, SAML, API Key, Username + Password, LDAP, etc.
 
-### Authorization
-An entity can be granted an authorization, which can contain an any types of tokens. I think we should norm on an access token (JWT) and a refresh token. The access token would have the Entity ID, Authorization ID, and the Client ID in the payload. These are all stored in a datastore or cache. This allows us to revoke tokens for an entire Entity, an individual token, or a client.
-
+### Authorization Types
 - `Access token (JWT)` - A JWT that sent by the client in:
     - the message body on a Socket `authenticate` event; or
     - every HTTP request as an `Authorization` header.
@@ -31,6 +29,8 @@ An entity can be granted an authorization, which can contain an any types of tok
 - `Blacklist` - A list of access tokens that are not expired but flagged as invalid or revoked.
 - `Whitelist` - A list of access tokens that are not expired and currently valid for your API.
 
+We might just need to keep a collection or table of Authorizations and you can simply check for presence of an Authorization ID or add a flag to that collection or table as to whether it is valid or not.
+
 ## Caveats to JWT
 
 JWT access tokens cannot be truly stateless unless you or okay with eventual consistency limited to the TTL of the tokens. Since JWTs are only invalidated if they are expired, tampered with, or malformed they cannot be explicitly revoked without checking a blacklist or whitelist (which requires storing state). So the JWTs themselves may be stateless but the complete validation of them is not.
@@ -39,7 +39,46 @@ Without a blacklist/whitelist they are not suitable for API keys, as is implied 
 
 Permissions are encoded in the token payload. If the permissions are revoked prior to the access token expiration the client could still send the access token with the old permissions until the token expires. This would not be possible if you blacklisted the access token when permissions were altered.
 
-## Types of Auth Flows
+## Proposal
+A User can have multiple clients. Each of which can be granted an authorization, which can contain many types of tokens. I think we should norm on an access token (JWT) and a refresh token (possibly also JWT) to start. The access token would have the Entity ID, Authorization ID, and the Client ID in the payload. These are all stored in a datastore or cache. This allows us to revoke tokens for an entire Entity, a Client or just individual tokens.
+
+### Data Model
+User -> has many -> Clients -> has many -> Authorizations ->  has many -> Permissions and Tokens
+
+```js
+// authorization
+{
+    _id: "762346asdg61dd",
+    clientId: "234jhfh7sf62332",
+    accessToken: "at_ghf89f892342grhja;kafs902632rdfao;ffjhafhsf9r2aad",
+    refreshToken: "rt_ajh;asuh234ief58haioa;adhafuygg321dfssds",
+    permissions: ["*"]
+}
+```
+
+### Example 1: IoT Device Authentication
+
+1. Register device with server. Send device serial or MAC address. Get back ClientID & ClientSecret. ClientID could be serial or MAC address.
+2. Client stores both securely. Especially the ClientSecret.
+3. Client authenticates with server by sending ClientID and ClientSecret.
+4. Server verifies these and generates an Authorization for the Client, any default tokens (ie. a JWT access token and refresh token), and any default permissions. It encodes the ClientID and AuthorizationID in the JWT payload.
+5. Sends the token back to the server.
+6. Client stores refresh token securely
+7. Client sends access token in `Authorization` header
+
+### Example 2: Username + Password Authentication
+
+1. Client authenticates with server by sending ClientID (username) & ClientSecret (password) to server.
+2. Server verifies these and generates an Authorization for the Client, any default tokens (ie. a JWT access token and refresh token), and any default permissions. It encodes the ClientID and AuthorizationID in the JWT payload.
+3. Sends the token back to the server.
+4. Client stores refresh token securely
+5. Client sends access token in `Authorization` header
+
+Depending on your transport these auth flows are modified as in the examples below. I think keeping an `Authorizations` table or collection resolves the blacklist/whitelist scenario.
+
+---
+
+## Current Types of Auth Flows
 
 ### Authenticating Username and Password over Ajax
 
