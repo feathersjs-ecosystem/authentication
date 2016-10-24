@@ -1,24 +1,27 @@
 import { expect } from 'chai';
-import io from 'socket.io-client';
 import createApplication from '../fixtures/server';
 
-describe('Socket.io authentication', function() {
+describe('Primus authentication', function() {
   this.timeout(10000);
 
-  const PORT = 8998;
+  const PORT = 9889;
   const app = createApplication({
     secret: 'supersecret'
-  });
+  }, false);
 
-  let socket;
+  let primus, Socket;
 
   before(function(done) {
     this.server = app.listen(PORT);
-    this.server.once('listening', () => done());
+    this.server.once('listening', () => {
+      Socket = app.primus.Socket;
+      done();
+    });
   });
 
-  beforeEach(function() {
-    socket = io(`http://localhost:${PORT}`);
+  beforeEach(done => {
+    primus = new Socket(`http://localhost:${PORT}`);
+    primus.on('open', () => done());
   });
 
   after(function() {
@@ -26,7 +29,7 @@ describe('Socket.io authentication', function() {
   });
 
   it('returns not authenticated error for protected endpoint', done => {
-    socket.emit('todos::get', 'laundry', e => {
+    primus.send('todos::get', 'laundry', e => {
       delete e.stack;
       delete e.type;
 
@@ -42,7 +45,7 @@ describe('Socket.io authentication', function() {
   });
 
   it('creates a token using the `authenticate` event', done => {
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing'
     }, function(error, data) {
       expect(error).to.not.be.ok;
@@ -52,7 +55,7 @@ describe('Socket.io authentication', function() {
   });
 
   it('`authenticate` with error', done => {
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing-fail'
     }, function(error) {
       expect(error).to.be.ok;
@@ -62,14 +65,14 @@ describe('Socket.io authentication', function() {
   });
 
   it('authenticated socket allows accesss and populates user', done => {
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing'
     }, function(error) {
       if(error) {
         return done(error);
       }
 
-      socket.emit('todos::get', 'laundry', function(error, data) {
+      primus.send('todos::get', 'laundry', function(error, data) {
         expect(data).to.deep.equal({
           id: 'laundry',
           description: 'You have to do laundry',
@@ -88,14 +91,14 @@ describe('Socket.io authentication', function() {
       expect(result.authenticated).to.be.ok;
       expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
 
-      expect(info.provider).to.equal('socketio');
+      expect(info.provider).to.equal('primus');
       expect(info.connection.token).to.equal(result.token);
       expect(info.socket).to.exist;
 
       done();
     });
 
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing'
     });
   });
@@ -108,19 +111,19 @@ describe('Socket.io authentication', function() {
       expect(result.authenticated).to.be.ok;
       expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
 
-      expect(info.provider).to.equal('socketio');
+      expect(info.provider).to.equal('primus');
       expect(info.socket).to.exist;
 
       done();
     });
 
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing'
-    }, () => socket.emit('logout'));
+    }, () => primus.send('logout'));
   });
 
   it('disconnecting sends `logout` event', done => {
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing'
     }, function(error) {
       if(error) {
@@ -134,19 +137,19 @@ describe('Socket.io authentication', function() {
         expect(result.authenticated).to.be.ok;
         expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
 
-        expect(info.provider).to.equal('socketio');
+        expect(info.provider).to.equal('primus');
         expect(info.socket).to.exist;
 
         done();
       });
 
-      socket.disconnect();
+      primus.end();
     });
   });
 
   it('no access allowed after logout', done => {
     app.once('logout', function() {
-      socket.emit('todos::get', 'laundry', e => {
+      primus.send('todos::get', 'laundry', e => {
         delete e.stack;
         delete e.type;
 
@@ -161,8 +164,8 @@ describe('Socket.io authentication', function() {
       });
     });
 
-    socket.emit('authenticate', {
+    primus.send('authenticate', {
       login: 'testing'
-    }, () => socket.emit('logout'));
+    }, () => primus.send('logout'));
   });
 });

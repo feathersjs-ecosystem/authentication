@@ -4,19 +4,27 @@ import { normalizeError } from 'feathers-socket-commons/lib/utils';
 
 const debug = Debug('feathers-authentication:sockets:handler');
 
+function handleSocketCallback(promise, callback) {
+  if(typeof callback === 'function') {
+    promise.then(data => callback(null, data))
+      .catch(error => {
+        debug(`Socket authentication error`, error);
+        callback(normalizeError(error));
+      });
+  }
+
+  return promise;
+}
+
 export default function setupSocketHandler(app, options, {
   feathersParams, provider, emit, disconnect
 }) {
 
   const service = app.service(options.service);
 
-  if(!service) {
-    throw new Error(`Could not find authentication service '${options.service}'`);
-  }
-
   return function(socket) {
     const authenticate = function (data, callback = () => {}) {
-      service.create(data, { provider })
+      const promise = service.create(data, { provider })
         .then(jwt => app.authentication.authenticate(jwt))
         .then(result => {
           if(!result.authenticated) {
@@ -36,12 +44,9 @@ export default function setupSocketHandler(app, options, {
           });
 
           return { token };
-        })
-        .then(data => callback(null, data))
-        .catch(error => {
-          debug(`Socket authentication error`, error);
-          callback(normalizeError(error));
         });
+
+      handleSocketCallback(promise, callback);
     };
     const logout = function (callback = () => {}) {
       const connection = feathersParams(socket);
@@ -52,7 +57,7 @@ export default function setupSocketHandler(app, options, {
 
         delete connection.token;
 
-        service.remove(token, { provider })
+        const promise = service.remove(token, { provider })
           .then(jwt => app.authentication.authenticate(jwt))
           .then(result => {
             debug(`Successfully logged out socket with token`, token);
@@ -62,12 +67,9 @@ export default function setupSocketHandler(app, options, {
             });
 
             return result;
-          })
-          .then(data => callback(null, data))
-          .catch(error => {
-            debug(`Error logging out socket`, error);
-            callback(normalizeError(error));
           });
+
+        handleSocketCallback(promise, callback);
       }
     };
 
