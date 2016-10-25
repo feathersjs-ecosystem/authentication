@@ -2,13 +2,15 @@
 
 Auth needed an overhaul because we assumed too much. Here is a the new proposal.
 
-## Caveats to JWT
+## Precursor
 
-JWT access tokens cannot be truly stateless unless you or okay with eventual consistency limited to the TTL of the tokens. Since JWTs are only invalidated if they are expired, tampered with, or malformed they cannot be explicitly revoked without checking a blacklist or whitelist (which requires storing state). So the JWTs themselves may be stateless but the complete validation of them is not.
+We've seen some a lot of miscommunication around JWT, so it is important to understand a couple things before diving into the spec.
 
-Without a blacklist/whitelist they are not suitable for API keys, as is implied in [this article from Auth0](https://auth0.com/blog/using-json-web-tokens-as-api-keys/). A contrived example based off the Auth0 article:
+JWT access tokens **cannot** be truly stateless unless you are okay with eventual consistency limited to the TTL of the tokens. Since JWTs are only invalidated if they are expired, tampered with, or malformed they cannot be explicitly revoked or expired early without checking a blacklist or whitelist (which requires storing state). So the JWTs themselves may be stateless but the complete validation of the consumer using them to request access to things is not.
 
-> Permissions are encoded in the token payload. If the permissions are revoked prior to the access token expiration the client could still send the access token with the old permissions until the token expires. This would not be possible if you blacklisted the access token when permissions were altered.
+Without storing some state and having to verify against it JWTs are not suitable for API keys, as is implied in [this article from Auth0](https://auth0.com/blog/using-json-web-tokens-as-api-keys/). A contrived example that showcases why (based off the linked Auth0 article):
+
+> Permissions are encoded in the token payload. If the permissions are revoked prior to the access token expiration the client could still send the access token with the old permissions until the token expires. This would not be possible if you blacklisted the access token when permissions were altered, but that involves storing state somewhere because you can't just alter the JWT itself or issue a new token without re-authenticating because even if you could you can't trust the client to send the new token.
 
 ## Definitions
 
@@ -46,6 +48,16 @@ Without a blacklist/whitelist they are not suitable for API keys, as is implied 
 
 ## Proposal
 These are the proposed requirements, data model and payloads, as well as basic usage. There are more complex examples defined in the [examples folder](./examples/readme.md).
+
+The gist is this:
+
+> We need a stateless, transport agnostic way of authenticating requests and we need a way for people to authenticate with any authentication provider and customize the JWT access token payload.
+
+Therefore, we've done 2 major things:
+
+1. Allow you to register your own `before`, `create` hooks on an `/authentication` service so that you can authenticate a user any way you would like (email/password, oauth, saml, etc.) and customize the JWT payload of the access token that gets created by the authentication service.
+
+2. Abstracted the verification of an authenticated socket message or a HTTP request to what we are calling an "Authentication Chain", comprised of special "Verification Hooks". All these hooks do is verify that an access token is valid **prior** to being passed on to the any service (ie. users, messages, etc). These are generally, non-erroring hooks and they just set `hook.params.authenticated` to `true` or `false` base on whatever conditions you specify in your hooks. The service, if it needs to, then checks to see if `hook.params.authenticated` is `true`.
 
 ### Data Model
 A User can have multiple clients. Each of which can be granted an authorization. Clients can have multiple authorizations. Each authorization record maps to a single access token or refresh token. 
