@@ -19,7 +19,7 @@ export default function() {
 
       app.authentication.authenticate(res.data)
         .then(result => {
-          debug(`Sending '${event}' event for REST provider token is`,
+          debug(`Sending '${event}' event for REST provider. Token is`,
             res.data.token
           );
 

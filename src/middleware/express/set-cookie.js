@@ -50,15 +50,15 @@ export default function setCookie(authOptions = {}) {
         options.expires = makeExpiry(authOptions.jwt.expiresIn);
       }
 
-      if ( options.expires && !(options.expires instanceof Date) ) {
-        return next(new Error('cookie.expires must be a valid Date object'));
-      }
-
-      // remove some of our options that don't apply to express cookie creation
-      // as well as the maxAge because we have set an explicit expiry.
-      const cookieOptions = omit(options, 'name', 'enabled', 'maxAge');
-
       if(res.hook.method !== 'remove' && res.data && res.data.token) {
+        if ( options.expires && !(options.expires instanceof Date) ) {
+          return next(new Error('cookie.expires must be a valid Date object'));
+        }
+
+        // remove some of our options that don't apply to express cookie creation
+        // as well as the maxAge because we have set an explicit expiry.
+        const cookieOptions = omit(options, 'name', 'enabled', 'maxAge');
+
         debug(`Setting '${cookie}' cookie`);
         res.cookie(cookie, res.data.token, cookieOptions);
       }

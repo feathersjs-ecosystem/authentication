@@ -77,6 +77,7 @@
     "nsp": "^2.6.1",
     "primus": "^5.2.2",
     "primus-emitter": "^3.1.1",
+    "request": "^2.75.0",
     "request-promise": "^4.1.1",
     "sinon": "^1.17.6",
     "sinon-chai": "^2.8.0",
