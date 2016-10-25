@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:middleware:get-jwt');
+const debug = Debug('feathers-authentication:express:get-jwt');
 
 export default function () {
   return function getJWT(req, res, next) {

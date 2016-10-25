@@ -78,4 +78,52 @@ describe('REST authentication', function() {
       });
     });
   });
+
+  it('app `login` event', done => {
+    app.once('login', function(auth, info) {
+      expect(auth.token).to.exist;
+      expect(auth.user).to.deep.equal({ id: 0, name: 'Tester' });
+
+      expect(info.provider).to.equal('rest');
+      expect(info.req).to.exist;
+      expect(info.res).to.exist;
+
+      done();
+    });
+
+    request({
+      url: '/authentication',
+      method: 'POST',
+      body: {
+        login: 'testing'
+      }
+    });
+  });
+
+  it('app `logout` event', done => {
+    app.once('logout', function(auth, info) {
+      expect(auth.token).to.exist;
+      expect(auth.user).to.deep.equal({ id: 0, name: 'Tester' });
+
+      expect(info.provider).to.equal('rest');
+      expect(info.req).to.exist;
+      expect(info.res).to.exist;
+
+      done();
+    });
+
+    request({
+      url: '/authentication',
+      method: 'POST',
+      body: {
+        login: 'testing'
+      }
+    }).then(login => request({
+      url: `/authentication`,
+      method: 'DELETE',
+      headers: {
+        'Authorization': login.token
+      }
+    }));
+  });
 });

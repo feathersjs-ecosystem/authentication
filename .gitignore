@@ -31,3 +31,4 @@ lib/
 coverage/
 data.db
 _backup/
+yarn.lock
