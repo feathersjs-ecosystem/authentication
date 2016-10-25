@@ -2,6 +2,7 @@ import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:token:populate-user');
 
+
 export default function(options) {
   const app = this;
   const { user } = options;

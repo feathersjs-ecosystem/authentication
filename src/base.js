@@ -8,6 +8,14 @@ const debug = Debug('feathers-authentication:authentication:base');
 // and also run through a token authentication chain
 export default class Authentication {
   constructor(app, options) {
+    if (!options.secret) {
+      throw new Error (`You must provide a 'secret' in your authentication configuration`);
+    }
+
+    if (!options.header) {
+      throw new Error(`'header' property must be set in authentication options`);
+    }
+
     this.options = options;
     this.app = app;
     this._middleware = [];

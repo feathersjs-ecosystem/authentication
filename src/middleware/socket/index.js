@@ -32,3 +32,28 @@ export function primusHandler(app, options = {}) {
 
   return setupSocketHandler(app, options, providerSettings);
 }
+
+export default function(options) {
+  return function() {
+    const app = this;
+    const _super = app.setup;
+
+    app.setup = function() {
+      let result = _super.apply(this, arguments);
+
+      // Socket.io middleware
+      if (app.io) {
+        debug('registering Socket.io authentication middleware');
+        app.io.on('connection', socketioHandler(app, options));
+      }
+
+      // Primus middleware
+      if (app.primus) {
+        debug('registering Primus authentication middleware');
+        app.primus.on('connection', primusHandler(app, options));
+      }
+
+      return result;
+    };
+  };
+}
