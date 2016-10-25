@@ -1,60 +1,6 @@
-# Authentication Scenarios
+# Authentication Examples
 
-## Definitions
-
-- `Client` - A browser, mobile device, IoT device, or other server that makes requests to the your authentication server.
-- `Server` - Your server that authenticates entities, issues and verifies tokens.
-- `ClientID` - A unique client identifier that is encoded in the payload of a JWT access token.
-- `ClientSecret` - A private key shared between a client and server. **Can't be used on an insecure client. Keep this private!**
-- `Entity` - A thing requesting API access (this could be a user, organization, device, etc.)
-- `Authentication Provider` - A 3rd party authentication provider (ie. Facebook, Twitter, etc.). They could expect users to authenticate via OAuth1/1a/2, SAML, API Key, Username + Password, LDAP, etc.
-
-### Authorization Types
-- `Access token (JWT)` - A JWT that sent by the client in:
-    - the message body on a Socket `authenticate` event; or
-    - every HTTP request as an `Authorization` header.
-
-    It is verified on every incoming request or socket message to ensure:
-
-    - the token hasn't expired
-    - the entity it is associated with still exists
-    - the token hasn't been revoked
-
-- `Refresh Token` - A secret token (could be a JWT, could be just a hash) that can be used to request a new access token.
-- `Permissions/Scopes` - Series of access permissions that are associated to an access token.
-- `Cookie` - A browser header that contains a signed access token (JWT). Used for server side templated, universal apps, or headless browser clients (used similarly to a session). The only difference between this and an Authorization header is the server sets it after successful authentication. It is mainly meant for when you do not have JavaScript enabled on the client.
-
-#### These might not make sense
-
-- `Blacklist` - A list of access tokens that are not expired but flagged as invalid or revoked.
-- `Whitelist` - A list of access tokens that are not expired and currently valid for your API.
-
-We might just need to keep a collection or table of Authorizations and you can simply check for presence of an Authorization ID or add a flag to that collection or table as to whether it is valid or not.
-
-## Caveats to JWT
-
-JWT access tokens cannot be truly stateless unless you or okay with eventual consistency limited to the TTL of the tokens. Since JWTs are only invalidated if they are expired, tampered with, or malformed they cannot be explicitly revoked without checking a blacklist or whitelist (which requires storing state). So the JWTs themselves may be stateless but the complete validation of them is not.
-
-Without a blacklist/whitelist they are not suitable for API keys, as is implied in [this article from Auth0](https://auth0.com/blog/using-json-web-tokens-as-api-keys/). A contrived example based off the Auth0 article:
-
-Permissions are encoded in the token payload. If the permissions are revoked prior to the access token expiration the client could still send the access token with the old permissions until the token expires. This would not be possible if you blacklisted the access token when permissions were altered.
-
-## Proposal
-A User can have multiple clients. Each of which can be granted an authorization, which can contain many types of tokens. I think we should norm on an access token (JWT) and a refresh token (possibly also JWT) to start. The access token would have the Entity ID, Authorization ID, and the Client ID in the payload. These are all stored in a datastore or cache. This allows us to revoke tokens for an entire Entity, a Client or just individual tokens.
-
-### Data Model
-User -> has many -> Clients -> has many -> Authorizations ->  has many -> Permissions and Tokens
-
-```js
-// authorization
-{
-    _id: "762346asdg61dd",
-    clientId: "234jhfh7sf62332",
-    accessToken: "at_ghf89f892342grhja;kafs902632rdfao;ffjhafhsf9r2aad",
-    refreshToken: "rt_ajh;asuh234ief58haioa;adhafuygg321dfssds",
-    permissions: ["*"]
-}
-```
+>TODO (EK): This is kind of a dumping ground right now and needs to be cleaned up. Likely, each example will be moved to their own file.
 
 ### Example 1: IoT Device Authentication
 
@@ -76,9 +22,31 @@ User -> has many -> Clients -> has many -> Authorizations ->  has many -> Permis
 
 Depending on your transport these auth flows are modified as in the examples below. I think keeping an `Authorizations` table or collection resolves the blacklist/whitelist scenario.
 
----
+### Customizing JWT Payload
 
-## Current Types of Auth Flows
+```js
+// Server Side
+app.service('authentication').hooks({
+  before: {
+    create: [
+      hasAcceptedTerms(),
+      localAuth({
+        clientIdField: 'email',
+        clientSecretField: 'password',
+        entity: 'user',
+        service: 'users'
+      }),
+      populate({
+        idField: '_id', // optional but should come from service.id
+        service: 'users',
+        entity: 'user',
+        on: 'params'
+      }),
+      setJWTPayload()
+    ]
+  }
+});
+```
 
 ### Authenticating Username and Password over Ajax
 
@@ -177,7 +145,10 @@ TODO: Might not be needed or would simply be a ClientID
 
 TODO
 
+### Custom Passport Authentication
+
+TODO
+
 ### Access Token Based OAuth
 
 In most cases this is for IoT devices or mobile devices. The user has already granted your application access to their profile through another mechanism that the regular OAuth HTTP redirects (ie. via a mobile app or CLI). The client sends their profile, OAuth `access_token` and possibly `refresh_token` to your server. The server verifies these with the OAuth authentication provider (ie. Facebook).
-
