@@ -13,7 +13,7 @@ export default function(options = {}){
     }
     
     // Check hook is being called on an allowable method
-    if (!hook.method === 'get' || !hook.method === 'update' || !hook.method === 'patch' || !hook.method === 'remove') {
+    if (!(hook.method === 'get' || hook.method === 'update' || hook.method === 'patch' || hook.method === 'remove')) { {
       throw new errors.MethodNotAllowed(`The 'restrictToOwner' hook should only be used on the 'get', 'update', 'patch' and 'remove' service methods.`);
     }
 
