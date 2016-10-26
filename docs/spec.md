@@ -57,7 +57,7 @@ Therefore, we've done 2 major things:
 
 1. Allow you to register your own `before`, `create` hooks on an `/authentication` service so that you can authenticate a user any way you would like (email/password, oauth, saml, etc.) and customize the JWT payload of the access token that gets created by the authentication service.
 
-2. Abstracted the verification of an authenticated socket message or a HTTP request to what we are calling an "Authentication Chain", comprised of special "Verification Hooks". All these hooks do is verify that an access token is valid **prior** to being passed on to the any service (ie. users, messages, etc). These are generally, non-erroring hooks and they just set `hook.params.authenticated` to `true` or `false` base on whatever conditions you specify in your hooks. The service, if it needs to, then checks to see if `hook.params.authenticated` is `true`.
+2. Abstracted the verification of an authenticated socket message or a HTTP request to what we are calling an "Authentication Chain", comprised of special "Verification Hooks". All these hooks do is verify that an access token is valid **prior** to being passed on to a service (ie. users, messages, etc). These are generally, non-erroring hooks and they just set `hook.params.authenticated` to `true` or `false` based on whatever conditions you specify in your hooks. The service, if it needs to, then checks to see if `hook.params.authenticated` is `true`.
 
 ### Data Model
 A User can have multiple clients. Each of which can be granted an authorization. Clients can have multiple authorizations. Each authorization record maps to a single access token or refresh token. 
@@ -66,14 +66,12 @@ A User can have multiple clients. Each of which can be granted an authorization.
 User -> has many -> Clients -> has many -> Authorizations ->  has many -> Permissions
 ```
 
-**NOTE:** We are considering `entityId` and `clientId` to be "verification values". There could be any arbitrary number of them and they are specific to an application but you would need at least one.
-
 #### SQL
 Example Authorizations Table:
 
-| id                                   | clientId                 | entityId                 | permissions                                       | createdAt                | updatedAt                | revokedAt                |
-|--------------------------------------|--------------------------|--------------------------|---------------------------------------------------|--------------------------|--------------------------|--------------------------|
-| 3f1ba85c-4ad4-493d-a986-8124a76031c5 | 58100cb3116a7b2f8d00abcc | 58100cb9116a7b2f8d00abcd | 'users:create,users:*:58100cb9116a7b2f8d00abcd' | 2016-10-26T01:55:21.903Z | 2016-10-26T01:55:21.903Z | 2016-10-26T01:55:21.903Z |
+| id | authorizationId                      | clientId                 | userId                   | permissions                                       | createdAt                | updatedAt                | revokedAt                |
+|----|--------------------------------------|--------------------------|--------------------------|---------------------------------------------------|--------------------------|--------------------------|--------------------------|
+| 1  | 3f1ba85c-4ad4-493d-a986-8124a76031c5 | 58100cb3116a7b2f8d00abcc | 58100cb9116a7b2f8d00abcd | 'users:create,users:*:58100cb9116a7b2f8d00abcd'   | 2016-10-26T01:55:21.903Z | 2016-10-26T01:55:21.903Z | 2016-10-26T01:55:21.903Z |
 
 #### NoSQL
 
@@ -83,8 +81,9 @@ Example MongoDB Collection
 // authorizations collection
 {
     _id: "58100d98116a7b2f8d00abce",
+    authorizationId: "3f1ba85c-4ad4-493d-a986-8124a76031c5",
     clientId: "58100cb3116a7b2f8d00abcc",
-    entityId: "58100cb9116a7b2f8d00abcd",
+    userId: "58100cb9116a7b2f8d00abcd",
     permissions: ['users:create', 'users:*:58100cb9116a7b2f8d00abcd'],
     createdAt: '2016-10-26T01:55:21.903Z',
     updatedAt: '2016-10-26T01:55:21.903Z',
@@ -92,19 +91,16 @@ Example MongoDB Collection
 }
 ```
 
-
-  would have the Entity ID, Authorization ID, and the Client ID in the payload. These are all stored in a datastore or cache. This allows us to revoke tokens for an entire Entity, a Client or just individual tokens.
-
+**NOTE:** We are considering `userId` and `clientId` to be "verification values". There could be any arbitrary number of them and they are specific to an application but you would need at least one to associate the authorization to a user and/or client.
 
 ### JWT Access Token Payload
 The access token payload **must** have an `authorizationId` but beyond that the token payload is customizable based on your application requirements. The token can have a very long TTL or very short depending on your app requirements. If it is long or indefinite, it essentially acts similar to an API key. If it is short it acts similar to a session.
 
 ```js
 {
-    authorizationId: "762346asdg61dd",
-    clientId: "234jhfh7sf62332",
-    entityId: "234jhfh7sf62332", // user, organization, etc.
-    permissions: ["*"] // this is optional. Could just be stored in the authorization record.
+    authorizationId: "3f1ba85c-4ad4-493d-a986-8124a76031c5", // required
+    clientId: "58100cb3116a7b2f8d00abcc", // optional
+    userId: "58100cb9116a7b2f8d00abcd", // optional - You could have more including organization, etc.
 }
 ```
 
@@ -113,9 +109,9 @@ The refresh token payload **must** have an `authorizationId` but beyond that the
 
 ```js
 {
-    refreshId: "762346asdg61dd",
-    clientId: "234jhfh7sf62332",
-    entityId: "2g6jhfh7sf62723" // user, organization, etc.
+    refreshId: "3f1ba85c-4ad4-493d-a986-8124a76031c5", // required
+    clientId: "58100cb3116a7b2f8d00abcc", // optional
+    userId: "58100cb9116a7b2f8d00abcd" // optional - You could have more including organization, etc.
 }
 ```
 
@@ -126,7 +122,7 @@ This will be the default response from the Authentication service upon successfu
 
 ```json
 {
-  "accessToken": "afsdsg",
+  "accessToken": "afsdsgsdfgdd",
   "refreshToken": "sfhgsdhfghsf",
 }
 ```
