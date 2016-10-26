@@ -85,6 +85,6 @@ An expired access token (JWT) is passed via an `Authorization` header **or** is 
   - malformed
   - has not been tampered with
 5. Server decodes the payload
-6. Server looks up refreshId on some service (TBD)
-  - If valid goes through access token creation flow which deletes the `refreshId` from the database.
+6. Server looks up authorization for the refresh token by `authorizationId` on the `/authorizations` service
+  - If valid goes through access token creation flow which deletes the authorization record with this `authorizationId` from the database or marks it as invalid/revoked.
   - Else returns a `NotAuthenticated` error
