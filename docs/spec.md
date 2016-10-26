@@ -175,7 +175,10 @@ app.service('authentication').hooks({
         clientSecretField: 'password',
         entity: 'user',
         service: 'users'
-      })
+      }),
+      revokeOldAuthorizations(),
+      createAuthorization(),
+      setupPayload()
     ]
   },
   before: {
