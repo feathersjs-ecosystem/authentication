@@ -71,9 +71,9 @@ User -> has many -> Clients -> has many -> Authorizations ->  has many -> Permis
 #### SQL
 Example Authorizations Table:
 
-```
-id, clientId, entityId, permissions, createdAt, updatedAt, revokedAt
-```
+| id                                   | clientId                 | entityId                 | permissions                                       | createdAt                | updatedAt                | revokedAt                |
+|--------------------------------------|--------------------------|--------------------------|---------------------------------------------------|--------------------------|--------------------------|--------------------------|
+| 3f1ba85c-4ad4-493d-a986-8124a76031c5 | 58100cb3116a7b2f8d00abcc | 58100cb9116a7b2f8d00abcd | 'users:create,users:*:58100cb9116a7b2f8d00abcd' | 2016-10-26T01:55:21.903Z | 2016-10-26T01:55:21.903Z | 2016-10-26T01:55:21.903Z |
 
 #### NoSQL
 
@@ -82,14 +82,13 @@ Example MongoDB Collection
 ```js
 // authorizations collection
 {
-    _id: "762346asdg61dd",
-    clientId: "234jhfh7sf62332",
-    entityId: "234jhfh7sf62332",
-    permissions: ["*"],
-    valid: true, // could use revokedAt instead
-    createdAt: '',
-    updatedAt: '',
-    revokedAt: ''
+    _id: "58100d98116a7b2f8d00abce",
+    clientId: "58100cb3116a7b2f8d00abcc",
+    entityId: "58100cb9116a7b2f8d00abcd",
+    permissions: ['users:create', 'users:*:58100cb9116a7b2f8d00abcd'],
+    createdAt: '2016-10-26T01:55:21.903Z',
+    updatedAt: '2016-10-26T01:55:21.903Z',
+    revokedAt: '2016-10-26T01:55:21.903Z'
 }
 ```
 
