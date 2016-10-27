@@ -24,7 +24,7 @@ Without storing some state and having to verify against it JWTs are not suitable
 - `Verification Value` - Something that is used alongside the `authorizationId` to verify access. These could be anything but typically would be an entity Id (ie. `userId`). In a multi-client scenario, you would also have a `clientId`.
 - `Verification Hook` - A special type of hook in the authentication chain that is used to verify the request or socket.
 - `Authentication Chain` - A special chain of verification hooks. [More details](./auth-chain.md)
-- `Access token (JWT)` - A JWT that sent by the client in:
+- `Access token (JWT)` - A JWT that is sent by the client in:
     - the message body on a Socket `authenticate` event; or
     - every HTTP request as an `Authorization` header.
 
@@ -34,7 +34,7 @@ Without storing some state and having to verify against it JWTs are not suitable
     - the entity it is associated with still exists
     - the token hasn't been revoked
 
-- `Refresh Token (JWT)` - A semi-secret JWT that can be used to request a new access token. It is sent by the client in:
+- `Refresh Token (JWT)` - A semi-secret, one time use, JWT that can be used to request a new access token. It is sent by the client in:
     - the message body on a Socket `authenticate` event; or
     - a HTTP request in the `POST` body to `/authentication`.
 
