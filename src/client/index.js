@@ -8,6 +8,8 @@ const defaults = {
   tokenEndpoint: '/auth/token'
 };
 
+export {openLoginPopup, authAgent} from './oauth';
+
 export default function (opts = {}) {
   const options = Object.assign({}, defaults, opts);
 
