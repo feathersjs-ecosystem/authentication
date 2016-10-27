@@ -159,12 +159,12 @@ app.configure(configuration(path.join(__dirname, '..')))
   .use('/authorizations', memory())
   .use(errorHandler());
 
-// Auth specific middleware
+// Auth Chain. Auth specific verification hooks
 app.authentication.use(
   verifyJWT(),
   populateAuthorization(),
   verifyClientId(),
-  // any other verification middleware
+  // any other verification hooks
 );
 
 app.service('authentication').hooks({
@@ -181,8 +181,8 @@ app.service('authentication').hooks({
       setupPayload()
     ]
   },
-  before: {
-    after: [
+  after: {
+    create: [
       commonHooks.populate({
         entity: 'user',
         service: 'users',
