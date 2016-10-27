@@ -36,7 +36,7 @@
     "compile": "rm -rf lib/ && babel -d lib/ src/",
     "watch": "babel --watch -d lib/ src/",
     "jshint": "jshint src/. test/. --config",
-    "mocha": "mocha --opts mocha.opts -r jsdom-global/register",
+    "mocha": "mocha --opts mocha.opts",
     "coverage": "istanbul cover _mocha -- --opts mocha.opts -r jsdom-global/register",
     "test": "npm run compile && npm run jshint && npm run coverage && nsp check"
   },
