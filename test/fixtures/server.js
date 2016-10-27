@@ -38,14 +38,14 @@ export default function(settings, useSocketio = true) {
 
   app.service('authentication').before({
     create(hook) {
-      if(hook.data.login === 'testing') {
+      if (hook.data.login === 'testing') {
         hook.params.authentication = 'test-auth';
 
         hook.data.payload = {
           userId: 0,
           authentication: 'test-auth'
         };
-      } else if(hook.data.login === 'testing-fail') {
+      } else if (hook.data.login === 'testing-fail') {
         hook.params.authentication = 'test-auth';
 
         hook.data.payload = {

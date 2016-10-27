@@ -8,24 +8,23 @@ export default function() {
 
     let event = null;
 
-    if(method === 'remove') {
+    if (method === 'remove') {
       event = 'logout';
-    } else if(method === 'create') {
+    } else if (method === 'create') {
       event = 'login';
     }
 
-    if(res.data && res.data.token && event) {
+    if (res.data && res.data.token && event) {
       const { app } = req;
 
       app.authentication.authenticate(res.data)
         .then(result => {
-          debug(`Sending '${event}' event for REST provider. Token is`,
-            res.data.token
-          );
+          debug(`Sending '${event}' event for REST provider. Token is`, res.data.token);
 
           app.emit(event, result, {
             provider: 'rest',
-            req, res
+            req,
+            res
           });
 
           next();

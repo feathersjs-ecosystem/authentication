@@ -11,6 +11,7 @@ export const defaults = {
     secure: true
   },
   jwt: {
+    subject: 'access',
     issuer: 'feathers',
     algorithm: 'HS256',
     expiresIn: '1d'
@@ -18,6 +19,9 @@ export const defaults = {
   user: {
     service: 'users',
     payloadField: 'userId'
+  },
+  authorization: {
+    service: 'authorizations'
   }
 };
 

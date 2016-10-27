@@ -3,11 +3,19 @@ var rest = require('feathers-rest');
 var socketio = require('feathers-socketio');
 var hooks = require('feathers-hooks');
 var memory = require('feathers-memory');
+var passport = require('feathers-passport');
 var bodyParser = require('body-parser');
 var errorHandler = require('feathers-errors/handler');
-var authentication = require('../lib/index');
-var token = authentication.TokenService.Service;
-var local = authentication.LocalService;
+var auth = require('../lib/index');
+
+const settings = {
+  user: {
+    idField: 'id'
+  },
+  token: {
+    secret: 'super secret'
+  }
+};
 
 // Initialize the application
 var app = feathers()
@@ -18,16 +26,7 @@ var app = feathers()
   .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: true }))
   // Configure feathers-authentication
-  .configure(authentication({
-    user: {
-      idField: 'id'
-    },
-    token: {
-      secret: 'super secret'
-    }
-  }))
-  .configure(token())
-  .configure(local())
+  .configure(auth(settings))
   // Initialize a user service
   .use('/users', memory())
   // A simple Message service that we can used for testing
@@ -47,8 +46,8 @@ messageService.create({text: 'Bar declared massive success'}, {}, function(){});
 
 messageService.before({
   all: [
-    authentication.hooks.isAuthenticated(),
-    authentication.hooks.hasPermissions('messages')
+    auth.hooks.isAuthenticated(),
+    auth.hooks.hasPermissions('messages')
   ]
 });
 
@@ -57,7 +56,7 @@ var userService = app.service('users');
 // Add a hook to the user service that automatically replaces
 // the password with a hash of the password before saving it.
 userService.before({
-  create: authentication.hooks.hashPassword()
+  create: auth.hooks.hashPassword()
 });
 
 // Create a user that we can use to log in

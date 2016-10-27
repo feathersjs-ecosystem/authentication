@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:token:verifyToken');
+const debug = Debug('feathers-authentication:hooks:verifyToken');
 
 export default function() {
   return function verifyToken(data) {

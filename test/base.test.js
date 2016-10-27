@@ -37,7 +37,7 @@ describe('Feathers Authentication Base Class', () => {
     expect(a._middleware.length).to.equal(1);
   });
 
-  it('.authenticate runs middleware', () => {
+  it('.authenticate runs hooks', () => {
     expect(auth.use(function(opts) {
       expect(opts).to.deep.equal(options);
 
@@ -95,6 +95,7 @@ describe('Feathers Authentication Base Class', () => {
         };
 
         return auth.getJWT(mockRequest).then(data => {
+          expect(data.req).to.equal(mockRequest);
           expect(data.token).to.equal('sometoken');
         });
       });
@@ -107,6 +108,7 @@ describe('Feathers Authentication Base Class', () => {
         };
 
         return auth.getJWT(mockRequest).then(data => {
+          expect(data.req).to.equal(mockRequest);
           expect(data.token).to.equal('sometoken');
         });
       });

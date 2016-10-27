@@ -54,7 +54,7 @@ describe('Socket.io authentication', function() {
     });
   });
 
-  it('authenticated socket allows accesss and populates user', done => {
+  it('authenticated socket allows access and populates user', done => {
     socket.emit('authenticate', {
       login: 'testing'
     }, function(error) {

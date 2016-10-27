@@ -16,10 +16,7 @@ function handleSocketCallback(promise, callback) {
   return promise;
 }
 
-export default function setupSocketHandler(app, options, {
-  feathersParams, provider, emit, disconnect
-}) {
-
+export default function setupSocketHandler(app, options, { feathersParams, provider, emit, disconnect }) {
   const service = app.service(options.service);
 
   return function(socket) {
@@ -27,43 +24,48 @@ export default function setupSocketHandler(app, options, {
       const promise = service.create(data, { provider })
         .then(jwt => app.authentication.authenticate(jwt))
         .then(result => {
-          if(!result.authenticated) {
+          if (!result.authenticated) {
             throw new errors.NotAuthenticated('Authentication was not successful');
           }
 
-          const { token } = result;
+          const { accessToken, refreshToken } = result;
           const connection = feathersParams(socket);
 
-          debug(`Successfully authenticated socket with token`, token);
+          debug(`Successfully authenticated socket with accessToken`, accessToken);
 
-          // Add the token to the connection so that it shows up as `params.token`
-          connection.token = token;
+          // Add the accessToken to the connection so that it shows up as `params.accessToken`
+          connection.accessToken = accessToken;
 
           app.emit('login', result, {
-            provider, socket, connection
+            provider,
+            socket,
+            connection
           });
 
-          return { token };
+          return { accessToken, refreshToken };
         });
 
       handleSocketCallback(promise, callback);
     };
+
     const logout = function (callback = () => {}) {
       const connection = feathersParams(socket);
-      const { token } = connection;
+      const { accessToken } = connection;
 
-      if(token) {
-        debug('Logging out socket with token', token);
+      if (accessToken) {
+        debug('Logging out socket with accessToken', accessToken);
 
-        delete connection.token;
+        delete connection.accessToken;
 
-        const promise = service.remove(token, { provider })
+        const promise = service.remove(accessToken, { provider })
           .then(jwt => app.authentication.authenticate(jwt))
           .then(result => {
-            debug(`Successfully logged out socket with token`, token);
+            debug(`Successfully logged out socket with accessToken`, accessToken);
 
             app.emit('logout', result, {
-              provider, socket, connection
+              provider,
+              socket,
+              connection
             });
 
             return result;

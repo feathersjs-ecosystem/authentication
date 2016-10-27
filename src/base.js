@@ -10,40 +10,24 @@ export default class Authentication {
   constructor(app, options) {
     this.options = options;
     this.app = app;
-    this._middleware = [];
-    this.use(... middlewares);
-    // Flag it as the initial middleware chain
-    // so that we can reset it when someone else
-    // calls .use
-    this._middleware.isInitial = true;
+    this._verificationHooks = [];
   }
 
-  // Register one or more handlers for the JWT verification chain
-  use(... middleware) {
-    // Reset the default middleware chain
-    if(this._middleware.isInitial) {
-      this._middleware = [];
-    }
-
-    const mapped = middleware.map(current =>
-      current.call(this.app, this.options)
-    );
-
-    this._middleware = this._middleware.concat(mapped);
-
+  // Register hooks for the authentication verification chain
+  use(hook) {
+    this._verificationHooks = this._verificationHooks.concat(hook.call(this.app, this.options));
     return this;
   }
 
-  // Run the JWT verification chain against data
+  // Run the JWT verification chain against data passed in
+  // by when calling app.authenticate()
   authenticate(data) {
     let promise = Promise.resolve(data);
 
     debug('Authenticating', data);
 
-    this._middleware.forEach(middleware =>
-      promise = promise.then(data =>
-        middleware.call(this.app, data, this.options)
-      )
+    this._verificationHooks.forEach(hook =>
+      promise = promise.then(data => hook.call(this.app, data, this.options))
     );
 
     promise.catch(error => console.error(error.stack));
@@ -56,30 +40,28 @@ export default class Authentication {
     const { header } = this.options;
 
     if (typeof data === 'string') {
-      return Promise.resolve({ token: data });
-    }
-    else if (typeof data === 'object' && data.headers) {
+      return Promise.resolve({ accessToken: data });
+    } else if (typeof data === 'object' && data.headers) {
       const req = data;
 
-      debug('Parsing token from request');
+      debug('Parsing accessToken from request');
 
       // Normalize header capitalization the same way Node.js does
-      let token = req.headers && req.headers[header.toLowerCase()];
+      let accessToken = req.headers && req.headers[header.toLowerCase()];
 
-      // Check the header for the token (preferred method)
-      if (token) {
+      // Check the header for the accessToken (preferred method)
+      if (accessToken) {
         // if the value contains "bearer" or "Bearer" then cut that part out
-        if (/bearer/i.test(token)) {
-          token = token.split(' ')[1];
+        if (/bearer/i.test(accessToken)) {
+          accessToken = accessToken.split(' ')[1];
         }
 
-        debug('Token found in header', token);
+        debug('accessToken found in header', accessToken);
       }
 
-      return Promise.resolve({ token });
-    }
-    else if (typeof data === 'object' && data.token) {
-      return Promise.resolve({ token: data.token });
+      return Promise.resolve({ accessToken });
+    } else if (typeof data === 'object' && data.accessToken) {
+      return Promise.resolve({ accessToken: data.accessToken });
     }
 
     return Promise.resolve();

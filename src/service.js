@@ -43,6 +43,12 @@ export default function init(options){
     app.use(path, new Service(app, options),
       events(options), setCookie(options), successRedirect(options)
     );
+
+    // app.service(path).hooks({
+    //   before: {
+    //     create: [hooks.disable('socketio'), hooks.disable('primus')]
+    //   }
+    // });
   };
 }
 

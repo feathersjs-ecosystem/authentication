@@ -1,6 +1,6 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:token:populate-user');
+const debug = Debug('feathers-authentication:token:populate-entity');
 
 export default function(options) {
   const app = this;
@@ -14,12 +14,12 @@ export default function(options) {
     throw new Error(`'user.payloadField' needs to be set in authentication options`);
   }
 
-  return function populateUser(data) {
+  return function populateEntity(data) {
     const service = typeof user.service === 'string' ? app.service(user.service) : user.service;
     const { payloadField } = user;
 
     if (typeof service.get !== 'function') {
-      throw new Error(`'user.service' does not support a 'get' method necessary for populateUser.`);
+      throw new Error(`'user.service' does not support a 'get' method necessary for populateEntity.`);
     }
 
     if (!data || !data.payload || data.payload[payloadField] === undefined) {
