@@ -109,7 +109,7 @@ The refresh token payload **must** have an `authorizationId` but beyond that the
 
 ```js
 {
-    refreshId: "3f1ba85c-4ad4-493d-a986-8124a76031c5", // required
+    authorizationId: "3f1ba85c-4ad4-493d-a986-8124a76031c5", // required
     clientId: "58100cb3116a7b2f8d00abcc", // optional
     userId: "58100cb9116a7b2f8d00abcd" // optional - You could have more including organization, etc.
 }
