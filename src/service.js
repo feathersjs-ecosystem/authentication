@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import * as utils from './utils';
-import { successRedirect, failureRedirect, setCookie, events } from './middleware/express';
+import { successRedirect, failureRedirect, setCookie, events } from './express';
 
 const debug = Debug('feathers-authentication:authentication:service');
 

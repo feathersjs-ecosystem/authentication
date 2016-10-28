@@ -6,7 +6,7 @@ import isAuthenticated from './is-authenticated';
 import getJWT from './get-jwt';
 import exposeHeaders from './expose-headers';
 import exposeCookies from './expose-cookies';
-// import events from './events';
+import events from './events';
 
 export default {
   getJWT,
@@ -16,6 +16,6 @@ export default {
   isAuthenticated,
   setCookie,
   successRedirect,
-  failureRedirect
-  // events
+  failureRedirect,
+  events
 };
