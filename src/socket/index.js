@@ -3,7 +3,7 @@ import setupSocketHandler from './handler';
 
 const debug = Debug('feathers-authentication:sockets');
 
-export function socketioHandler(app, options = {}) {
+export function socketio(app, options = {}) {
   debug('Setting up Socket.io authentication middleware with options:', options);
 
   const providerSettings = {
@@ -18,7 +18,7 @@ export function socketioHandler(app, options = {}) {
   return setupSocketHandler(app, options, providerSettings);
 }
 
-export function primusHandler(app, options = {}) {
+export function primus(app, options = {}) {
   debug('Setting up Primus authentication middleware with options:', options);
 
   const providerSettings = {

@@ -18,10 +18,9 @@ export const defaults = {
   },
   user: {
     service: 'users',
-    payloadField: 'userId'
-  },
-  authorization: {
-    service: 'authorizations'
+    usernameField: 'email',
+    passwordField: 'password',
+    // payloadField: 'userId'
   }
 };
 
