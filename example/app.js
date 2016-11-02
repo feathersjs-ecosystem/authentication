@@ -69,6 +69,11 @@ const options = Object.assign({
 
 app.passport.use(new JWTStrategy(options, jwtHandler));
 
+
+/******************************
+ * Github
+ ******************************/
+
 const githubHandler = function(req, accessToken, refreshToken, profile, done) {
   console.log(req, accessToken, refreshToken, profile);
 
@@ -76,10 +81,6 @@ const githubHandler = function(req, accessToken, refreshToken, profile, done) {
   // or do whatever we want to further verify the JWT.
   done(null, profile);
 };
-
-/******************************
- * Github
- ******************************/
 
 app.passport.use(new GithubStrategy({
   clientID: '',
