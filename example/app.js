@@ -98,6 +98,11 @@ app.get('/auth/github/callback', auth.express.authenticate('github'), function(r
   }).catch(next);
 });
 
+
+/******************************
+ * Twitter
+ ******************************/
+
 const twitterHandler = function(req, token, tokenSecret, profile, done) {
   console.log(req, token, tokenSecret, profile);
 
@@ -105,10 +110,6 @@ const twitterHandler = function(req, token, tokenSecret, profile, done) {
   // or do whatever we want to further verify the JWT.
   done(null, profile);
 };
-
-/******************************
- * Twitter
- ******************************/
 
 app.passport.use(new TwitterStrategy({
   consumerKey: '',
