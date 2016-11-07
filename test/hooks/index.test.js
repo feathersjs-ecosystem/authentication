@@ -17,32 +17,4 @@ describe('hooks', () => {
   it('exposes hashPassword hook', () => {
     expect(typeof hooks.hashPassword).to.equal('function');
   });
-
-  it('exposes createAuthorization hook', () => {
-    expect(typeof hooks.createAuthorization).to.equal('function');
-  });
-
-  it('exposes populateAuthorization hook', () => {
-    expect(typeof hooks.populateAuthorization).to.equal('function');
-  });
-
-  it('exposes populateEntity hook', () => {
-    expect(typeof hooks.populateEntity).to.equal('function');
-  });
-
-  it('exposes isAuthenticated hook', () => {
-    expect(typeof hooks.isAuthenticated).to.equal('function');
-  });
-
-  it('exposes revokeAuthorizations hook', () => {
-    expect(typeof hooks.revokeAuthorizations).to.equal('function');
-  });
-
-  it('exposes verifyAuthorization hook', () => {
-    expect(typeof hooks.verifyAuthorization).to.equal('function');
-  });
-
-  it('exposes verifyToken hook', () => {
-    expect(typeof hooks.verifyToken).to.equal('function');
-  });
 });
