@@ -1,9 +1,8 @@
 import merge from 'lodash.merge';
 
-export const defaults = {
+const defaults = {
   service: '/authentication',
   header: 'Authorization',
-  successRedirect: null,
   cookie: {
     enabled: false,
     name: 'feathers-jwt',
@@ -11,6 +10,8 @@ export const defaults = {
     secure: true
   },
   jwt: {
+    header: { typ: 'jwt' },
+    audience: 'user',
     subject: 'access',
     issuer: 'feathers',
     algorithm: 'HS256',
@@ -19,8 +20,7 @@ export const defaults = {
   user: {
     service: 'users',
     usernameField: 'email',
-    passwordField: 'password',
-    // payloadField: 'userId'
+    passwordField: 'password'
   }
 };
 

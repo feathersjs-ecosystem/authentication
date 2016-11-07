@@ -3,6 +3,24 @@ import Debug from 'debug';
 
 const debug = Debug('feathers-authentication:hooks:hash-password');
 
+const defaultHash = function (password) {
+  return new Promise((resolve, reject) => {
+    bcrypt.genSalt(10, function(error, salt) {
+      if (error) {
+        return reject(error);
+      }
+
+      bcrypt.hash(password, salt, function(error, hashedPassword) {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(hashedPassword);
+      });
+    });
+  });
+};
+
 export default function hashPassword(options = {}) {
   return function(hook) {
     if (hook.type !== 'before') {
@@ -17,23 +35,7 @@ export default function hashPassword(options = {}) {
     debug('Running hashPassword hook with options:', options);
 
     const field = options.passwordField;
-    const hashPw = options.hash || function(password) {
-      return new Promise((resolve, reject) => {
-        bcrypt.genSalt(10, function(error, salt) {
-          if (error) {
-            return reject(error);
-          }
-
-          bcrypt.hash(password, salt, function(error, hashedPassword) {
-            if (error) {
-              return reject(error);
-            }
-
-            resolve(hashedPassword);
-          });
-        });
-      });
-    };
+    const hashPw = options.hash || defaultHash;
 
     if (typeof hashPw !== 'function') {
       return Promise.reject(new Error(`'hash' must be a function that takes a password and returns Promise that resolves with a hashed password.`));

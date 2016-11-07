@@ -86,7 +86,7 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
           // }
           
           // NOTE (EK): This handles redirects and .pass()
-          return Promise.reject(new errors.NotAuthenticated('Authentication could not complete. You might be using an unsupported socket authentication strategy. Refer to docs.feathersjs.com for more details.'))
+          return Promise.reject(new errors.NotAuthenticated('Authentication could not complete. You might be using an unsupported socket authentication strategy. Refer to docs.feathersjs.com for more details.'));
         })
         .then(result => {
           return app.service('authentication').create(result, { provider }).then(tokens => {

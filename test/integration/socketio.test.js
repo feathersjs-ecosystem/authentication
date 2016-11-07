@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import io from 'socket.io-client';
 import createApplication from '../fixtures/server';
 
-describe('Socket.io authentication', function() {
+describe.skip('Socket.io authentication', function() {
   this.timeout(10000);
 
   const PORT = 8998;

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import createApplication from '../fixtures/server';
 
-describe('Primus authentication', function() {
+describe.skip('Primus authentication', function() {
   this.timeout(10000);
 
   const PORT = 9889;

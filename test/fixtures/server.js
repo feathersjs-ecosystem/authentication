@@ -1,12 +1,21 @@
 import feathers from 'feathers';
-import primus from 'feathers-primus';
-import socketio from 'feathers-socketio';
 import rest from 'feathers-rest';
-import errorHandler from 'feathers-errors/handler';
+import socketio from 'feathers-socketio';
+import primus from 'feathers-primus';
 import hooks from 'feathers-hooks';
-import bodyParser from 'body-parser';
 import memory from 'feathers-memory';
-import authentication from '../../src/';
+import bodyParser from 'body-parser';
+import errors from 'feathers-errors';
+import errorHandler from 'feathers-errors/handler';
+import auth from '../../lib/index';
+import local from './local';
+import jwt from './jwt';
+
+const User = {
+  email: 'admin@feathersjs.com',
+  password: 'admin',
+  permissions: ['*']
+};
 
 export default function(settings, useSocketio = true) {
   const app = feathers();
@@ -17,55 +26,36 @@ export default function(settings, useSocketio = true) {
     }))
     .configure(hooks())
     .use(bodyParser.json())
-    .use(bodyParser.urlencoded({
-      extended: true
-    }))
-    .configure(authentication(settings))
+    .use(bodyParser.urlencoded({ extended: true }))
+    .configure(auth(settings))
+    .configure(local)
+    .configure(jwt)
     .use('/users', memory())
-    .use('/todos', {
-      get(id, params) {
-        return Promise.resolve({
-          id, description: `You have to do ${id}`,
-          user: params.user
-        });
-      }
-    })
-    .get('/get-jwt', function(req, res) {
-      res.json({ token: req.token });
-    })
-    .use(errorHandler());
+    .use('/', feathers.static(__dirname + '/public'))
+    .use(errorHandler());  
 
-
-  app.service('authentication').before({
-    create(hook) {
-      if (hook.data.login === 'testing') {
-        hook.params.authentication = 'test-auth';
-
-        hook.data.payload = {
-          userId: 0,
-          authentication: 'test-auth'
-        };
-      } else if (hook.data.login === 'testing-fail') {
-        hook.params.authentication = 'test-auth';
-
-        hook.data.payload = {
-          authentication: 'test-auth'
-        };
-      }
+  app.service('authentication').hooks({
+    before: {
+      create: [
+        auth.hooks.authenticate('local', { session: false }),
+        // auth.hooks.createJWT()
+      ]
     }
   });
 
-  app.service('todos').before({
-    all: [
-      authentication.hooks.authenticate(),
-      authentication.hooks.isAuthenticated()
-    ]
+  // Add a hook to the user service that automatically replaces
+  // the password with a hash of the password before saving it.
+  app.service('users').hooks({
+    before: {
+      get: [
+        auth.hooks.authenticate('jwt', { session: false })
+      ],
+      create: auth.hooks.hashPassword()
+    }
   });
 
-  app.service('users').create({
-    id: 0,
-    name: 'Tester'
-  });
+  // Create a user that we can use to log in
+  app.service('users').create(User).catch(console.error);
 
   return app;
 }

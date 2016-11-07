@@ -1,18 +1,30 @@
-# Migrating from 0.7 to 0.8
+# Migrating to 1.0
 
-Feathers authentication has had a fairly major overhaul in order to support some functionality and scalability going forward. After usage by ourselves and others we realized that there were some limitations in previous the architecture. These new changes allow for some pretty awesome functionality and flexibility.
+Feathers authentication has had a fairly major overhaul in order to support some functionality and scalability going forward. It is now simply an adapter over top of Passport. After usage by ourselves and others we realized that there were some limitations in previous the architecture. These new changes allow for some pretty awesome functionality and flexibility.
+
+We've also decoupled the plugins from the core authentication. They are now located here:
+
+- [feathers-authentication-client]()
+- [feathers-authentication-local]()
+- [feathers-authentication-jwt]()
+- [feathers-authentication-oauth1]()
+- [feathers-authentication-oauth2]()
+- [feathers-permissions]()
+
+For most of you migrating your app should be fairly straight forward as there are only a couple breaking changes to the public interface:
+
 
 ## New Features and Additions
 
 ### More warnings and debugging
 
-We've added more helpful warning messages and added debug logs for every hook, service, and middleware.
+We've added more helpful warning messages and added debug logs for every hook, service, and middleware. We use the [debug]() module so usage is the same.
 
 #### Turning on all auth logs
 You can turn on all auth debug logs by running your app with `DEBUG=feathers-authentication* npm start`.
 
 #### Turning on logs for a specific type
-If you want to only turn on logs for a `hooks`, `middleware` or `services` you can do `DEBUG=feathers-authentication:<type>* npm start`. For example,
+If you want to only turn on logs for a `hooks`, `express`, `passport` or `service` you can do `DEBUG=feathers-authentication:<type>* npm start`. For example,
 
 ```
 `DEBUG=feathers-authentication:hooks* npm start`

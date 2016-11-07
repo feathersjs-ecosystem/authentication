@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import * as utils from './utils';
-import { successRedirect, failureRedirect, setCookie, events } from './express';
+import { successRedirect, failureRedirect, setCookie, emitEvents } from './express';
 
 const debug = Debug('feathers-authentication:authentication:service');
 
@@ -50,7 +50,7 @@ export default function init(options){
     app.use(
       path,
       new Service(app, options),
-      events(options),
+      emitEvents(options),
       setCookie(options),
       successRedirect(),
       failureRedirect()

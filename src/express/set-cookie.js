@@ -31,27 +31,30 @@ export default function setCookie(authOptions = {}) {
 
       debug(`Clearing old '${cookie}' cookie`);
       res.clearCookie(cookie);
+      
+      // Only set the cookie if we weren't removing the token and we
+      // have a JWT access token.
+      if (res.hook && res.hook.method !== 'remove' && res.data && res.data.accessToken) {
+        // Check HTTPS and cookie status in production.
+        if (!req.secure && app.env === 'production' && options.secure) {
+          console.warn('WARN: Request isn\'t served through HTTPS: JWT in the cookie is exposed.');
+          console.info('If you are behind a proxy (e.g. NGINX) you can:');
+          console.info('- trust it: http://expressjs.com/en/guide/behind-proxies.html');
+          console.info(`- set cookie['${cookie}'].secure false`);
+        }
 
-      // Check HTTPS and cookie status in production.
-      if (!req.secure && app.env === 'production' && options.secure) {
-        console.warn('WARN: Request isn\'t served through HTTPS: JWT in the cookie is exposed.');
-        console.info('If you are behind a proxy (e.g. NGINX) you can:');
-        console.info('- trust it: http://expressjs.com/en/guide/behind-proxies.html');
-        console.info(`- set cookie['${cookie}'].secure false`);
-      }
+        // If a custom expiry wasn't passed then set the expiration
+        // to be that of the JWT expiration or the maxAge option if provided.
+        if (options.expires === undefined) {
+          if (options.maxAge) {
+            options.expires = makeExpiry(options.maxAge);
+          } else if (authOptions.jwt.expiresIn) {
+            options.expires = makeExpiry(authOptions.jwt.expiresIn);
+          }
+        }
 
-      // If a custom expiry wasn't passed then set the expiration
-      // to be the default maxAge of the respective cookie otherwise it
-      // will just become a session cookie.
-      if (options.expires === undefined && options.maxAge) {
-        options.expires = makeExpiry(options.maxAge);
-      } else if(options.expires === undefined && authOptions.jwt.expiresIn) {
-        // By default, the cookie will expire with the token.
-        options.expires = makeExpiry(authOptions.jwt.expiresIn);
-      }
-
-      if(res.hook.method !== 'remove' && res.data && res.data.token) {
-        if ( options.expires && !(options.expires instanceof Date) ) {
+        // Ensure that if a custom expiration was passed it is a valid date
+        if (options.expires && !(options.expires instanceof Date)) {
           return next(new Error('cookie.expires must be a valid Date object'));
         }
 
@@ -60,7 +63,7 @@ export default function setCookie(authOptions = {}) {
         const cookieOptions = omit(options, 'name', 'enabled', 'maxAge');
 
         debug(`Setting '${cookie}' cookie`);
-        res.cookie(cookie, res.data.token, cookieOptions);
+        res.cookie(cookie, res.data.accessToken, cookieOptions);
       }
     }
 

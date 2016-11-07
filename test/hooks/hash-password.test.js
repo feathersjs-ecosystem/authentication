@@ -5,7 +5,7 @@ import { hashPassword } from '../../src/hooks';
 
 chai.use(sinonChai);
 
-describe.only('hooks:hashPassword', () => {
+describe('hooks:hashPassword', () => {
   let hook;
 
   beforeEach(() => {

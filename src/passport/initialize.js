@@ -1,36 +1,17 @@
-/*
- * Initialize passport bindings for express, socketio, and primus.
- */
-
-// import express from '../express';
-import { socketio, primus } from '../socket';
 import makeDebug from 'debug';
 
 const debug = makeDebug('feathers-authentication:passport:initialize');
 
 export default function initialize (options = {}) {
-  const app = this;
-  const _super = app.setup;
+  // const app = this;
 
   debug('Initializing custom passport initialize', options);
 
-  return function (passport) {    
-    app.setup = function() {
-      let result = _super.apply(this, arguments);
-
-      // Socket.io middleware
-      if (app.io) {
-        debug('registering Socket.io authentication middleware');
-        app.io.on('connection', socketio(app, options));
-      }
-
-      // Primus middleware
-      if (app.primus) {
-        debug('registering Primus authentication middleware');
-        app.primus.on('connection', primus(app, options));
-      }
-
-      return result;
-    };
+  // Do any special feathers passport initialization here. We may need this
+  // to support different engines.
+  return function (passport) {
+    // NOTE (EK): This is called by passport.initialize() when calling
+    // app.configure(authentication()). Since we aren't doing anything
+    // special right now we don't need to do anything in here.
   };
 }

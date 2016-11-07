@@ -9,24 +9,24 @@ const debug = makeDebug('feathers-authentication:passport:authenticate');
 
 export default function authenticate (options = {}) {
   const app = this;
+  options.assignProperty = options.assignProperty || 'user';
 
   debug('Initializing custom passport authenticate', options);
-
-  // TODO (EK): Need the current socket or request
 
   // This function is bound by passport and called by passport.authenticate()
   return function (passport, name, strategyOptions = {}, callback = () => {}) {
 
     debug('Inside passport.authenticate', passport, name, strategyOptions, callback);
     
-    // This is called by the feathers middleware or hook
+    // This is called by the feathers middleware, hook or socket. The req object
+    // is a mock request derived from an http request, socket object, or hook.
     return function (req = {}) {
       return new Promise((resolve, reject) => {
         // TODO (EK): Support transformAuthInfo
         
         // Allow you to set a location for the success payload.
         // Default is hook.params.user, req.user and socket.user.
-        const assignProperty = options.assignProperty || strategyOptions.assignProperty || 'user';
+        const assignProperty = strategyOptions.assignProperty || options.assignProperty;
 
         // TODO (EK): Handle chaining multiple strategies
         // let multi = true;
@@ -58,7 +58,7 @@ export default function authenticate (options = {}) {
         let prototype = passport._strategy(layer);
 
         if (!prototype) {
-          throw new Error(`Unknown authentication strategy '${layer}'`);
+          return reject(new Error(`Unknown authentication strategy '${layer}'`));
         }
         
 
@@ -67,16 +67,12 @@ export default function authenticate (options = {}) {
         let strategy = Object.create(prototype);
 
         strategy.redirect = (url, status = 302) => {
-          // TODO (EK): Handle redirect
-          // redirect to a given url
-          // res.redirect(status, url);
-          console.log('Redirecting', url, status);
+          debug(`'${layer}' authentication redirecting to`, url, status);
           resolve({ redirect: true, url, status });
         };
 
         strategy.fail = (challenge, status) => {
-          // TODO (EK): Handle fail
-          console.error('Authentication Failed', challenge, status);
+          debug(`Authentication strategy '${layer}' failed`, challenge, status);
           resolve({
             fail: true,
             challenge,
@@ -85,23 +81,26 @@ export default function authenticate (options = {}) {
         };
         
         strategy.error = error => {
-          // TODO (EK): Do we need to wrap up as a Feathers error?
-          console.error('AUTH ERROR', error);
+          debug(`Error in '${layer}' authentication strategy`, error);
           reject(error);
         };
 
-        strategy.success = info => {
-          // TODO (EK): Handle success
-          console.log('Success!', info);
+        strategy.success = (data, info) => {
+          debug(`'${layer}' authentication strategy succeeded`, info);
           resolve({
             success: true,
-            data: { [assignProperty]: info }
+            data: {
+              [assignProperty]: data,
+              info
+            }
           });
         };
 
-        strategy.pass = () => resolve();
+        strategy.pass = () => {
+          debug(`Passing on '${layer}' authentication strategy`);
+          resolve();
+        };
 
-        console.log('REQUEST', req);
         // NOTE (EK): Passport expects an express/connect
         // like request object. So we need to create on.
         let request = req;
@@ -109,8 +108,6 @@ export default function authenticate (options = {}) {
         request.headers = request.headers || request.params.headers;
         request.session = request.session || {};
         request.cookies = request.cookies || request.params.cookies;
-
-        console.log('REQUEST2', request);
 
         strategy.authenticate(request, strategyOptions);
       });

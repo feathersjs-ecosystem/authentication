@@ -32,3 +32,8 @@ export function primus(app, options = {}) {
 
   return setupSocketHandler(app, options, providerSettings);
 }
+
+export default {
+  socketio,
+  primus
+}

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hooks from '../../src/hooks';
 
-describe.only('hooks', () => {
+describe('hooks', () => {
   it('is CommonJS compatible', () => {
     expect(typeof require('../../lib/hooks')).to.equal('object');
   });
@@ -26,8 +26,8 @@ describe.only('hooks', () => {
     expect(typeof hooks.populateAuthorization).to.equal('function');
   });
 
-  it('exposes populatEntity hook', () => {
-    expect(typeof hooks.populatEntity).to.equal('function');
+  it('exposes populateEntity hook', () => {
+    expect(typeof hooks.populateEntity).to.equal('function');
   });
 
   it('exposes isAuthenticated hook', () => {

@@ -69,7 +69,6 @@ const options = Object.assign({
 
 app.passport.use(new JWTStrategy(options, jwtHandler));
 
-
 /******************************
  * Github
  ******************************/
@@ -83,8 +82,8 @@ const githubHandler = function(req, accessToken, refreshToken, profile, done) {
 };
 
 app.passport.use(new GithubStrategy({
-  clientID: '',
-  clientSecret: '',
+  clientID: 'dc608a778075377552a3',
+  clientSecret: 'c337fce2f47c493daa4e6b67e9f22ea8704d37ab',
   callbackURL: 'http://localhost:3030/auth/github/callback',
   passReqToCallback: true,
   scope: ['user']
@@ -97,7 +96,6 @@ app.get('/auth/github/callback', auth.express.authenticate('github'), function(r
     res.json(result);
   }).catch(next);
 });
-
 
 /******************************
  * Twitter
@@ -112,8 +110,8 @@ const twitterHandler = function(req, token, tokenSecret, profile, done) {
 };
 
 app.passport.use(new TwitterStrategy({
-  consumerKey: '',
-  consumerSecret: '',
+  consumerKey: 'WtM1SrafYc2rpssbKJ8xKDfGr',
+  consumerSecret: 'Bpz87UsE5Y4OXnNVI8wql69NuygyYaSR1ZptYJumuAktrnbB46',
   callbackURL: 'http://localhost:3030/auth/twitter/callback',
 
   passReqToCallback: true

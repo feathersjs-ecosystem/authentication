@@ -13,8 +13,9 @@ export default function feathersPassport (options) {
   const app = this;
 
   debug('Initializing Feathers passport adapter');
+
   return {
     initialize: initialize.call(app, options),
     authenticate: authenticate.call(app, options)
-  }
+  };
 }

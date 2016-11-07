@@ -3,7 +3,7 @@ import feathers from 'feathers';
 import hooks from 'feathers-hooks';
 import authentication from '../src';
 
-describe('/authentication service', () => {
+describe.skip('/authentication service', () => {
   const app = feathers().configure(hooks())
     .configure(authentication({
       secret: 'supersecret'

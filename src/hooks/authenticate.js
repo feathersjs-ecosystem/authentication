@@ -20,7 +20,7 @@ export default function authenticate (strategy, options = {}) {
       return Promise.reject(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
     }
 
-    return app.authenticate(strategy, options)(hook).then(result => {
+    return app.authenticate(strategy, options)(hook).then((result = {}) => {
       if (result.fail) {
         // TODO (EK): Reject with something...
         // You get back result.challenge and result.status
@@ -29,17 +29,21 @@ export default function authenticate (strategy, options = {}) {
           hook.redirect = {
             status: 302,
             url: options.failureRedirect
-          }
+          };
         }
 
         const { challenge, status = 401 } = result;
-        const message = options.failureMessage || (challenge && challenge.message);
+        let message = challenge && challenge.message ? challenge.message : challenge;
+
+        if (options.failureMessage) {
+          message = options.failureMessage;
+        }
         
         return Promise.reject(new errors[status](message, challenge));
       }
 
       if (result.success) {
-        hook.params = Object.assign({}, hook.params, result);
+        hook.params = Object.assign({}, hook.params, result.data);
 
         if (options.successRedirect) {
           // TODO (EK): Bypass the service?
@@ -47,7 +51,7 @@ export default function authenticate (strategy, options = {}) {
           hook.redirect = {
             status: 302,
             url: options.successRedirect
-          }
+          };
         }
       } else if (result.redirect) {
         // TODO (EK): Bypass the service?
@@ -55,7 +59,7 @@ export default function authenticate (strategy, options = {}) {
         hook.redirect = {
           status: result.status,
           url: result.url
-        }
+        };
       }
 
       return Promise.resolve(hook);

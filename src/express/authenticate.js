@@ -16,10 +16,9 @@ export default function authenticate (strategy, options = {}) {
     // TODO (EK): Can we do something in here to get away
     // from express-session for OAuth1?
     // TODO (EK): Handle chaining multiple strategies
-    req.app.authenticate(strategy, options)(req).then(result => {
+    req.app.authenticate(strategy, options)(req).then((result = {}) => {
       // TODO (EK): Support passport failureFlash
       // TODO (EK): Support passport successFlash
-
       if (result.success) {
         Object.assign(req, result.data);
         Object.assign(req.feathers, result.data);
@@ -31,16 +30,17 @@ export default function authenticate (strategy, options = {}) {
         return next();
       }
 
-      if (result.fail) {
-        // TODO (EK): Reject with something...
-        // You get back result.challenge and result.status
-        
+      if (result.fail) {        
         if (options.failureRedirect) {
           return res.redirect(302, options.failureRedirect);
         }
 
         const { challenge, status = 401 } = result;
-        const message = options.failureMessage || (challenge && challenge.message);
+        let message = challenge && challenge.message ? challenge.message : challenge;
+
+        if (options.failureMessage) {
+          message = options.failureMessage;
+        }
         
         return Promise.reject(new errors[status](message, challenge));
       }
