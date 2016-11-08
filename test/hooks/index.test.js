@@ -13,8 +13,4 @@ describe('hooks', () => {
   it('exposes authenticate hook', () => {
     expect(typeof hooks.authenticate).to.equal('function');
   });
-
-  it('exposes hashPassword hook', () => {
-    expect(typeof hooks.hashPassword).to.equal('function');
-  });
 });

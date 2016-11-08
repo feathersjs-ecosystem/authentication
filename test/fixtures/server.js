@@ -50,7 +50,7 @@ export default function(settings, useSocketio = true) {
       get: [
         auth.hooks.authenticate('jwt', { session: false })
       ],
-      create: auth.hooks.hashPassword()
+      // create: auth.hooks.hashPassword()
     }
   });
 
