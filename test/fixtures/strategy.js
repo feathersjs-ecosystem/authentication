@@ -33,5 +33,5 @@ Strategy.prototype.authenticate = function(req, options) {
     return this.success(user, info);
   }.bind(this);
 
-  this._verify(callback)
+  this._verify(callback);
 };

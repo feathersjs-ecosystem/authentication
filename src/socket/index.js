@@ -36,4 +36,4 @@ export function primus(app, options = {}) {
 export default {
   socketio,
   primus
-}
+};

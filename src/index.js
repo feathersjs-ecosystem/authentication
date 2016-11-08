@@ -17,7 +17,7 @@ export default function init(config = {}) {
     const options = getOptions(config);
 
     if (app.passport) {
-      throw new Error(`You have already registered authentication on this app. You only need to do it once.`)
+      throw new Error(`You have already registered authentication on this app. You only need to do it once.`);
     }
 
     if (!options.secret) {

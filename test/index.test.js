@@ -87,7 +87,7 @@ describe('Feathers Authentication', () => {
   });
 
   it('sets custom config options', () => {
-    config.custom = 'custom'
+    config.custom = 'custom';
     app.configure(authentication(config));
     expect(app.get('auth').custom).to.equal('custom');
   });
