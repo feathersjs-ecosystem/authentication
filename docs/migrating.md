@@ -91,7 +91,7 @@ app.authenticate({
 ```js
 // feathers-authentication-client >= v1.0.0
 const authentication = require('feathers-authentication-client');
-app.configure(authentication());
+app.configure(authentication(config));
 
 app.authenticate({
   strategy: 'local',
@@ -103,6 +103,12 @@ app.authenticate({
   console.error('Error authenticating!', error);
 });
 ```
+
+### Config Options
+
+- `localEndpoint` has been removed. There is just one endpoint called `service` which defaults to `/authentication`.
+- `tokenEndpoint` has been removed. There is just one endpoint called `service` which defaults to `/authentication`.
+- `tokenKey` -> `accessTokenKey`
 
 
 ## Response to `app.authenticate()` does not return `user`
