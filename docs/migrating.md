@@ -1,296 +1,192 @@
 # Migrating to 1.0
 
-Feathers authentication has had a fairly major overhaul in order to support some functionality and scalability going forward. It is now simply an adapter over top of Passport. After usage by ourselves and others we realized that there were some limitations in previous the architecture. These new changes allow for some pretty awesome functionality and flexibility.
+Feathers authentication has had a major overhaul in order to bring some much needed functionality, customization, and scalability going forward while also making it less complex. It is now simply an adapter over top of [Passport](http://passportjs.org/).
 
-We've also decoupled the plugins from the core authentication. They are now located here:
+After usage by ourselves and others we realized that there were some limitations in previous the architecture. These new changes allow for some pretty awesome functionality and flexibility that are outlined in [New 1.0 Features](./new-1.0-features.md).
 
-- [feathers-authentication-client]()
-- [feathers-authentication-local]()
-- [feathers-authentication-jwt]()
-- [feathers-authentication-oauth1]()
-- [feathers-authentication-oauth2]()
-- [feathers-permissions]()
+We've also decoupled the authentication strategies and permissions from the core authentication. While many apps needs these, not **every** app does. This has also allowed us to better test each piece in isolation.
 
-For most of you migrating your app should be fairly straight forward as there are only a couple breaking changes to the public interface:
+They are now located here:
 
+- [feathers-authentication-client](https://github.com/feathersjs/feathers-authentication-client)
+- [feathers-authentication-local](https://github.com/feathersjs/feathers-authentication-local)
+- [feathers-authentication-jwt](https://github.com/feathersjs/feathers-authentication-jwt)
+- [feathers-authentication-oauth1](https://github.com/feathersjs/feathers-authentication-oauth1)
+- [feathers-authentication-oauth2](https://github.com/feathersjs/feathers-authentication-oauth2)
+- [feathers-permissions](https://github.com/feathersjs/feathers-permissions)
 
-## New Features and Additions
+For most of you, migrating your app should be fairly straight forward as there are only a couple breaking changes to the public interface.
 
-### More warnings and debugging
+---
 
-We've added more helpful warning messages and added debug logs for every hook, service, and middleware. We use the [debug]() module so usage is the same.
+# Breaking Changes
 
-#### Turning on all auth logs
-You can turn on all auth debug logs by running your app with `DEBUG=feathers-authentication* npm start`.
+## Setting up authentication on the server
 
-#### Turning on logs for a specific type
-If you want to only turn on logs for a `hooks`, `express`, `passport` or `service` you can do `DEBUG=feathers-authentication:<type>* npm start`. For example,
-
-```
-`DEBUG=feathers-authentication:hooks* npm start`
-```
-
-#### Turning on logs for a specific entity
-If you want to only turn on logs for a specific hook, middleware or service you can do `DEBUG=feathers-authentication:<type>:<entity> npm start`. For example,
-
-```
-`DEBUG=feathers-authentication:hooks:isAuthenticated npm start`
-```
-
-### New Options
-
-TODO (EK)
-
-- `shouldSetupMiddleware` - by default, middleware for HTTP(s) and socket requests is set up for you automatically. If you need to alter the default middleware or order you will need to set this option to `false` and register the middleware yourself. You can see how it is registered [here]().
-
-### Better Permissions Control (WIP)
-
-We have introduced a new hook and new middleware called `hasPermissions`. This gives you more flexibility and better control over access permissions than was previously possible. Permissions are stored in the database on the entity record that needs to have access permissions checked (typically a user). They look like this:
-
-```js
-[
-    '*', // all services, all methods, all docs
-    'users:*', // all methods on users service
-    'users:remove:*', // can remove any user
-    '*:remove', // can remove on any service
-    'users:remove:1234', // can only remove user with id 1234
-    'users:*:1234', // can call any service method for user with id 1234
-]
-```
-
-you use your hook like this:
-
-```js
-const auth = require('feathers-authentication').hooks;
-userService.before({
-    all: [
-        auth.isAuthenticated(),
-        auth.checkPermissions({namespace: 'users', on: 'user', field: 'permissions'}),
-        auth.isPermitted()
-    ]
-});
-```
-
-and the middleware like this:
-
-```js
-const mw = require('feathers-authentication').middleware;
-const permissions = ['users:*', 'admin']; // whatever permissions you want
-app.get(
-    '/protected',
-    mw.checkPermissions({
-        on: 'user',
-        field: 'permissions',
-        permissions
-    }),
-    isPermitted,
-    (req, res, next) => {
-    // Do your thing
-    }
-);
-```
-
-By default this new hook and new middleware assume you are storing your permissions on a `permissions` field either as an array of strings or a string with comma separated permissions. As always, you can customize the field you are storing your permissions under so you can still use the old role based system by doing this:
-
-```js
-const auth = require('feathers-authentication').hooks;
-userService.before({
-    all: [
-        auth.isAuthenticated(),
-        auth.checkPermissions({namespace: 'admin', on: 'user', field: 'role'})
-    ]
-});
-```
-
-### More Flexible Tokens (WIP)
-
-The token service has now been altered to be more generic. You can now generate different types of tokens other than JWT's. You can also generate different types of JWT's with different options separate from the standard auth token. This allows you to generate temporary access tokens for things like password reset or email confirmation or generate longer lived access tokens for things like IoT devices.
-
-The service supports the following token types:
-
-- `uuid`,
-- `jwt` (default)
-
-You can specify the type of token during a `create` call by setting `hook.params.tokenOptions.type = 'uuid'`.
-
-Here is an example of how you might generate a temporary JWT:
-
-```js
-const payload = {
-    // whatever you want to put in the token
-};
-
-const params = {
-    tokenOptions: {
-        type: 'jwt',
-        options: {
-            audience: 'user',
-            subject: 'password-reset',
-            expiresIn: '5m'
-        }
-    }
-}
-
-app.service('auth/token').create(payload, params).then(token => {
-    // Do your thing
-})
-.catch(error => {
-    // Handle errors
-});
-```
-
-## Server Side Rendering
-
-You can now create "Universal" apps or the more old school server side templated apps **with** stateless JWT authentication. In order to support server side rendering the client will now automatically attempt to authenticate if a token is present without you needing to call `app.authenticate` explicitly each time.
-
-For servers that are using a template engine to render their views server side (ie. Jade, Handlebars, etc) you may not be using client side JS for your authentication. So we now support using your JWT more like a traditional session. It's still stateless but the JWT is stored in a cookie.
-
-## Logged In/Logged Out State
-It wasn't possible to know accurately when a user was logged in or out. We've fixed that! You can now access the user at any point in your application . In addition, **you no longer need to add the `verifyToken` and `populateUser` hooks to your services** because they are already loaded earlier on in the data flow.
-
-### Using Sockets
-
-Using sockets you can now listen for the `login` and `logout` events. This is accomplished by doing:
-
-```js
-app.on('login', function(data) {
-  console.log('User logged in', data);
-});
-
-app.on('logout', function(data) {
-  console.log('User logged out', data);
-});
-
-// or on a specific socket
-
-socket.on('login', function(data) {
-  console.log('User logged in', data);
-});
-
-socket.on('logout', function(data) {
-  console.log('User logged out', data);
-});
-
-```
-
-### Using REST
-If a request came in over HTTP(S) the user is now being populated and authenticated in middleware on every request.
-
-#### In Middleware
-If you need this information in a custom route or other middleware you can access the current user and whether they are authenticated by inspecting `req.authenticated` and `req.user`.
-
-### In Hooks/Services
-If you need this information in a hook or service you can access the current user and whether they are authenticated by inspecting `hook.params.user` and `hook.params.authenticated`.
-
-## Breaking Changes
-
-### You must configure all services explicitly
-Your JSON config files for your app no longer magically determine which authentication services are initialized. You now need to configure them explicitly.
-
-Instead of:
+**The Old Way (< v0.8.0)**
 
 ```js
 // feathers-authentication < v0.8.0
 const authentication = require('feathers-authentication');
-app.configure(authentication(options))
+app.configure(authentication(config))
+    .use('/users', memory()) // this use to be okay to be anywhere
 ```
- 
-You now do:
+
+**The New Way**
 
 ```js
-// feathers-authentication >= v0.8.0
+// feathers-authentication >= v1.0.0
 const authentication = require('feathers-authentication');
-const token = authentication.TokenService;
-const local = authentication.LocalService;
-const oauth2 = authentication.OAuth2Service;
+const local = require('feathers-authentication-local');
+const jwt = require('feathers-authentication-jwt');
+const oauth1 = require('feathers-authentication-oauth1');
+const oauth2 = require('feathers-authentication-oauth2');
 
-app.configure(authentication(options))
-    .configure(token(options))
-    .configure(local(options))
-    .configure(oauth2(options))
+// The services you are setting the `entity` param for need to be registered before authentication
+app.use('/users', memory())
+    .configure(authentication(config))
+    .configure(jwt(config))
+    .configure(local(config))
+    .configure(oauth1(config))
+    .configure(oauth2(config))
 ```
 
-### You must configure register all middleware explicitly (WIP)
+### Config Options
 
-TODO (EK): We currently set them up automatically by default but may enforce middleware to be registered explicitly.
+There are a number of breaking changes since the services have been removed:
 
-### All cookies are httpOnly
+- Change `auth.token` -> `auth.jwt` in your config
+- Move `auth.token.secret` -> `auth.secret`
+- `auth.token.payload` option has been removed. See [customizing JWT payload]() for how to do this.
+- `auth.idField` has been removed. It is now included in all services so we can pull it internally without you needing to specify it.
+- `auth.shouldSetupSuccessRoute` has been removed. Success redirect middleware is registered automatically but only triggers if you explicitly set a redirect. [See redirecting]() for more details.
+- `auth.shouldSetupFailureRoute` has been removed. Failure redirect middleware is registered automatically but only triggers if you explicitly set a redirect. [See redirecting]() for more details.
+- `auth.tokenEndpoint` has been removed. There isn't a token service anymore.
+- `auth.localEndpoint` has been removed. There isn't a local service anymore. It is a passport plugin and has turned into `feathers-authentication-local`.
+- `auth.userEndpoint` has been removed. It is now part of `feathers-authentication-local` and is `auth.local.service`.
+- Cookies are now disabled by default. If you need cookie support (ie. OAuth, Server Side Rendering, Redirection) then you need to explicitly enable it by setting `auth.cookie.enable = true`.
 
-There is no longer a JS accessible cookie. in most cases this is an implementation detail and not something you were likely aware of. However, if you were relying on accessing the JWT access token inside the JS accessible cookie then it is no more.
+## Setting up authentication on the client
 
-We've found that all authentication can happen using an `httpOnly` cookie instead of having the short lived JS accessible cookie. This is not only more secure as you are no longer susceptible to XSS attacks but are also more flexible.
-
-Scenarios where you need to use a cookie:
-
-- OAuth
-- Universal app server side rendering
-- Old school server side template rendering
-- Redirects to other domains or apps after authentication
-
-To support all of these use cases we needed to encode the auth token a cookie. The other option is to put the token in the query string (which is insecure).
-
-Previously we had the feathers client parse the token from a short lived JS accessible cookie. However, we've since realized that if you make an ajax call the cookie will be sent along in the header and we can verify it on the server side. If you make a socket call the initial socket connection will also have the cookie and we can verify it. So in all cases we can simply use an `httpOnly` cookie and parse the token out of it server side.
-
-If you are doing your authentication over AJAX or sockets in the first place then there is no need for a cookie at all and the client will just store the token in localstorage and use it until logged out or expired.
-
-### You no longer register some hooks
-
-You no longer need to add the `verifyToken` and `populateUser` hooks to your services. We are loading the user and checking tokens earlier in the data flow before it even gets to a service.
-
-The old way:
+**The Old Way (< v0.8.0)**
 
 ```js
 // feathers-authentication < v0.8.0
-const auth = require('feathers-authentication').hooks;
-messageService.before({
-    all: [
-        auth.verifyToken(),
-        auth.populateUser()
-    ]
+const authentication = require('feathers-authentication/client');
+app.configure(authentication());
+
+app.authenticate({
+  type: 'local',
+  'email': 'admin@feathersjs.com',
+  'password': 'admin'
+}).then(function(result){
+  console.log('Authenticated!', result);
+}).catch(function(error){
+  console.error('Error authenticating!', error);
 });
 ```
 
-The new way:
+**The New Way (with `feathers-authentication-client`)**
 
 ```js
-// feathers-authentication >= v0.8.0
-const auth = require('feathers-authentication').hooks;
-messageService.before({
-    all: []
+// feathers-authentication-client >= v1.0.0
+const authentication = require('feathers-authentication-client');
+app.configure(authentication());
+
+app.authenticate({
+  strategy: 'local',
+  'email': 'admin@feathersjs.com',
+  'password': 'admin'
+}).then(function(result){
+  console.log('Authenticated!', result);
+}).catch(function(error){
+  console.error('Error authenticating!', error);
 });
 ```
 
-Much better! :smile:
+
+## Response to `app.authenticate()` does not return `user`
+
+We previously made the poor assumption that you are always authenticating a user. This is not always be the case, or your app may not care about the current user as you have their id or can encode some details in the JWT.  Therefore, if you need to get the current user you need to request it explicitly after authentication or populate it yourself in an after hook.
+
+### Fetching User Explicitly
+
+TODO
+
+### Populating User Explicitly
+
+TODO
+
+## JWT Parsing
+
+The JWT is only parsed from the header by default now. It is no longer pulled from the body or query string.
+
+You can customize the header by passing the `app.configure(authentication({header: 'custom'})`. If you want to customize things further you can refer to the [`feathers-authentication-jwt`](https://github.com/feathersjs/feathers-authentication-jwt) module or implement your own custom passport JWT strategy.
+
+## Hook Changes
 
 ### Hooks always return promises
 
 This shouldn't really affect you unless you are testing, modifying or wrapping existing hooks but they **always** return promises now. This makes the interface more consistent, making it easier to test and reason as to what a hook does.
 
-### Response to `app.authenticate()` does not return `user`
-
-We previously made the assumption that you are always authenticating a user. This may not always be the case, or your app may not care about the current user as you have their id or can encode some details in the JWT.  Therefore, if you need to get the current user you need to request it explicitly after authentication.
-
-### Removed Configuration Options
-
-TODO (EK)
-
-We've changed up some of the possible authentication options. You can view all the available options in the main [`index.js`](./src/index.js) file.
-
-- 
-
-### Options specific to hooks need to be passed explicitly
-
 ### Removed Hooks
 
-We have removed some of the authentication hooks, specifically around authorization permissions.
+We have removed all of the old authentication hooks. If you still need these they have been moved to the [feathers-legacy-authentication-hooks](https://github.com/feathersjs/feathers-legacy-authentication-hooks) repo and are deprecated.
 
 The following hooks have been removed:
 
-- `restrictToOwner`
-- `restrictToRoles`
-- `verifyOrRestrict`
-- `populateOrRestrict`
-- `hasRoleOrRestrict`
-- `restrictToAuthenticated` - renamed to `isAuthenticated`.
+- `associateCurrentUser` -> left to developer
+- `queryWithCurrentUser` -> left to developer
+- `restrictToOwner` -> use new `feathers-permissions` plugin
+- `restrictToRoles` -> use new `feathers-permissions` plugin
+- `verifyOrRestrict` -> use new `feathers-permissions` plugin
+- `populateOrRestrict` -> use new `feathers-permissions` plugin
+- `hasRoleOrRestrict` -> use new `feathers-permissions` plugin
+- `restrictToAuthenticated` -> use new `feathers-permissions` plugin
+- `hashPassword` -> has been moved to `feathers-authentication-local`
+- `populateUser` -> use new `populate` hook in `feathers-hooks-common`
+- `verifyToken` -> use new `feathers-authentication-jwt` plugin to easily validate a JWT access token. You can also now call `app.passport.verifyJWT` anywhere in your app to do it explicitly.
 
-You should now use single `checkPermissions` and `isPermitted` hook (or middleware) as shown above.
+**We will no longer be supporting these** but have published them as `feathers-legacy-authentication-hooks` to ease migration. You are highly encouraged to migrate to the much more powerful and flexible [feathers-permissions](https://github.com/feathersjs/feathers-permissions) plugin.
+
+**The Old Way (< v0.8.0)**
+
+Typically you saw a lot of this in your hook definitions for a service:
+
+```js
+// feathers-authentication < v0.8.0
+const auth = require('feathers-authentication').hooks;
+exports.before = {
+  all: [],
+  find: [
+    auth.verifyToken(),
+    auth.populateUser(),
+    auth.restrictToAuthenticated(),
+    auth.queryWithCurrentUser()
+  ],
+  get: [
+    auth.verifyToken(),
+    auth.populateUser(),
+    auth.restrictToAuthenticated(),
+    auth.restrictToOwner({ ownerField: '_id' })
+  ]
+}
+```
+
+**The New Way**
+
+```js
+// feathers-authentication >= v1.0.0
+const authentication = require('feathers-authentication');
+const permissions = require('feathers-permissions');
+exports.before = {
+  all: [
+    authentication.hooks.authenticate('jwt'),
+    permissions.hooks.checkPermissions({service: 'users', on: 'user', field: 'permissions'}),
+    permissions.hooks.isPermitted()
+  ],
+  find: [
+    myCustomQueryWithCurrentUser() // instead of auth.queryWithCurrentUser()
+  ]
+}
+```
