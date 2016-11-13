@@ -46,7 +46,10 @@ function setupSocketHandler(feathersParams, provider, emit, app, options) {
 
         params.req.body = data;
 
-        app.service(options.localEndpoint).create(data, params).then(response => {
+        // If an endPoint was provided in the request, use it.
+        const endPoint = data.endpoint ? data.endpoint : options.localEndpoint;
+
+        app.service(endPoint).create(data, params).then(response => {
           feathersParams(socket).token = response.token;
           feathersParams(socket).user = response.data;
           socket[emit]('authenticated', response);
