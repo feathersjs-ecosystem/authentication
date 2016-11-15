@@ -8,7 +8,6 @@ chai.use(sinonChai);
 describe('express:successRedirect', () => {
   let req;
   let res;
-  let next;
 
   beforeEach(() => {
     req = {
@@ -21,41 +20,37 @@ describe('express:successRedirect', () => {
     res = {
       redirect: sinon.spy()
     };
-    next = sinon.spy();
   });
 
   afterEach(() => {
-    next.reset();
     res.redirect.reset();
   });
 
   describe('when redirect is set on the hook', () => {
     it('redirects to configured endpoint with default status code', () => {
-      successRedirect()(req, res, next);
+      successRedirect()(req, res);
       expect(res.redirect).to.have.been.calledOnce;
       expect(res.redirect).to.have.been.calledWith(302, '/app');
     });
 
     it('supports a custom status code', () => {
       req.hook.redirect.status = 400;
-      successRedirect()(req, res, next);
+      successRedirect()(req, res);
       expect(res.redirect).to.have.been.calledWith(400, '/app');
     });
   });
 
   describe('when req.hook is not defined', () => {
-    it('calls next', () => {
+    it('calls next', next => {
       delete req.hook;
       successRedirect()(req, res, next);
-      expect(next).to.have.been.calledOnce;
     });
   });
 
   describe('when req.hook.redirect is not defined', () => {
-    it('calls next', () => {
+    it('calls next', next => {
       delete req.hook.redirect;
       successRedirect()(req, res, next);
-      expect(next).to.have.been.calledOnce;
     });
   });
 });

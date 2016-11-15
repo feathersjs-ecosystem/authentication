@@ -1,9 +1,26 @@
 import Debug from 'debug';
+import pick from 'lodash.pick';
 import jwt from 'jsonwebtoken';
 
 const debug = Debug('feathers-authentication:authentication:utils');
 
 export function createJWT (payload = {}, options = {}) {
+  const VALID_KEYS = [
+    'algorithm',
+    'expiresIn',
+    'notBefore',
+    'audience',
+    'issuer',
+    'jwtid',
+    'subject',
+    'noTimetamp',
+    'header',
+    'exp',
+    'nbf',
+    'aud',
+    'sub',
+    'iss'
+  ];
   const settings = Object.assign({}, options.jwt);
   const { secret } = options;
 
@@ -14,7 +31,8 @@ export function createJWT (payload = {}, options = {}) {
       return reject(new Error(`secret must provided`));
     }
 
-    jwt.sign(payload, secret, settings, (error, token) => {
+    // TODO (EK): Support jwtids. Maybe auto-generate a uuid
+    jwt.sign(payload, secret, pick(settings, VALID_KEYS), function(error, token) {
       if (error) {
         debug('Error signing JWT', error);
         return reject(error);
@@ -27,6 +45,15 @@ export function createJWT (payload = {}, options = {}) {
 }
 
 export function verifyJWT (token, options = {}) {
+  const VALID_KEYS = [
+    'algorithms',
+    'audience',
+    'issuer',
+    'ignoreExpiration',
+    'ignoreNotBefore',
+    'subject',
+    'clockTolerance',
+  ];
   const settings = Object.assign({}, options.jwt);
   const { secret } = options;
 
@@ -43,7 +70,7 @@ export function verifyJWT (token, options = {}) {
       return reject(new Error(`secret must provided`));
     }
 
-    jwt.verify(token, secret, settings, (error, payload) => {
+    jwt.verify(token, secret, pick(settings, VALID_KEYS), (error, payload) => {
       if (error) {
         debug('Error verifying token', error);
         return reject(error);

@@ -33,12 +33,16 @@ describe('express:authenticate', () => {
 
   describe('when strategy name is missing', () => {
     it('throws an error', () => {
-      try {
+      expect(() => {
         authenticate()(req, res, next);
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
+      }).to.throw;
+    });
+  });
+
+  describe('when already authenticated', () => {
+    it('calls next', next => {
+      req.authenticated = true;
+      authenticate('missing')(req, res, next);
     });
   });
 
@@ -79,9 +83,24 @@ describe('express:authenticate', () => {
       });
     });
 
+    it('sets request.authenticated', done => {
+      authenticate('mock')(req, res, () => {
+        expect(req.authenticated).to.equal(true);
+        done();
+      });
+    });
+
     it('exposes result to feathers', done => {
       authenticate('mock')(req, res, () => {
-        expect(req.feathers).to.deep.equal(response.data);
+        expect(req.feathers.user).to.deep.equal(response.data.user);
+        expect(req.feathers.info).to.deep.equal(response.data.info);
+        done();
+      });
+    });
+
+    it('sets request.feathers.authenticated', done => {
+      authenticate('mock')(req, res, () => {
+        expect(req.feathers.authenticated).to.equal(true);
         done();
       });
     });

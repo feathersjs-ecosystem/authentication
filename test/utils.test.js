@@ -44,15 +44,15 @@ describe('utils', () => {
       });
 
       it('has the correct audience', () => {
-        expect(decoded.aud).to.equal('user');
+        expect(decoded.aud).to.equal(options.jwt.audience);
       });
 
       it('has the correct subject', () => {
-        expect(decoded.sub).to.equal('access');
+        expect(decoded.sub).to.equal(options.jwt.subject);
       });
 
       it('has the correct issuer', () => {
-        expect(decoded.iss).to.equal('feathers');
+        expect(decoded.iss).to.equal(options.jwt.issuer);
       });
     });
 

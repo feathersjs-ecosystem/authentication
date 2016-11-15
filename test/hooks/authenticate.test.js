@@ -19,18 +19,34 @@ describe('hooks:authenticate', () => {
         authenticate: () => {
           return () => Promise.resolve();
         }
-      }
+      },
+      params: { provider: 'rest' }
     };
   });
 
   describe('when strategy name is missing', () => {
     it('throws an error', () => {
-      try {
+      expect(() => {
         authenticate()(hook);
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
+      }).to.throw;
+    });
+  });
+
+  describe('when provider is missing', () => {
+    it('does nothing', () => {
+      delete hook.params.provider;
+      return authenticate('mock')(hook).then(returnedHook => {
+        expect(returnedHook).to.deep.equal(hook);  
+      });
+    });
+  });
+
+  describe('when hook is already authenticated', () => {
+    it('does nothing', () => {
+      hook.params.authenticated = true;
+      return authenticate('mock')(hook).then(returnedHook => {
+        expect(returnedHook).to.deep.equal(hook);  
+      });
     });
   });
 
@@ -74,6 +90,12 @@ describe('hooks:authenticate', () => {
       });
     });
 
+    it('sets hook.params.authenticated', () => {
+      return authenticate('mock')(hook).then(hook => {
+        expect(hook.params.authenticated).to.equal(true);
+      });
+    });
+
     it('supports redirecting', () => {
       const successRedirect = '/app';
       return authenticate('mock', { successRedirect })(hook).then(hook => {
@@ -99,6 +121,12 @@ describe('hooks:authenticate', () => {
     it('returns an Unauthorized error', () => {
       return authenticate('mock')(hook).catch(error => {
         expect(error.code).to.equal(401);
+      });
+    });
+
+    it('does not set hook.params.authenticated', () => {
+      return authenticate('mock')(hook).catch(() => {
+        expect(hook.params.authenticated).to.equal(undefined);
       });
     });
 
@@ -155,6 +183,12 @@ describe('hooks:authenticate', () => {
     it('returns an error', () => {
       return authenticate('mock')(hook).catch(error => {
         expect(error).to.not.equal(undefined);
+      });
+    });
+
+    it('does not set hook.params.authenticated', () => {
+      return authenticate('mock')(hook).catch(() => {
+        expect(hook.params.authenticated).to.equal(undefined);
       });
     });
   });

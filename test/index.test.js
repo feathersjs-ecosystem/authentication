@@ -41,30 +41,24 @@ describe('Feathers Authentication', () => {
 
   describe('when secret is missing', () => {
     it('throws an error', () => {
-      try {
+      expect(() => {
         app.configure(authentication());
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
+      }).to.throw;
     });
   });
 
   describe('authentication has already been registered', () => {
     it('throws an error', () => {
-      try {
+      expect(() => {
         app.configure(authentication(config));
         app.configure(authentication(config));
-      }
-      catch(error) {
-        expect(error).to.not.equal(undefined);
-      }
+      }).to.throw;
     });
   });  
 
   describe('when in development mode', () => {
     it('sets cookie to be insecure', () => {
-      app.env = 'development';
+      app.set('env', 'development');
       app.configure(authentication(config));
       expect(app.get('auth').cookie.secure).to.equal(false);
     });
@@ -72,7 +66,7 @@ describe('Feathers Authentication', () => {
 
   describe('when in test mode', () => {
     it('sets cookie to be insecure', () => {
-      app.env = 'test';
+      app.set('env', 'test');
       app.configure(authentication(config));
       expect(app.get('auth').cookie.secure).to.equal(false);
     });
@@ -80,7 +74,7 @@ describe('Feathers Authentication', () => {
 
   describe('when in production mode', () => {
     it('sets cookie to be secure', () => {
-      app.env = 'production';
+      app.set('env', 'production');
       app.configure(authentication(config));
       expect(app.get('auth').cookie.secure).to.equal(true);
     });

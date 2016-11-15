@@ -12,6 +12,11 @@ export default function authenticate (strategy, options = {}) {
   return function (hook) {
     const app = hook.app;
 
+    // If called internally or we are already authenticated skip
+    if (!hook.params.provider || hook.params.authenticated) {
+      return Promise.resolve(hook);
+    }
+
     if (hook.type !== 'before') {
       return Promise.reject(new Error(`The 'authenticate' hook should only be used as a 'before' hook.`));
     }
@@ -43,7 +48,7 @@ export default function authenticate (strategy, options = {}) {
       }
 
       if (result.success) {
-        hook.params = Object.assign({}, hook.params, result.data);
+        hook.params = Object.assign({ authenticated: true }, hook.params, result.data);
 
         if (options.successRedirect) {
           // TODO (EK): Bypass the service?

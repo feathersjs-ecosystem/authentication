@@ -26,7 +26,7 @@ export default function init(config = {}) {
 
     // Make sure cookies don't have to be sent over HTTPS
     // when in development or test mode.
-    if (app.env === 'development' || app.env === 'test') {
+    if (app.get('env') === 'development' || app.get('env') === 'test') {
       options.cookie.secure = false;
     }
 

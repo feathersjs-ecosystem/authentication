@@ -17,12 +17,28 @@ describe('options', () => {
       options = getOptions();
     });
 
-    it('sets the service', () => {
-      expect(options.service).to.equal('/authentication');
+    it('sets the service path', () => {
+      expect(options.path).to.equal('/authentication');
     });
 
     it('sets the header', () => {
       expect(options.header).to.equal('Authorization');
+    });
+
+    it('sets the entity to add to the req, socket, and hook.params', () => {
+      expect(options.entity).to.equal('user');
+    });
+
+    it('sets the service to lookup the entity', () => {
+      expect(options.service).to.equal('users');
+    });
+
+    it('sets passReqToCallback', () => {
+      expect(options.passReqToCallback).to.equal(true);
+    });
+
+    it('disables sessions', () => {
+      expect(options.session).to.equal(false);
     });
 
     describe('cookie', () => {
@@ -49,15 +65,15 @@ describe('options', () => {
 
     describe('jwt', () => {
       it('sets the header', () => {
-        expect(options.jwt.header).to.deep.equal({ typ: 'jwt' });
+        expect(options.jwt.header).to.deep.equal({ typ: 'access' });
       });
 
       it('sets the audience', () => {
-        expect(options.jwt.audience).to.equal('user');
+        expect(options.jwt.audience).to.equal('https://yourdomain.com');
       });
 
       it('sets the subject', () => {
-        expect(options.jwt.subject).to.equal('access');
+        expect(options.jwt.subject).to.equal('anonymous');
       });
 
       it('sets the issuer', () => {
@@ -70,20 +86,6 @@ describe('options', () => {
 
       it('sets the expiresIn', () => {
         expect(options.jwt.expiresIn).to.equal('1d');
-      });
-    });
-
-    describe('user', () => {
-      it('sets the service', () => {
-        expect(options.user.service).to.equal('users');
-      });
-
-      it('sets the usernameField', () => {
-        expect(options.user.usernameField).to.equal('email');
-      });
-
-      it('sets the passwordField', () => {
-        expect(options.user.passwordField).to.equal('password');
       });
     });
   });

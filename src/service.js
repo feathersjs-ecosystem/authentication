@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import merge from 'lodash.merge';
 import * as utils from './utils';
 import { successRedirect, failureRedirect, setCookie, emitEvents } from './express';
 
@@ -11,15 +12,13 @@ class Service {
   }
 
   create(data, params) {
-    // if (params.provider && !params.authentication) {
-    //   return Promise.reject(new Error(`External ${params.provider} requests need to run through an authentication provider`));
-    // }
     const defaults = this.app.get('auth');
 
     // create accessToken
     // TODO (EK): Support refresh tokens
     // TODO (EK): This should likely be a hook
-    return utils.createJWT(data.payload, params, defaults).then(accessToken => {
+    // TODO (EK): This service can be datastore backed to support blacklists :)
+    return utils.createJWT(data.payload, merge(defaults, params)).then(accessToken => {
       this.emit('login', { accessToken });
 
       return { accessToken };
@@ -32,17 +31,17 @@ class Service {
 
     this.emit('logout', { accessToken });
 
-    return utils.verifyJWT(accessToken, params, defaults);
+    return utils.verifyJWT(accessToken, merge(defaults, params));
   }
 }
 
 export default function init(options){
   return function() {
     const app = this;
-    const path = options.service;
+    const path = options.path;
 
     if (typeof path !== 'string') {
-      throw new Error(`Authentication option for 'service' needs to be set`);
+      throw new Error(`You must provide a 'path' in your authentication configuration or pass one explicitly.`);
     }
 
     debug('Configuring authentication service at path', path);
@@ -53,7 +52,7 @@ export default function init(options){
       emitEvents(options),
       setCookie(options),
       successRedirect(),
-      failureRedirect()
+      failureRedirect(options)
     );
   };
 }

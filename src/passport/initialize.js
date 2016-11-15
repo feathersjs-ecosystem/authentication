@@ -1,4 +1,5 @@
 import makeDebug from 'debug';
+import { createJWT, verifyJWT } from '../utils';
 
 const debug = makeDebug('feathers-authentication:passport:initialize');
 
@@ -11,7 +12,10 @@ export default function initialize (options = {}) {
   // to support different engines.
   return function (passport) {
     // NOTE (EK): This is called by passport.initialize() when calling
-    // app.configure(authentication()). Since we aren't doing anything
-    // special right now we don't need to do anything in here.
+    // app.configure(authentication()).
+    
+    // Expose our JWT util functions globally
+    passport.createJWT = createJWT;
+    passport.verifyJWT = verifyJWT;
   };
 }

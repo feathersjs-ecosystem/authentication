@@ -151,7 +151,7 @@ describe('passport:authenticate', () => {
           organization = { name: 'Apple' };
           verifier = (cb) => cb(null, user, info);
           passport.use(new MockStrategy({}, verifier));
-          authenticator = authenticate()(passport, 'mock');
+          authenticator = authenticate({ entity: 'user' })(passport, 'mock');
         });
 
         it('sets success true', () => {
@@ -172,10 +172,10 @@ describe('passport:authenticate', () => {
           });
         });
 
-        it('supports a global custom namespace', () => {
+        it('supports custom namespaces via passports assignProperty', () => {
           verifier = (cb) => cb(null, organization);
           passport.use(new MockStrategy({}, verifier));
-          authenticator = authenticate({ assignProperty: 'organization' })(passport, 'mock');
+          authenticator = authenticate()(passport, 'mock', { assignProperty: 'organization' });
 
           return authenticator(req).then(result => {
             expect(result.data.organization).to.deep.equal(organization);
@@ -185,7 +185,7 @@ describe('passport:authenticate', () => {
         it('supports custom namespaces via strategy options', () => {
           verifier = (cb) => cb(null, organization);
           passport.use(new MockStrategy({}, verifier));
-          authenticator = authenticate()(passport, 'mock', { assignProperty: 'organization' });
+          authenticator = authenticate()(passport, 'mock', { entity: 'organization' });
 
           return authenticator(req).then(result => {
             expect(result.data.organization).to.deep.equal(organization);

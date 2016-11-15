@@ -101,7 +101,7 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
               authorization: `JWT ${tokens.accessToken}`
             };
 
-            connection = Object.assign(connection, result, tokens, { headers });
+            connection = Object.assign(connection, result, tokens, { headers, authenticated: true });
             // Might not need this one
             socket._feathers.headers = headers;
 
@@ -126,6 +126,7 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
         debug('Logging out socket with accessToken', accessToken);
 
         delete connection.accessToken;
+        delete connection.authenticated;
         connection.headers = {};
         socket._feathers.body = {};
         socket._feathers.headers = {};

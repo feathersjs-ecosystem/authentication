@@ -12,7 +12,6 @@ const cookies = {
 describe('express:exposeCookies', () => {
   let req;
   let res;
-  let next;
 
   beforeEach(() => {
     req = {
@@ -20,20 +19,16 @@ describe('express:exposeCookies', () => {
       cookies
     };
     res = {};
-    next = sinon.spy();
   });
 
-  afterEach(() => {
-    next.reset();
+  it('adds the cookies object to req.feathers', done => {
+    exposeCookies()(req, res, () => {
+      expect(req.feathers.cookies).to.deep.equal(cookies);
+      done();
+    });
   });
 
-  it('adds the cookies object to req.feathers', () => {
+  it('calls next', next => {
     exposeCookies()(req, res, next);
-    expect(req.feathers.cookies).to.deep.equal(cookies);
-  });
-
-  it('calls next', () => {
-    exposeCookies()(req, res, next);
-    expect(next).to.have.been.calledOnce;
   });
 });

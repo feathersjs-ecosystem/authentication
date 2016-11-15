@@ -12,7 +12,6 @@ const headers = {
 describe('express:exposeHeaders', () => {
   let req;
   let res;
-  let next;
 
   beforeEach(() => {
     req = {
@@ -20,20 +19,16 @@ describe('express:exposeHeaders', () => {
       headers
     };
     res = {};
-    next = sinon.spy();
   });
 
-  afterEach(() => {
-    next.reset();
+  it('adds the headers object to req.feathers', done => {
+    exposeHeaders()(req, res, () => {
+      expect(req.feathers.headers).to.deep.equal(headers);
+      done();
+    });
   });
 
-  it('adds the headers object to req.feathers', () => {
+  it('calls next', next => {
     exposeHeaders()(req, res, next);
-    expect(req.feathers.headers).to.deep.equal(headers);
-  });
-
-  it('calls next', () => {
-    exposeHeaders()(req, res, next);
-    expect(next).to.have.been.calledOnce;
   });
 });

@@ -9,14 +9,12 @@ const debug = makeDebug('feathers-authentication:passport:authenticate');
 
 export default function authenticate (options = {}) {
   const app = this;
-  options.assignProperty = options.assignProperty || 'user';
 
   debug('Initializing custom passport authenticate', options);
 
   // This function is bound by passport and called by passport.authenticate()
   return function (passport, name, strategyOptions = {}, callback = () => {}) {
-
-    debug('Inside passport.authenticate', passport, name, strategyOptions, callback);
+    debug('passport.authenticate called with the following options', passport, name, strategyOptions, callback);
     
     // This is called by the feathers middleware, hook or socket. The req object
     // is a mock request derived from an http request, socket object, or hook.
@@ -26,7 +24,7 @@ export default function authenticate (options = {}) {
         
         // Allow you to set a location for the success payload.
         // Default is hook.params.user, req.user and socket.user.
-        const assignProperty = strategyOptions.assignProperty || options.assignProperty;
+        const entity = strategyOptions.entity || strategyOptions.assignProperty || options.entity;
 
         // TODO (EK): Handle chaining multiple strategies
         // let multi = true;
@@ -86,11 +84,11 @@ export default function authenticate (options = {}) {
         };
 
         strategy.success = (data, info) => {
-          debug(`'${layer}' authentication strategy succeeded`, info);
+          debug(`'${layer}' authentication strategy succeeded`, data, info);
           resolve({
             success: true,
             data: {
-              [assignProperty]: data,
+              [entity]: data,
               info
             }
           });
@@ -103,12 +101,14 @@ export default function authenticate (options = {}) {
 
         // NOTE (EK): Passport expects an express/connect
         // like request object. So we need to create on.
+        
         let request = req;
         request.body = request.body || request.data;
         request.headers = request.headers || request.params.headers;
         request.session = request.session || {};
         request.cookies = request.cookies || request.params.cookies;
 
+        debug('Passport request object', request);
         strategy.authenticate(request, strategyOptions);
       });
     };

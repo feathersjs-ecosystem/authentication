@@ -7,9 +7,9 @@ import memory from 'feathers-memory';
 import bodyParser from 'body-parser';
 import errors from 'feathers-errors';
 import errorHandler from 'feathers-errors/handler';
+import local from 'feathers-authentication-local';
+import jwt from 'feathers-authentication-jwt';
 import auth from '../../lib/index';
-import local from './local';
-import jwt from './jwt';
 
 const User = {
   email: 'admin@feathersjs.com',
@@ -28,8 +28,8 @@ export default function(settings, useSocketio = true) {
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .configure(auth(settings))
-    .configure(local)
-    .configure(jwt)
+    .configure(local())
+    .configure(jwt())
     .use('/users', memory())
     .use('/', feathers.static(__dirname + '/public'))
     .use(errorHandler());  
@@ -37,8 +37,7 @@ export default function(settings, useSocketio = true) {
   app.service('authentication').hooks({
     before: {
       create: [
-        auth.hooks.authenticate('local', { session: false }),
-        // auth.hooks.createJWT()
+        auth.hooks.authenticate('local'),
       ]
     }
   });
@@ -48,9 +47,11 @@ export default function(settings, useSocketio = true) {
   app.service('users').hooks({
     before: {
       get: [
-        auth.hooks.authenticate('jwt', { session: false })
+        auth.hooks.authenticate('jwt')
       ],
-      // create: auth.hooks.hashPassword()
+      create: [
+        local.hooks.hashPassword({ passwordField: 'password' })
+      ]
     }
   });
 

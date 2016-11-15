@@ -13,7 +13,7 @@ export default function setCookie(authOptions = {}) {
 
   return function(req, res, next) {
     const app = req.app;
-    const options = authOptions.cookie;
+    const options = authOptions.cookie || {};
 
     debug('Running setCookie middleware with options:', options);
 
@@ -34,9 +34,9 @@ export default function setCookie(authOptions = {}) {
       
       // Only set the cookie if we weren't removing the token and we
       // have a JWT access token.
-      if (res.hook && res.hook.method !== 'remove' && res.data && res.data.accessToken) {
+      if (!res.hook || (res.hook && res.hook.method !== 'remove') && res.data && res.data.accessToken) {
         // Check HTTPS and cookie status in production.
-        if (!req.secure && app.env === 'production' && options.secure) {
+        if (!req.secure && app.get('env') === 'production' && options.secure) {
           console.warn('WARN: Request isn\'t served through HTTPS: JWT in the cookie is exposed.');
           console.info('If you are behind a proxy (e.g. NGINX) you can:');
           console.info('- trust it: http://expressjs.com/en/guide/behind-proxies.html');
@@ -62,7 +62,7 @@ export default function setCookie(authOptions = {}) {
         // as well as the maxAge because we have set an explicit expiry.
         const cookieOptions = omit(options, 'name', 'enabled', 'maxAge');
 
-        debug(`Setting '${cookie}' cookie`);
+        debug(`Setting '${cookie}' cookie with options`, cookieOptions);
         res.cookie(cookie, res.data.accessToken, cookieOptions);
       }
     }

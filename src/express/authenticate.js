@@ -10,6 +10,11 @@ export default function authenticate (strategy, options = {}) {
   }
 
   return function (req, res, next) {
+    // If we are already authenticated skip
+    if (req.authenticated) {
+      return next();
+    }
+
     if (!req.app.passport._strategy(strategy)) {
       return next(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
     }
@@ -20,10 +25,11 @@ export default function authenticate (strategy, options = {}) {
       // TODO (EK): Support passport failureFlash
       // TODO (EK): Support passport successFlash
       if (result.success) {
-        Object.assign(req, result.data);
-        Object.assign(req.feathers, result.data);
+        Object.assign(req, { authenticated: true }, result.data);
+        Object.assign(req.feathers, { authenticated: true }, result.data);
 
         if (options.successRedirect) {
+          console.log('redirecting');
           return res.redirect(302, options.successRedirect);
         }
 
