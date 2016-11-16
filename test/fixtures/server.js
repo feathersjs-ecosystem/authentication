@@ -17,6 +17,16 @@ const User = {
   permissions: ['*']
 };
 
+function customizeJWTPayload() {
+  return function(hook) {
+    hook.data.payload = {
+      id: hook.params.user.id
+    };
+
+    return Promise.resolve(hook);
+  };
+}
+
 export default function(settings, useSocketio = true) {
   const app = feathers();
 
@@ -31,13 +41,16 @@ export default function(settings, useSocketio = true) {
     .configure(local())
     .configure(jwt())
     .use('/users', memory())
-    .use('/', feathers.static(__dirname + '/public'))
-    .use(errorHandler());  
+    .use('/', feathers.static(__dirname + '/public'));
 
   app.service('authentication').hooks({
     before: {
       create: [
-        auth.hooks.authenticate('local'),
+        auth.hooks.authenticate(['jwt', 'local']),
+        customizeJWTPayload()
+      ],
+      remove: [
+        auth.hooks.authenticate('jwt')
       ]
     }
   });
@@ -46,7 +59,7 @@ export default function(settings, useSocketio = true) {
   // the password with a hash of the password before saving it.
   app.service('users').hooks({
     before: {
-      get: [
+      find: [
         auth.hooks.authenticate('jwt')
       ],
       create: [
@@ -57,6 +70,28 @@ export default function(settings, useSocketio = true) {
 
   // Create a user that we can use to log in
   app.service('users').create(User).catch(console.error);
+
+  // Custom Express routes
+  app.get('/protected', auth.express.authenticate('jwt'), (req, res, next) => {
+    res.json({ success: true });
+  });
+
+  app.get('/unprotected', (req, res, next) => {
+    res.json({ success: true });
+  });
+
+  // Custom route with custom redirects
+  app.post('/login', auth.express.authenticate('local', { successRedirect: '/app', failureRedirect: '/login' }));
+
+  app.get('/app', (req, res, next) => {
+    res.json({ success: true });
+  });
+
+  app.get('/login', (req, res, next) => {
+    res.json({ success: false });
+  });
+
+  app.use(errorHandler());
 
   return app;
 }

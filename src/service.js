@@ -1,6 +1,5 @@
 import Debug from 'debug';
 import merge from 'lodash.merge';
-import * as utils from './utils';
 import { successRedirect, failureRedirect, setCookie, emitEvents } from './express';
 
 const debug = Debug('feathers-authentication:authentication:service');
@@ -8,7 +7,7 @@ const debug = Debug('feathers-authentication:authentication:service');
 class Service {
   constructor(app) {
     this.app = app;
-    // this.passport = app.passport;
+    this.passport = app.passport;
   }
 
   create(data, params) {
@@ -18,20 +17,22 @@ class Service {
     // TODO (EK): Support refresh tokens
     // TODO (EK): This should likely be a hook
     // TODO (EK): This service can be datastore backed to support blacklists :)
-    return utils.createJWT(data.payload, merge(defaults, params)).then(accessToken => {
-      this.emit('login', { accessToken });
-
-      return { accessToken };
-    });
+    return this.passport
+      .createJWT(data.payload, merge(defaults, params))
+      .then(accessToken => {
+        return { accessToken };
+      });
   }
 
   remove(id, params) {
     const defaults = this.app.get('auth');
-    const accessToken = id !== null ? id : params.accessToken;
-
-    this.emit('logout', { accessToken });
-
-    return utils.verifyJWT(accessToken, merge(defaults, params));
+    const accessToken = id !== null ? id : params.headers[defaults.header.toLowerCase()];
+    // TODO (EK): return error if token is missing?
+    return this.passport
+      .verifyJWT(accessToken, merge(defaults, params))
+      .then(payload => {
+        return { accessToken };
+      });
   }
 }
 

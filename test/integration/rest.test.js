@@ -1,129 +1,501 @@
-import { expect } from 'chai';
-import axios from 'axios';
+import merge from 'lodash.merge';
+import request from 'superagent';
 import createApplication from '../fixtures/server';
+import chai, { expect } from 'chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
+import passportLocal from 'passport-local';
 
-describe.skip('REST authentication', function() {
-  this.timeout(10000);
+chai.use(sinonChai);
 
-  const request = axios.create({
-    baseUrl: 'http://localhost:8998',
-    json: true
-  });
+describe('REST authentication', function() {
+  const port = 8998;
+  const baseURL = `http://localhost:${port}`;
+
   const app = createApplication({
     secret: 'supersecret'
   });
+  let server;
+  let expiredToken;
+  let accessToken;
 
   before(function(done) {
-    this.server = app.listen(8998);
-    this.server.once('listening', () => done());
+    const options = merge({}, app.get('auth'), { jwt: { expiresIn: '1ms' } });
+    app.passport.createJWT({}, options)
+      .then(token => {
+        expiredToken = token;
+        return app.passport.createJWT({ id: 0 }, app.get('auth'));
+      })
+      .then(token => {
+        accessToken = token;
+        server = app.listen(port);
+        server.once('listening', () => done());
+      });
   });
 
   after(function() {
-    this.server.close();
+    server.close();
   });
 
-  it('returns not authenticated error for protected endpoint', () => {
-    return request({
-      url: '/todos/laundry'
-    }).catch(error => {
-      expect(error.error).to.deep.equal({
-        name: 'NotAuthenticated',
-        message: 'You are not authenticated.',
-        code: 401,
-        className: 'not-authenticated',
-        errors: {}
+  describe('Authenticating against auth service', () => {
+    describe('Using local strategy', () => {
+      let data;
+
+      beforeEach(() => {
+        data = {
+          strategy: 'local',
+          email: 'admin@feathersjs.com',
+          password: 'admin'
+        };
+      });
+
+      describe('when using valid credentials', () => {
+        it('returns a valid access token', () => {
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .then(response => {
+              expect(response.body.accessToken).to.exist;
+              return app.passport.verifyJWT(response.body.accessToken, app.get('auth'));
+            }).then(payload => {
+              expect(payload).to.exist;
+              expect(payload.iss).to.equal('feathers');
+              expect(payload.id).to.equal(0);
+            });
+        });
+      });
+
+      describe('when using invalid credentials', () => {
+        it('returns NotAuthenticated error', () => {
+          data.password = 'invalid';
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
+      });
+
+      describe('when missing credentials', () => {
+        it('returns NotAuthenticated error', () => {
+          return request
+            .post(`${baseURL}/authentication`)
+            .send({ strategy: 'local' })
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
+      });
+
+      describe('when missing strategy', () => {
+        it('returns an error', () => {
+          delete data.strategy;
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
+      });
+    });
+
+    describe('Using JWT strategy via body', () => {
+      let data;
+
+      beforeEach(() => {
+        data = {
+          strategy: 'jwt',
+          accessToken
+        };
+      });
+
+      describe('when using a valid access token', () => {
+        it('returns a valid access token', () => {
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .then(response => {
+              expect(response.body.accessToken).to.exist;
+              return app.passport.verifyJWT(response.body.accessToken, app.get('auth'));
+            }).then(payload => {
+              expect(payload).to.exist;
+              expect(payload.iss).to.equal('feathers');
+              expect(payload.id).to.equal(0);
+            });
+        });
+      });
+
+      describe.skip('when using a valid refresh token', () => {
+        it('returns a valid access token', () => {
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .then(response => {
+              expect(response.body.accessToken).to.exist;
+              return app.passport.verifyJWT(response.body.accessToken, app.get('auth'));
+            }).then(payload => {
+              expect(payload).to.exist;
+              expect(payload.iss).to.equal('feathers');
+              expect(payload.id).to.equal(0);
+            });
+        });
+      });
+
+      describe('when access token is invalid', () => {
+        it('returns not authenticated error', () => {
+          data.accessToken = 'invalid';
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
+      });
+
+      describe('when access token is expired', () => {
+        it('returns not authenticated error', () => {
+          data.accessToken = expiredToken;
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
+      });
+
+      describe('when access token is missing', () => {
+        it('returns not authenticated error', () => {
+          return request
+            .post(`${baseURL}/authentication`)
+            .send({ strategy: 'local' })
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
+      });
+
+      describe('when missing strategy', () => {
+        it('returns an error', () => {
+          delete data.strategy;
+          return request
+            .post(`${baseURL}/authentication`)
+            .send(data)
+            .catch(error => {
+              expect(error.status).to.equal(401);
+              expect(error.response.body.name).to.equal('NotAuthenticated');
+            });
+        });
       });
     });
   });
 
-  it('creates a valid token via HTTP with custom auth', () => {
-    return request({
-      url: '/authentication',
-      method: 'POST',
-      body: {
-        login: 'testing'
-      }
-    }).then(body => {
-      expect(body.token).to.exist;
-      return app.authentication.verifyJWT(body);
-    }).then(verifiedToken => {
-      const p = verifiedToken.payload;
-
-      expect(p).to.exist;
-      expect(p.iss).to.equal('feathers');
-      expect(p.userId).to.equal(0);
-      expect(p.authentication).to.equal('test-auth');
+  describe('when calling a protected service method', () => {
+    describe('when header is invalid', () => {
+      it('returns not authenticated error', () => {
+        return request
+          .get(`${baseURL}/users`)
+          .set('X-Authorization', accessToken)
+          .catch(error => {
+            expect(error.status).to.equal(401);
+            expect(error.response.body.name).to.equal('NotAuthenticated');
+          });
+      });
     });
-  });
 
-  it('allows access to protected service with valid token, populates user', () => {
-    return request({
-      url: '/authentication',
-      method: 'POST',
-      body: {
-        login: 'testing'
-      }
-    }).then(login =>
-      request({
-        url: '/todos/dishes',
-        headers: {
-          'Authorization': login.token
-        }
-      })
-    ).then(data => {
-      expect(data).to.deep.equal({
-        id: 'dishes',
-        description: 'You have to do dishes',
-        user: { id: 0, name: 'Tester' }
+    describe('when token is invalid', () => {
+      it('returns not authenticated error', () => {
+        return request
+          .get(`${baseURL}/users`)
+          .set('Authorization', 'invalid')
+          .catch(error => {
+            expect(error.status).to.equal(401);
+            expect(error.response.body.name).to.equal('NotAuthenticated');
+          });
+      });
+    });
+
+    describe('when token is expired', () => {
+      it('returns not authenticated error', () => {
+        return request
+          .get(`${baseURL}/users`)
+          .set('Authorization', expiredToken)
+          .catch(error => {
+            expect(error.status).to.equal(401);
+            expect(error.response.body.name).to.equal('NotAuthenticated');
+          });
+      });
+    });
+
+    describe('when token is valid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/users`)
+          .set('Authorization', accessToken)
+          .then(response => {
+            expect(response.body.length).to.equal(1);
+            expect(response.body[0].id).to.equal(0);
+          });
       });
     });
   });
 
-  it('app `login` event', done => {
-    app.once('login', function(auth, info) {
-      expect(auth.token).to.exist;
-      expect(auth.user).to.deep.equal({ id: 0, name: 'Tester' });
-
-      expect(info.provider).to.equal('rest');
-      expect(info.req).to.exist;
-      expect(info.res).to.exist;
-
-      done();
+  describe('when calling an un-protected service method', () => {
+    describe('when header is invalid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/users/0`)
+          .set('X-Authorization', accessToken)
+          .then(response => {
+            expect(response.body.id).to.equal(0);
+          });
+      });
+    });
+    describe('when token is invalid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/users/0`)
+          .set('Authorization', 'invalid')
+          .then(response => {
+            expect(response.body.id).to.equal(0);
+          });
+      });
     });
 
-    request({
-      url: '/authentication',
-      method: 'POST',
-      body: {
-        login: 'testing'
-      }
+    describe('when token is expired', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/users/0`)
+          .set('Authorization', expiredToken)
+          .then(response => {
+            expect(response.body.id).to.equal(0);
+          });
+      });
+    });
+
+    describe('when token is valid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/users/0`)
+          .set('Authorization', accessToken)
+          .then(response => {
+            expect(response.body.id).to.equal(0);
+          });
+      });
     });
   });
 
-  it('app `logout` event', done => {
-    app.once('logout', function(auth, info) {
-      expect(auth.token).to.exist;
-      expect(auth.user).to.deep.equal({ id: 0, name: 'Tester' });
-
-      expect(info.provider).to.equal('rest');
-      expect(info.req).to.exist;
-      expect(info.res).to.exist;
-
-      done();
+  describe('when calling a protected custom route', () => {
+    describe('when header is invalid', () => {
+      it('returns not authenticated error', () => {
+        return request
+          .get(`${baseURL}/protected`)
+          .set('Content-Type', 'application/json')
+          .set('X-Authorization', accessToken)
+          .catch(error => {
+            expect(error.status).to.equal(401);
+            expect(error.response.body.name).to.equal('NotAuthenticated');
+          });
+      });
     });
 
-    request({
-      url: '/authentication',
-      method: 'POST',
-      body: {
-        login: 'testing'
-      }
-    }).then(login => request({
-      url: `/authentication`,
-      method: 'DELETE',
-      headers: {
-        'Authorization': login.token
-      }
-    }));
+    describe('when token is invalid', () => {
+      it('returns not authenticated error', () => {
+        return request
+          .get(`${baseURL}/protected`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', 'invalid')
+          .catch(error => {
+            expect(error.status).to.equal(401);
+            expect(error.response.body.name).to.equal('NotAuthenticated');
+          });
+      });
+    });
+
+    describe('when token is expired', () => {
+      it('returns not authenticated error', () => {
+        return request
+          .get(`${baseURL}/protected`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', expiredToken)
+          .catch(error => {
+            expect(error.status).to.equal(401);
+            expect(error.response.body.name).to.equal('NotAuthenticated');
+          });
+      });
+    });
+
+    describe('when token is valid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/protected`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', accessToken)
+          .then(response => {
+            expect(response.body.success).to.equal(true);
+          });
+      });
+    });
+  });
+
+  describe('when calling an un-protected custom route', () => {
+    describe('when header is invalid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/unprotected`)
+          .set('Content-Type', 'application/json')
+          .set('X-Authorization', accessToken)
+          .then(response => {
+            expect(response.body.success).to.equal(true);
+          });
+      });
+    });
+    describe('when token is invalid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/unprotected`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', 'invalid')
+          .then(response => {
+            expect(response.body.success).to.equal(true);
+          });
+      });
+    });
+
+    describe('when token is expired', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/unprotected`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', expiredToken)
+          .then(response => {
+            expect(response.body.success).to.equal(true);
+          });
+      });
+    });
+
+    describe('when token is valid', () => {
+      it('returns data', () => {
+        return request
+          .get(`${baseURL}/unprotected`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', accessToken)
+          .then(response => {
+            expect(response.body.success).to.equal(true);
+          });
+      });
+    });
+  });
+
+  describe('when redirects are enabled', () => {
+    let data;
+
+    beforeEach(() => {
+      data = {
+        strategy: 'local',
+        email: 'admin@feathersjs.com',
+        password: 'admin'
+      };
+    });
+
+    describe('authentication succeeds', () => {
+      it('redirects', () => {
+        return request
+          .post(`${baseURL}/login`)
+          .send(data)
+          .then(response => {
+            expect(response.status).to.equal(200);
+            expect(response.body).to.deep.equal({ success: true });
+          });
+      });
+    });
+
+    describe('authentication fails', () => {
+      it('redirects', () => {
+        data.password = 'invalid';
+        return request
+          .post(`${baseURL}/login`)
+          .send(data)
+          .then(response => {
+            expect(response.body.success).to.equal(false);
+          });
+      });
+    });
+  });
+
+  describe('events', () => {
+    let data;
+
+    beforeEach(() => {
+      data = {
+        strategy: 'local',
+        email: 'admin@feathersjs.com',
+        password: 'admin'
+      };
+    });
+
+    describe('when authentication succeeds', () => {
+      it('emits login event', done => {
+        app.once('login', function(auth, info) {
+          expect(info.provider).to.equal('rest');
+          expect(info.req).to.exist;
+          expect(info.res).to.exist;
+          done();
+        });
+
+        request.post(`${baseURL}/authentication`).send(data).end();
+      });
+    });
+
+    describe('authentication fails', () => {
+      it('does not emit login event', done => {
+        data.password = 'invalid';
+        const handler = sinon.spy();
+        app.once('login', handler);
+
+        request.post(`${baseURL}/authentication`)
+          .send(data)
+          .catch(error => {
+            expect(error.status).to.equal(401);
+
+            setTimeout(function() {
+              expect(handler).to.not.have.been.called;
+              done();
+            }, 100);
+          });
+      });
+    });
+
+    describe('when logout succeeds', () => {
+      it('emits logout event', done => {
+        app.once('logout', function(auth, info) {
+          expect(info.provider).to.equal('rest');
+          expect(info.req).to.exist;
+          expect(info.res).to.exist;
+          done();
+        });
+
+        request.post(`${baseURL}/authentication`)
+          .send(data)
+          .then(response => {
+            return request
+              .del(`${baseURL}/authentication`)
+              .set('Content-Type', 'application/json')
+              .set('Authorization', response.body.accessToken);
+          })
+          .then(response => {
+            expect(response.status).to.equal(200);
+          });
+      });
+    });
   });
 });

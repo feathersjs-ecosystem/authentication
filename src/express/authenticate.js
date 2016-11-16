@@ -15,9 +15,9 @@ export default function authenticate (strategy, options = {}) {
       return next();
     }
 
-    if (!req.app.passport._strategy(strategy)) {
-      return next(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
-    }
+    // if (!req.app.passport._strategy(strategy)) {
+    //   return next(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
+    // }
     // TODO (EK): Can we do something in here to get away
     // from express-session for OAuth1?
     // TODO (EK): Handle chaining multiple strategies
@@ -29,8 +29,9 @@ export default function authenticate (strategy, options = {}) {
         Object.assign(req.feathers, { authenticated: true }, result.data);
 
         if (options.successRedirect) {
-          console.log('redirecting');
-          return res.redirect(302, options.successRedirect);
+          debug(`Redirecting to ${options.successRedirect}`);
+          res.status(302);
+          return res.redirect(options.successRedirect);
         }
 
         return next();
@@ -38,7 +39,9 @@ export default function authenticate (strategy, options = {}) {
 
       if (result.fail) {        
         if (options.failureRedirect) {
-          return res.redirect(302, options.failureRedirect);
+          debug(`Redirecting to ${options.failureRedirect}`);
+          res.status(302);
+          return res.redirect(options.failureRedirect);
         }
 
         const { challenge, status = 401 } = result;
@@ -47,12 +50,15 @@ export default function authenticate (strategy, options = {}) {
         if (options.failureMessage) {
           message = options.failureMessage;
         }
-        
+
+        res.status(status);
         return Promise.reject(new errors[status](message, challenge));
       }
 
       if (result.redirect) {
-        return res.redirect(result.status, result.url);
+        debug(`Redirecting to ${result.url}`);
+        res.status(result.status);
+        return res.redirect(result.url);
       }
 
       // Only gets here if pass() is called by the strategy

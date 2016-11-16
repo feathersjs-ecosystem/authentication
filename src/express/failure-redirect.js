@@ -13,8 +13,9 @@ export default function failureRedirect(options = {}) {
     if (req.hook && req.hook.redirect) {
       const { url, status } = req.hook.redirect;
       debug(`Redirecting to ${url} after failed authentication.`);
-
-      return res.redirect(status || 302, url);
+      
+      res.status(status || 302);
+      return res.redirect(url);
     }
 
     next(error);

@@ -18,25 +18,32 @@ describe('express:successRedirect', () => {
       }
     };
     res = {
-      redirect: sinon.spy()
+      redirect: sinon.spy(),
+      status: sinon.spy()
     };
   });
 
   afterEach(() => {
     res.redirect.reset();
+    res.status.reset();
   });
 
   describe('when redirect is set on the hook', () => {
     it('redirects to configured endpoint with default status code', () => {
       successRedirect()(req, res);
+      expect(res.status).to.have.been.calledOnce;
+      expect(res.status).to.have.been.calledWith(302);
       expect(res.redirect).to.have.been.calledOnce;
-      expect(res.redirect).to.have.been.calledWith(302, '/app');
+      expect(res.redirect).to.have.been.calledWith('/app');
     });
 
     it('supports a custom status code', () => {
       req.hook.redirect.status = 400;
       successRedirect()(req, res);
-      expect(res.redirect).to.have.been.calledWith(400, '/app');
+      expect(res.status).to.have.been.calledOnce;
+      expect(res.status).to.have.been.calledWith(400);
+      expect(res.redirect).to.have.been.calledOnce;
+      expect(res.redirect).to.have.been.calledWith('/app');
     });
   });
 

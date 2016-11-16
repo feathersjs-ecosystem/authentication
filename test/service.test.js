@@ -1,59 +1,108 @@
-import { expect, assert } from 'chai';
 import feathers from 'feathers';
 import hooks from 'feathers-hooks';
-import authentication from '../src';
+import authentication, { express } from '../src';
+import chai, { expect } from 'chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 
-describe.skip('/authentication service', () => {
-  const app = feathers().configure(hooks())
-    .configure(authentication({
-      secret: 'supersecret'
-    }));
+chai.use(sinonChai);
 
-  it('throws an error when service option is not set', () => {
-    try {
+describe('/authentication service', () => {
+  let app;
+
+  beforeEach(() => {
+    sinon.spy(express, 'emitEvents');
+    sinon.spy(express, 'setCookie');
+    sinon.spy(express, 'successRedirect');
+    sinon.spy(express, 'failureRedirect');
+
+    app = feathers()
+      .configure(hooks())
+      .configure(authentication({ secret: 'supersecret' }));
+  });
+
+  afterEach(() => {
+    express.emitEvents.restore();
+    express.setCookie.restore();
+    express.successRedirect.restore();
+    express.failureRedirect.restore();
+  });
+
+  it('throws an error when path option is missing', () => {
+    expect(() => {
       feathers().configure(authentication({
         secret: 'dummy',
-        service: null
+        path: null
       }));
-      assert.ok(false, 'Should never get here');
-    } catch(e) {
-      expect(e.message).to.equal(`Authentication option for 'service' needs to be set`);
-    }
+    }).to.throw;
   });
 
-  it('configures the service with options on app', () => {
-    assert.ok(app.service('authentication'));
+  it('registers the service at the path', () => {
+    expect(app.service('authentication')).to.not.equal(undefined);
   });
 
-  it('internal .create creates a token with payload', () => {
-    const payload = { testing: true };
-
-    return app.service('authentication')
-      .create({ payload }).then( ({ token }) => {
-        assert.ok(token);
-
-        return app.authentication.verifyJWT(token);
-      }).then( ({ payload }) =>
-        assert.ok(payload.testing)
-      );
+  it('keeps a reference to app', () => {
+    expect(app.service('authentication').app).to.not.equal(undefined);
   });
 
-  it('.remove verifies the token', () => {
-    const payload = { testing: true };
+  it('keeps a reference to passport', () => {
+    expect(app.service('authentication').passport).to.not.equal(undefined);
+  });
 
-    return app.authentication.createJWT(payload)
-      .then( ({ token }) =>
-        app.service('authentication').remove(token)
-      ).then(result => {
-        assert.ok(result.payload.testing);
+  it('registers the emitEvents express middleware', () => {
+    expect(express.emitEvents).to.have.been.calledOnce;
+  });
+
+  it('registers the setCookie express middleware', () => {
+    expect(express.setCookie).to.have.been.calledOnce;
+  });
+
+  it('registers the successRedirect express middleware', () => {
+    expect(express.successRedirect).to.have.been.calledOnce;
+  });
+
+  it('registers the failureRedirect express middleware', () => {
+    expect(express.failureRedirect).to.have.been.calledOnce;
+  });
+
+  describe('create', () => {
+    const data = {
+      payload: { id: 1 }
+    };
+
+    it('creates an accessToken', () => {
+      return app.service('authentication').create(data).then(result => {
+        expect(result.accessToken).to.not.equal.undefined;
       });
+    });
+
+    it('creates a custom token', () => {
+      const params = {
+        jwt: {
+          header: { typ: 'refresh' },
+          expiresIn: '1y'
+        }
+      };
+
+      return app.service('authentication').create(data, params).then(result => {
+        expect(result.accessToken).to.not.equal.undefined;
+      });
+    });
   });
 
-  it('.create with params.provider, no params.authentication throws', () => {
-    return app.service('authentication').create({}, {
-      provider: 'dummy'
-    }).catch(e => {
-      expect(e.message).to.equal(`External dummy requests need to run through an authentication provider`);
+  describe('remove', () => {
+    let accessToken;
+
+    beforeEach(() => {
+      return app.passport
+        .createJWT({ id: 1}, app.get('auth'))
+        .then(token => accessToken = token);
+    });
+
+    it('verifies an accessToken and returns it', () => {
+      return app.service('authentication').remove(accessToken).then(response => {
+        expect(response).to.deep.equal({ accessToken });
+      });
     });
   });
 });

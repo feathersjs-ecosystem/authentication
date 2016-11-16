@@ -20,7 +20,8 @@ describe('express:failureRedirect', () => {
     };
     res = {
       clearCookie: sinon.spy(),
-      redirect: sinon.spy()
+      redirect: sinon.spy(),
+      status: sinon.spy()
     };
     error = new Error('Authentication Error');
   });
@@ -28,19 +29,25 @@ describe('express:failureRedirect', () => {
   afterEach(() => {
     res.clearCookie.reset();
     res.redirect.reset();
+    res.status.reset();
   });
 
   describe('when redirect is set on the hook', () => {
     it('redirects to configured endpoint with default status code', () => {
       failureRedirect()(error, req, res);
+      expect(res.status).to.have.been.calledOnce;
+      expect(res.status).to.have.been.calledWith(302);
       expect(res.redirect).to.have.been.calledOnce;
-      expect(res.redirect).to.have.been.calledWith(302, '/app');
+      expect(res.redirect).to.have.been.calledWith('/app');
     });
 
     it('supports a custom status code', () => {
       req.hook.redirect.status = 400;
       failureRedirect()(error, req, res);
-      expect(res.redirect).to.have.been.calledWith(400, '/app');
+      expect(res.status).to.have.been.calledOnce;
+      expect(res.status).to.have.been.calledWith(400);
+      expect(res.redirect).to.have.been.calledOnce;
+      expect(res.redirect).to.have.been.calledWith('/app');
     });
   });
 

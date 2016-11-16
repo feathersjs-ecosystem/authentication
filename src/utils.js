@@ -64,12 +64,15 @@ export function verifyJWT (token, options = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    debug('Verifying token', token);
+    if (!token) {
+      return reject(new Error(`token must provided`));
+    }
 
     if (!secret) {
       return reject(new Error(`secret must provided`));
     }
 
+    debug('Verifying token', token);
     jwt.verify(token, secret, pick(settings, VALID_KEYS), (error, payload) => {
       if (error) {
         debug('Error verifying token', error);

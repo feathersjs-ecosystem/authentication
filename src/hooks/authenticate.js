@@ -21,9 +21,9 @@ export default function authenticate (strategy, options = {}) {
       return Promise.reject(new Error(`The 'authenticate' hook should only be used as a 'before' hook.`));
     }
 
-    if (!hook.app.passport._strategy(strategy)) {
-      return Promise.reject(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
-    }
+    // if (!hook.app.passport._strategy(strategy)) {
+    //   return Promise.reject(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
+    // }
 
     return app.authenticate(strategy, options)(hook).then((result = {}) => {
       if (result.fail) {

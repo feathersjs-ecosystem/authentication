@@ -23,12 +23,15 @@ describe('express:authenticate', () => {
         }
       }
     };
-    res = {};
+    res = {
+      status: sinon.spy()
+    };
     next = sinon.spy();
   });
 
   afterEach(() => {
     next.reset();
+    res.status.reset();
   });
 
   describe('when strategy name is missing', () => {
@@ -108,9 +111,9 @@ describe('express:authenticate', () => {
     it('supports redirecting', done => {
       const successRedirect = '/app';
 
-      res.redirect = (status, url) => {
+      res.redirect = url => {
+        expect(res.status).to.have.been.calledWith(302);
         expect(next).to.not.be.called;
-        expect(status).to.equal(302);
         expect(url).to.equal(successRedirect);
         done();
       };
@@ -180,9 +183,9 @@ describe('express:authenticate', () => {
     it('supports redirecting', done => {
       const failureRedirect = '/login';
 
-      res.redirect = (status, url) => {
+      res.redirect = (url) => {
         expect(next).to.not.be.called;
-        expect(status).to.equal(302);
+        expect(res.status).to.have.been.calledWith(302);
         expect(url).to.equal(failureRedirect);
         done();
       };
@@ -221,9 +224,9 @@ describe('express:authenticate', () => {
     });
 
     it('redirects', done => {
-      res.redirect = (status, url) => {
+      res.redirect = url => {
         expect(next).to.not.be.called;
-        expect(status).to.equal(response.status);
+        expect(res.status).to.have.been.calledWith(response.status);
         expect(url).to.equal(response.url);
         done();
       };

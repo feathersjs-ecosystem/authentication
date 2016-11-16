@@ -9,7 +9,8 @@ export default function successRedirect() {
       const { url, status } = req.hook.redirect;
       debug(`Redirecting to ${url} after successful authentication.`);
 
-      return res.redirect(status || 302, url);
+      res.status(status || 302);
+      return res.redirect(url);
     }
 
     next();

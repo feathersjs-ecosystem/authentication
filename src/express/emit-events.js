@@ -1,8 +1,8 @@
 import Debug from 'debug';
 
-const debug = Debug('feathers-authentication:express:events');
+const debug = Debug('feathers-authentication:express:emit-events');
 
-export default function() {
+export default function emitEvents() {
   return function(req, res, next) {
     const method = res.hook && res.hook.method;
 
@@ -14,23 +14,18 @@ export default function() {
       event = 'login';
     }
 
-    if (res.data && res.data.token && event) {
+    if (res.data && res.data.accessToken && event) {
       const { app } = req;
 
-      app.authentication.authenticate(res.data)
-        .then(result => {
-          debug(`Sending '${event}' event for REST provider. Token is`, res.data.token);
+      debug(`Sending '${event}' event for REST provider. Token is`, res.data.accessToken);
 
-          app.emit(event, result, {
-            provider: 'rest',
-            req,
-            res
-          });
-
-          next();
-        }).catch(next);
-    } else {
-      next();
+      app.emit(event, res.data, {
+        provider: 'rest',
+        req,
+        res
+      });
     }
+    
+    next();
   };
 }
