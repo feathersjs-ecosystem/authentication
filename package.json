@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "feathers": "^2.0.2",
     "feathers-commons": "^0.8.4",
     "feathers-errors": "^2.4.0",
     "feathers-socket-commons": "^2.3.1",
@@ -54,11 +53,9 @@
     "lodash.omit": "^4.5.0",
     "lodash.pick": "^4.4.0",
     "ms": "^0.7.1",
-    "passport": "^0.3.2",
-    "primus": "^6.0.5"
+    "passport": "^0.3.2"
   },
   "devDependencies": {
-    "axios": "^0.15.2",
     "babel-cli": "^6.14.0",
     "babel-core": "^6.14.0",
     "babel-plugin-add-module-exports": "^0.2.0",
@@ -66,7 +63,7 @@
     "bcryptjs": "^2.3.0",
     "body-parser": "^1.15.2",
     "chai": "^3.5.0",
-    "feathers": "2.0.1",
+    "feathers": "^2.0.2",
     "feathers-authentication-jwt": "feathersjs/feathers-authentication-jwt",
     "feathers-authentication-local": "feathersjs/feathers-authentication-local",
     "feathers-configuration": "^0.4.1",
@@ -81,11 +78,11 @@
     "mocha": "^3.0.2",
     "nsp": "^2.6.1",
     "passport-strategy": "^1.0.0",
-    "primus": "^5.2.2",
-    "primus-emitter": "^3.1.1",
+    "primus": "^6.0.5",
     "sinon": "^1.17.6",
     "sinon-chai": "^2.8.0",
     "socket.io-client": "^1.4.8",
+    "superagent": "^2.3.0",
     "ws": "^1.1.1"
   }
 }
