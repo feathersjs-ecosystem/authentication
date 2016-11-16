@@ -44,7 +44,7 @@ If you want to only turn on logs for a specific hook, middleware or service you 
 
 ## Better Permissions Control
 
-We have introduced 3 new hooks and 2 new middleware as part of [`feathers-permissions](https://github.com/feathersjs.com) that give you much more flexibility and control over access permissions than was previously possible. Permissions are stored in the database on the entity record that needs to have access permissions checked (typically a user). They look like this:
+We have introduced 3 new hooks and 2 new middleware as part of [feathers-permissions](https://github.com/feathersjs.com) that give you much more flexibility and control over access permissions than was previously possible. Permissions are stored in the database on the entity record that needs to have access permissions checked (typically a user). They look like this:
 
 ```js
 [
@@ -53,7 +53,7 @@ We have introduced 3 new hooks and 2 new middleware as part of [`feathers-permis
     'users:remove:*', // can remove any user
     '*:remove', // can remove on any service
     'users:remove:1234', // can only remove user with id 1234
-    'users:*:1234', // can call any service method for user with id 1234
+    'users:*:1234' // can call any service method for user with id 1234
 ]
 ```
 

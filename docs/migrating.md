@@ -68,6 +68,12 @@ There are a number of breaking changes since the services have been removed:
 
 ## Setting up authentication on the client
 
+Authenticating through the Feathers client is almost exactly the same with just a few keys changes:
+
+- `type` is now `strategy` when calling `authenticate()` and must be an exact name match of one of your strategies registered server side.
+- You must fetch your user explicitly (typically after authentication succeeds)
+- You require `feathers-authentication-client` instead of `feathers-authentication/client`
+
 **The Old Way (< v0.8.0)**
 
 ```js
@@ -77,8 +83,8 @@ app.configure(authentication());
 
 app.authenticate({
   type: 'local',
-  'email': 'admin@feathersjs.com',
-  'password': 'admin'
+  email: 'admin@feathersjs.com',
+  password: 'admin'
 }).then(function(result){
   console.log('Authenticated!', result);
 }).catch(function(error){
@@ -95,10 +101,14 @@ app.configure(authentication(config));
 
 app.authenticate({
   strategy: 'local',
-  'email': 'admin@feathersjs.com',
-  'password': 'admin'
+  email: 'admin@feathersjs.com',
+  password: 'admin'
 }).then(function(result){
   console.log('Authenticated!', result);
+
+  return app.service('users').get(result.payload.id).then(user => {
+    app.set('user', user);
+  });
 }).catch(function(error){
   console.error('Error authenticating!', error);
 });
