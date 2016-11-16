@@ -9,19 +9,34 @@ chai.use(sinonChai);
 
 describe('hooks:authenticate', () => {
   let hook;
+  let authenticator;
 
   beforeEach(() => {
     passport.use(new MockStrategy({}, () => {}));
+    authenticator = sinon.stub().returns(Promise.resolve());
     hook = {
       type: 'before',
       app: {
         passport,
         authenticate: () => {
-          return () => Promise.resolve();
+          return authenticator;
         }
       },
-      params: { provider: 'rest' }
+      data: { name: 'Bob' },
+      params: {
+        provider: 'rest',
+        headers: {
+          authorization: 'JWT'
+        },
+        cookies: {
+          'feathers-jwt': 'token'
+        }
+      }
     };
+  });
+
+  afterEach(() => {
+    authenticator.reset();
   });
 
   describe('when strategy name is missing', () => {
@@ -63,6 +78,20 @@ describe('hooks:authenticate', () => {
     it('returns an error', () => {
       return authenticate('missing')(hook).catch(error => {
         expect(error).to.not.equal(undefined);  
+      });
+    });
+  });
+
+  it('normalizes request object for passport', () => {
+    return authenticate('mock')(hook).then(() => {
+      expect(authenticator).to.have.been.called;
+      expect(authenticator).to.have.been.calledWith({
+        query: hook.data,
+        body: hook.data,
+        params: hook.params,
+        headers: hook.params.headers,
+        cookies: hook.params.cookies,
+        session: {}
       });
     });
   });

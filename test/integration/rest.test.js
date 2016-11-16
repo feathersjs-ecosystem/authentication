@@ -4,22 +4,18 @@ import createApplication from '../fixtures/server';
 import chai, { expect } from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
-import passportLocal from 'passport-local';
 
 chai.use(sinonChai);
 
 describe('REST authentication', function() {
-  const port = 8998;
+  const port = 8996;
   const baseURL = `http://localhost:${port}`;
-
-  const app = createApplication({
-    secret: 'supersecret'
-  });
+  const app = createApplication({ secret: 'supersecret' });
   let server;
   let expiredToken;
   let accessToken;
 
-  before(function(done) {
+  before(done => {
     const options = merge({}, app.get('auth'), { jwt: { expiresIn: '1ms' } });
     app.passport.createJWT({}, options)
       .then(token => {
@@ -33,9 +29,7 @@ describe('REST authentication', function() {
       });
   });
 
-  after(function() {
-    server.close();
-  });
+  after(() => server.close());
 
   describe('Authenticating against auth service', () => {
     describe('Using local strategy', () => {
@@ -43,7 +37,6 @@ describe('REST authentication', function() {
 
       beforeEach(() => {
         data = {
-          strategy: 'local',
           email: 'admin@feathersjs.com',
           password: 'admin'
         };
@@ -71,6 +64,9 @@ describe('REST authentication', function() {
           return request
             .post(`${baseURL}/authentication`)
             .send(data)
+            .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
             .catch(error => {
               expect(error.status).to.equal(401);
               expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -82,20 +78,10 @@ describe('REST authentication', function() {
         it('returns NotAuthenticated error', () => {
           return request
             .post(`${baseURL}/authentication`)
-            .send({ strategy: 'local' })
-            .catch(error => {
-              expect(error.status).to.equal(401);
-              expect(error.response.body.name).to.equal('NotAuthenticated');
-            });
-        });
-      });
-
-      describe('when missing strategy', () => {
-        it('returns an error', () => {
-          delete data.strategy;
-          return request
-            .post(`${baseURL}/authentication`)
-            .send(data)
+            .send({})
+            .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
             .catch(error => {
               expect(error.status).to.equal(401);
               expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -108,10 +94,7 @@ describe('REST authentication', function() {
       let data;
 
       beforeEach(() => {
-        data = {
-          strategy: 'jwt',
-          accessToken
-        };
+        data = { accessToken };
       });
 
       describe('when using a valid access token', () => {
@@ -152,6 +135,9 @@ describe('REST authentication', function() {
           return request
             .post(`${baseURL}/authentication`)
             .send(data)
+            .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
             .catch(error => {
               expect(error.status).to.equal(401);
               expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -165,6 +151,9 @@ describe('REST authentication', function() {
           return request
             .post(`${baseURL}/authentication`)
             .send(data)
+            .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
             .catch(error => {
               expect(error.status).to.equal(401);
               expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -174,22 +163,13 @@ describe('REST authentication', function() {
 
       describe('when access token is missing', () => {
         it('returns not authenticated error', () => {
-          return request
-            .post(`${baseURL}/authentication`)
-            .send({ strategy: 'local' })
-            .catch(error => {
-              expect(error.status).to.equal(401);
-              expect(error.response.body.name).to.equal('NotAuthenticated');
-            });
-        });
-      });
-
-      describe('when missing strategy', () => {
-        it('returns an error', () => {
-          delete data.strategy;
+          delete data.accessToken;
           return request
             .post(`${baseURL}/authentication`)
             .send(data)
+            .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
             .catch(error => {
               expect(error.status).to.equal(401);
               expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -205,6 +185,9 @@ describe('REST authentication', function() {
         return request
           .get(`${baseURL}/users`)
           .set('X-Authorization', accessToken)
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
             expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -217,6 +200,9 @@ describe('REST authentication', function() {
         return request
           .get(`${baseURL}/users`)
           .set('Authorization', 'invalid')
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
             expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -229,6 +215,9 @@ describe('REST authentication', function() {
         return request
           .get(`${baseURL}/users`)
           .set('Authorization', expiredToken)
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
             expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -301,6 +290,9 @@ describe('REST authentication', function() {
           .get(`${baseURL}/protected`)
           .set('Content-Type', 'application/json')
           .set('X-Authorization', accessToken)
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
             expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -314,6 +306,9 @@ describe('REST authentication', function() {
           .get(`${baseURL}/protected`)
           .set('Content-Type', 'application/json')
           .set('Authorization', 'invalid')
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
             expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -327,6 +322,9 @@ describe('REST authentication', function() {
           .get(`${baseURL}/protected`)
           .set('Content-Type', 'application/json')
           .set('Authorization', expiredToken)
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
             expect(error.response.body.name).to.equal('NotAuthenticated');
@@ -401,7 +399,6 @@ describe('REST authentication', function() {
 
     beforeEach(() => {
       data = {
-        strategy: 'local',
         email: 'admin@feathersjs.com',
         password: 'admin'
       };
@@ -437,7 +434,6 @@ describe('REST authentication', function() {
 
     beforeEach(() => {
       data = {
-        strategy: 'local',
         email: 'admin@feathersjs.com',
         password: 'admin'
       };
@@ -464,6 +460,9 @@ describe('REST authentication', function() {
 
         request.post(`${baseURL}/authentication`)
           .send(data)
+          .then(response => {
+              expect(response).to.not.be.ok; // should not get here
+            })
           .catch(error => {
             expect(error.status).to.equal(401);
 

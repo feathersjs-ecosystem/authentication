@@ -16,9 +16,9 @@ export default function authenticate (options = {}) {
   return function (passport, name, strategyOptions = {}, callback = () => {}) {
     debug('passport.authenticate called with the following options', passport, name, strategyOptions, callback);
     
-    // This is called by the feathers middleware, hook or socket. The req object
+    // This is called by the feathers middleware, hook or socket. The request object
     // is a mock request derived from an http request, socket object, or hook.
-    return function (req = {}) {
+    return function (request = {}) {
       return new Promise((resolve, reject) => {
         // TODO (EK): Support transformAuthInfo
         
@@ -103,15 +103,6 @@ export default function authenticate (options = {}) {
             debug(`Passing on '${layer}' authentication strategy`);
             resolve();
           };
-
-          // NOTE (EK): Passport expects an express/connect
-          // like request object. So we need to create on.
-          
-          let request = req;
-          request.body = request.body || request.data;
-          request.headers = request.headers || request.params.headers;
-          request.session = request.session || {};
-          request.cookies = request.cookies || request.params.cookies;
 
           debug('Passport request object', request);
           strategy.authenticate(request, strategyOptions);

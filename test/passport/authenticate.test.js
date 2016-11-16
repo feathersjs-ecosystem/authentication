@@ -27,7 +27,7 @@ describe('passport:authenticate', () => {
       };
     });
 
-    it('returns an error when passport strategy is not registered', () => {
+    it.skip('returns an error when passport strategy is not registered', () => {
       const authenticator = authenticate()(passport, 'mock');
       return authenticator().catch(error => {
         expect(error).to.not.equal(undefined);
@@ -201,58 +201,6 @@ describe('passport:authenticate', () => {
 
           return authenticator(req).then(result => {
             expect(result).to.equal(undefined);
-          });
-        });
-      });
-    });
-
-    describe('normalizing request object', () => {
-      beforeEach(() => {
-        req = {
-          data: { name: 'Bob' },
-          params: {
-            headers: {
-              authorization: 'JWT'
-            },
-            cookies: {
-              'feathers-jwt': 'token'
-            }
-          }
-        };
-
-        verifier = (cb) => cb(null, {});
-        passport.use(new MockStrategy({}, verifier));
-        authenticator = authenticate()(passport, 'mock');
-      });
-
-      describe('when request.body is missing', () => {
-        it('uses request.data', () => {
-          return authenticator(req).then(() => {
-            expect(req.body).to.deep.equal(req.data);
-          });
-        });
-      });
-
-      describe('when request.headers is missing', () => {
-        it('uses request.params.headers', () => {
-          return authenticator(req).then(() => {
-            expect(req.headers).to.deep.equal(req.params.headers);
-          });
-        });
-      });
-
-      describe('when request.session is missing', () => {
-        it('sets it to empty object', () => {
-          return authenticator(req).then(() => {
-            expect(req.session).to.deep.equal({});
-          });
-        });
-      });
-
-      describe('when request.cookies is missing', () => {
-        it('uses request.params.cookies', () => {
-          return authenticator(req).then(() => {
-            expect(req.cookies).to.deep.equal(req.params.cookies);
           });
         });
       });

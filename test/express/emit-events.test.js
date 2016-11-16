@@ -5,7 +5,7 @@ import { emitEvents } from '../../src/express';
 
 chai.use(sinonChai);
 
-describe.only('express:emitEvents', () => {
+describe('express:emitEvents', () => {
   let req;
   let res;
 

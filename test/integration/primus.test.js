@@ -1,157 +1,389 @@
-import { expect } from 'chai';
+import merge from 'lodash.merge';
+import io from 'socket.io-client';
 import createApplication from '../fixtures/server';
+import chai, { expect } from 'chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 
-describe.skip('Primus authentication', function() {
-  this.timeout(10000);
+chai.use(sinonChai);
 
-  const PORT = 9889;
-  const app = createApplication({
-    secret: 'supersecret'
-  }, false);
+describe('Primus authentication', function() {
+  const port = 8998;
+  const baseURL = `http://localhost:${port}`;
+  const app = createApplication({ secret: 'supersecret' }, 'primus');
+  const expiringApp = createApplication({
+    secret: 'supersecret',
+    jwt: { expiresIn: '500ms' }
+  }, 'primus');
 
-  let primus, Socket;
-
-  before(function(done) {
-    this.server = app.listen(PORT);
-    this.server.once('listening', () => {
-      Socket = app.primus.Socket;
-      done();
-    });
+  let server;
+  let socket;
+  let Socket;
+  let ExpiringSocket;
+  let expiringServer;
+  let expiringSocket;
+  let expiredToken;
+  let accessToken;
+  
+  before(done => {
+    const options = merge({}, app.get('auth'), { jwt: { expiresIn: '1ms' } });
+    app.passport.createJWT({}, options)
+      .then(token => {
+        expiredToken = token;
+        return app.passport.createJWT({ id: 0 }, app.get('auth'));
+      })
+      .then(token => {
+        accessToken = token;
+        expiringServer = expiringApp.listen(1337);
+        expiringServer.once('listening', () => {
+          ExpiringSocket = expiringApp.primus.Socket;
+          server = app.listen(port);
+          server.once('listening', () => {
+            Socket = app.primus.Socket;
+            done();
+          });
+        });
+      });
   });
 
   beforeEach(done => {
-    primus = new Socket(`http://localhost:${PORT}`);
-    primus.on('open', () => done());
-  });
-
-  after(function() {
-    this.server.close();
-  });
-
-  it('returns not authenticated error for protected endpoint', done => {
-    primus.send('todos::get', 'laundry', e => {
-      expect(e.name).to.equal('NotAuthenticated');
-      expect(e.code).to.equal(401);
-
-      done();
+    expiringSocket = new ExpiringSocket('http://localhost:1337');
+    expiringSocket.on('open', () => {
+      socket = new Socket(baseURL);
+      socket.on('open', () => done());
     });
   });
 
-  it('creates a token using the `authenticate` event', done => {
-    primus.send('authenticate', {
-      login: 'testing'
-    }, function(error, data) {
-      expect(error).to.not.be.ok;
-      expect(data.token).to.exist;
-      done();
-    });
+  after(() => {
+    expiringServer.close();
+    server.close();
   });
 
-  it('`authenticate` with error', done => {
-    primus.send('authenticate', {
-      login: 'testing-fail'
-    }, function(error) {
-      expect(error).to.be.ok;
-      expect(error.name).to.equal('NotAuthenticated');
-      done();
-    });
-  });
+  describe('Authenticating against auth service', () => {
+    describe('Using local strategy', () => {
+      let data;
 
-  it('authenticated socket allows accesss and populates user', done => {
-    primus.send('authenticate', {
-      login: 'testing'
-    }, function(error) {
-      if(error) {
-        return done(error);
-      }
+      beforeEach(() => {
+        data = {
+          strategy: 'local',
+          email: 'admin@feathersjs.com',
+          password: 'admin'
+        };
+      });
 
-      primus.send('todos::get', 'laundry', function(error, data) {
-        expect(data).to.deep.equal({
-          id: 'laundry',
-          description: 'You have to do laundry',
-          user: { id: 0, name: 'Tester' }
+      describe('when using valid credentials', () => {
+        it('returns a valid access token', done => {
+          socket.send('authenticate', data, (error, response) => {
+            expect(response.accessToken).to.exist;
+            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+              expect(payload).to.exist;
+              expect(payload.iss).to.equal('feathers');
+              expect(payload.id).to.equal(0);
+              done();
+            });
+          });
         });
-        done();
+      });
+
+      describe('when using invalid credentials', () => {
+        it('returns NotAuthenticated error', done => {
+          data.password = 'invalid';
+          socket.send('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+      });
+
+      describe('when missing credentials', () => {
+        it('returns NotAuthenticated error', done => {
+          socket.send('authenticate', { strategy: 'local' }, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+      });
+
+      describe('when missing strategy', () => {
+        it('returns BadRequest error', done => {
+          delete data.strategy;
+          socket.send('authenticate', data, error => {
+            expect(error.code).to.equal(400);
+            done();
+          });
+        });
+      });
+    });
+
+    describe('Using JWT strategy', () => {
+      let data;
+
+      beforeEach(() => {
+        data = {
+          strategy: 'jwt',
+          accessToken
+        };
+      });
+
+      describe('when using a valid access token', () => {
+        it('returns a valid access token', done => {
+          socket.send('authenticate', data, (error, response) => {
+            expect(response.accessToken).to.exist;
+            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+              expect(payload).to.exist;
+              expect(payload.iss).to.equal('feathers');
+              expect(payload.id).to.equal(0);
+              done();
+            });
+          });
+        });
+      });
+
+      describe.skip('when using a valid refresh token', () => {
+        it('returns a valid access token', done => {
+          delete data.accessToken;
+          data.refreshToken = 'refresh';
+          socket.send('authenticate', data, (error, response) => {
+            expect(response.accessToken).to.exist;
+            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+              expect(payload).to.exist;
+              expect(payload.iss).to.equal('feathers');
+              expect(payload.id).to.equal(0);
+              done();
+            });
+          });
+        });
+      });
+
+      describe('when access token is invalid', () => {
+        it('returns NotAuthenticated error', done => {
+          data.accessToken = 'invalid';
+          socket.send('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+      });
+
+      describe('when access token is missing', () => {
+        it('returns NotAuthenticated error', done => {
+          delete data.accessToken;
+          socket.send('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+      });
+
+      describe('when access token is expired', () => {
+        it('returns NotAuthenticated error', done => {
+          data.accessToken = expiredToken;
+          socket.send('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+      });
+
+      describe('when missing strategy', () => {
+        it('returns BadRequest error', done => {
+          delete data.strategy;
+          socket.send('authenticate', data, error => {
+            expect(error.code).to.equal(400);
+            done();
+          });
+        });
       });
     });
   });
 
-  it('app `login` event', done => {
-    app.once('login', function(result, info) {
-      expect(result.token).to.exist;
-      expect(result.payload).to.exist;
-      expect(result.payload.userId).to.equal(0);
-      expect(result.authenticated).to.be.ok;
-      expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
-
-      expect(info.provider).to.equal('primus');
-      expect(info.connection.token).to.equal(result.token);
-      expect(info.socket).to.exist;
-
-      done();
-    });
-
-    primus.send('authenticate', {
-      login: 'testing'
-    });
-  });
-
-  it('app `logout` event', done => {
-    app.once('logout', function(result, info) {
-      expect(result.token).to.exist;
-      expect(result.payload).to.exist;
-      expect(result.payload.userId).to.equal(0);
-      expect(result.authenticated).to.be.ok;
-      expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
-
-      expect(info.provider).to.equal('primus');
-      expect(info.socket).to.exist;
-
-      done();
-    });
-
-    primus.send('authenticate', {
-      login: 'testing'
-    }, () => primus.send('logout'));
-  });
-
-  it('disconnecting sends `logout` event', done => {
-    primus.send('authenticate', {
-      login: 'testing'
-    }, function(error) {
-      if(error) {
-        return done(error);
-      }
-
-      app.once('logout', function(result, info) {
-        expect(result.token).to.exist;
-        expect(result.payload).to.exist;
-        expect(result.payload.userId).to.equal(0);
-        expect(result.authenticated).to.be.ok;
-        expect(result.user).to.deep.equal({ id: 0, name: 'Tester' });
-
-        expect(info.provider).to.equal('primus');
-        expect(info.socket).to.exist;
-
-        done();
-      });
-
-      primus.end();
-    });
-  });
-
-  it('no access allowed after logout', done => {
-    app.once('logout', function() {
-      primus.send('todos::get', 'laundry', e => {
-        expect(e.name).to.equal('NotAuthenticated');
-        expect(e.code).to.equal(401);
-
-        done();
+  describe('when calling a protected service method', () => {
+    describe('when not authenticated', () => {
+      it('returns NotAuthenticated error', done => {
+        socket.send('users::find', {}, error => {
+          expect(error.code).to.equal(401);
+          done();
+        });
       });
     });
 
-    primus.send('authenticate', {
-      login: 'testing'
-    }, () => primus.send('logout'));
+    describe('when access token is expired', () => {
+      it('returns NotAuthenticated error', done => {
+        const data = {
+          strategy: 'local',
+          email: 'admin@feathersjs.com',
+          password: 'admin'
+        };
+
+        expiringSocket.send('authenticate', data, (error, response) => {
+          expect(response).to.be.ok;
+          // Wait for the accessToken to expire
+          setTimeout(function() {
+            expiringSocket.send('users::find', {}, (error, response) => {
+              expect(error.code).to.equal(401);
+              done();
+            });
+          }, 1000);
+        });
+      });
+    });
+
+    describe('when authenticated', () => {
+      it('returns data', done => {
+        const data = {
+          strategy: 'jwt',
+          accessToken
+        };
+
+        socket.send('authenticate', data, (error, response) => {
+          expect(response).to.be.ok;
+          socket.send('users::find', {}, (error, response) => {
+            expect(response.length).to.equal(1);
+            expect(response[0].id).to.equal(0);
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  describe('when calling an un-protected service method', () => {
+    describe('when not authenticated', () => {
+      it('returns data', done => {
+        socket.send('users::get', 0, (error, response) => {
+          expect(response.id).to.equal(0);
+          done();
+        });
+      });
+    });
+
+    describe('when access token is expired', () => {
+      it('returns data', done => {
+        const data = {
+          strategy: 'local',
+          email: 'admin@feathersjs.com',
+          password: 'admin'
+        };
+
+        expiringSocket.send('authenticate', data, (error, response) => {
+          expect(response).to.be.ok;
+          // Wait for the accessToken to expire
+          setTimeout(function() {
+            socket.send('users::get', 0, (error, response) => {
+              expect(response.id).to.equal(0);
+              done();
+            });
+          }, 1000);
+        });
+      });
+    });
+
+    describe('when authenticated', () => {
+      it('returns data', done => {
+        const data = {
+          strategy: 'jwt',
+          accessToken
+        };
+
+        socket.send('authenticate', data, (error, response) => {
+          expect(response).to.be.ok;
+          socket.send('users::get', 0, (error, response) => {
+            expect(response.id).to.equal(0);
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  describe.skip('when redirects are enabled', () => {
+    let data;
+
+    beforeEach(() => {
+      data = {
+        strategy: 'local',
+        email: 'admin@feathersjs.com',
+        password: 'admin'
+      };
+    });
+
+    describe('authentication succeeds', () => {
+      it('redirects', done => {
+        socket.send('authenticate', data, (error, response) => {
+          expect(response.redirect).to.equal(true);
+          expect(response.url).to.be.ok;
+          done();
+        });
+      });
+    });
+
+    describe('authentication fails', () => {
+      it('redirects', done => {
+        delete data.password;
+        socket.send('authenticate', data, (error, response) => {
+          expect(response.redirect).to.equal(true);
+          expect(response.url).to.be.ok;
+          done();
+        });
+      });
+    });
+  });
+
+  describe('events', () => {
+    let data;
+
+    beforeEach(() => {
+      data = {
+        strategy: 'local',
+        email: 'admin@feathersjs.com',
+        password: 'admin'
+      };
+    });
+
+    describe('when authentication succeeds', () => {
+      it('emits login event', done => {
+        app.once('login', function(auth, info) {
+          expect(info.provider).to.equal('primus');
+          expect(info.socket).to.exist;
+          expect(info.connection).to.exist;
+          done();
+        });
+
+        socket.send('authenticate', data);
+      });
+    });
+
+    describe('authentication fails', () => {
+      it('does not emit login event', done => {
+        data.password = 'invalid';
+        const handler = sinon.spy();
+        app.once('login', handler);
+
+        socket.send('authenticate', data, error => {
+          expect(error.code).to.equal(401);
+
+          setTimeout(function() {
+            expect(handler).to.not.have.been.called;
+            done();
+          }, 100);
+        });
+      });
+    });
+
+    describe('when logout succeeds', () => {
+      it('emits logout event', done => {
+        app.once('logout', function(auth, info) {
+          expect(info.provider).to.equal('primus');
+          expect(info.socket).to.exist;
+          expect(info.connection).to.exist;
+          done();
+        });
+        
+        socket.send('authenticate', data, (error, response) => {
+          expect(response).to.be.ok;
+          socket.send('logout', data);
+        });
+      });
+    });
   });
 });

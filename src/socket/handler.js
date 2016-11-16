@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import errors from 'feathers-errors';
 import omit from 'lodash.omit';
+import ms from 'ms';
 import { normalizeError } from 'feathers-socket-commons/lib/utils';
 
 const debug = Debug('feathers-authentication:sockets:handler');
@@ -18,9 +19,40 @@ function handleSocketCallback(promise, callback) {
 }
 
 export default function setupSocketHandler(app, options, { feathersParams, provider, emit, disconnect }) {
-  const service = app.service(options.service);
+  const authSettings = app.get('auth');
+  const service = app.service(authSettings.path);
 
   return function(socket) {
+    let logoutTimer;
+
+    const logout = function (callback = () => {}) {
+      const connection = feathersParams(socket);
+      const { accessToken } = connection;
+
+      if (accessToken) {
+        debug('Logging out socket with accessToken', accessToken);
+
+        delete connection.accessToken;
+        delete connection.authenticated;
+        connection.headers = {};
+        socket._feathers.body = {};
+
+        const promise = service.remove(accessToken, { authenticated: true }).then(tokens => {
+          debug(`Successfully logged out socket with accessToken`, accessToken);
+
+          app.emit('logout', tokens, {
+            provider,
+            socket,
+            connection
+          });
+
+          return tokens;
+        });
+
+        handleSocketCallback(promise, callback);
+      }
+    };
+
     const authenticate = function (data, callback = () => {}) {
       const { strategy } = data;
       const body = omit(data, 'strategy');
@@ -35,7 +67,7 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
       };
 
       if (!strategy) {
-        const error = new Error(`An authentication 'strategy' must be provided.`);
+        const error = new errors.BadRequest(`An authentication 'strategy' must be provided.`);
         return callback(normalizeError(error));
       }
 
@@ -48,7 +80,8 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
         .then(result => {
           if (result.success) {
             // NOTE (EK): I don't think we need to support
-            // custom redirects or even can.
+            // custom redirects. We can emit this to the client
+            // and let the client redirect.
             // if (options.successRedirect) {
             //   return {
             //     redirect: true,
@@ -56,12 +89,13 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
             //     url: options.successRedirect
             //   };
             // }
-            return Promise.resolve(result);
+            return Promise.resolve(result.data);
           }
 
           if (result.fail) {
             // NOTE (EK): I don't think we need to support
-            // custom redirects or even can.
+            // custom redirects. We can emit this to the client
+            // and let the client redirect.
             // if (options.failureRedirect) {
             //   return {
             //     redirect: true,
@@ -70,12 +104,10 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
             //   };
             // }
 
-            // TODO (EK): Reject with something...
-            // You get back result.challenge and result.status
-            const { challenge, status = 401 } = result;
+            const { challenge } = result;
             const message = options.failureMessage || (challenge && challenge.message);
             
-            return Promise.reject(new errors[status](message, challenge));
+            return Promise.reject(new errors[401](message, challenge));
           }
 
           // NOTE (EK): I don't think we need to support
@@ -89,23 +121,60 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
           return Promise.reject(new errors.NotAuthenticated('Authentication could not complete. You might be using an unsupported socket authentication strategy. Refer to docs.feathersjs.com for more details.'));
         })
         .then(result => {
-          return app.service('authentication').create(result, { provider }).then(tokens => {
-            // Add the response and tokens to the socket connection so that
-            // they can be referenced in the future. (ie. attach the user)
-            // TODO (EK): Get the passport 'assignProperty' and service for the
-            // entity so that we can keep it up to date.
+          // Now that we are authenticated create our JWT access token
+          const params = Object.assign({ authenticated: true }, result);
+          return service.create(result, params).then(tokens => {
+            // Add the auth strategy response data and tokens to the socket connection
+            // so that they can be referenced in the future. (ie. attach the user)
             let connection = feathersParams(socket);
-
-            // TODO (EK): make header pull from config.
             const headers = {
-              authorization: `JWT ${tokens.accessToken}`
+              [authSettings.header]: tokens.accessToken
             };
 
             connection = Object.assign(connection, result, tokens, { headers, authenticated: true });
-            // Might not need this one
-            socket._feathers.headers = headers;
+            
+            // Clear any previous timeout if we have logged in again.
+            if (logoutTimer) {
+              debug(`Clearing old timeout.`);
+              logoutTimer.clearTimeout();
+            }
 
-            app.emit('login', result, {
+            logoutTimer = setTimeout(() => {
+              debug(`Token expired. Logging out.`);
+              logout();
+            }, ms(authSettings.jwt.expiresIn));
+
+            // TODO (EK): Setup and tear down socket listeners to keep the entity
+            // up to date that should be attached to the socket. Need to get the
+            // entity or assignProperty
+            //
+            // Remove old listeners to prevent leaks
+            // socket.off('users updated');
+            // socket.off('users patched');
+            // socket.off('users removed');
+
+            // Register new event listeners
+            // socket.on('users updated', data => {
+            //   if (data.id === id) {
+            //     let connection = feathersParams(socket);
+            //     connection.user = data;
+            //   }
+            // });
+
+            // socket.on('users patched', data => {
+            //   if (data.id === id) {
+            //     let connection = feathersParams(socket);
+            //     connection.user = data;
+            //   }
+            // });
+
+            // socket.on('users removed', data => {
+            //   if (data.id === id) {
+            //     logout();
+            //   }
+            // });
+
+            app.emit('login', tokens, {
               provider,
               socket,
               connection
@@ -116,35 +185,6 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
         });
 
       handleSocketCallback(promise, callback);
-    };
-
-    const logout = function (callback = () => {}) {
-      const connection = feathersParams(socket);
-      const { accessToken } = connection;
-
-      if (accessToken) {
-        debug('Logging out socket with accessToken', accessToken);
-
-        delete connection.accessToken;
-        delete connection.authenticated;
-        connection.headers = {};
-        socket._feathers.body = {};
-        socket._feathers.headers = {};
-
-        const promise = service.remove(accessToken, { provider }).then(result => {
-          debug(`Successfully logged out socket with accessToken`, accessToken);
-
-          app.emit('logout', result, {
-            provider,
-            socket,
-            connection
-          });
-
-          return result;
-        });
-
-        handleSocketCallback(promise, callback);
-      }
     };
 
     socket.on('authenticate', authenticate);

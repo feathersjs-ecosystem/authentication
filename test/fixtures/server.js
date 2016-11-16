@@ -27,11 +27,11 @@ function customizeJWTPayload() {
   };
 }
 
-export default function(settings, useSocketio = true) {
+export default function(settings, socketProvider) {
   const app = feathers();
 
   app.configure(rest())
-    .configure(useSocketio ? socketio() : primus({
+    .configure(socketProvider === 'socketio' ? socketio() : primus({
       transformer: 'websockets'
     }))
     .configure(hooks())

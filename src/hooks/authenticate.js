@@ -24,8 +24,19 @@ export default function authenticate (strategy, options = {}) {
     // if (!hook.app.passport._strategy(strategy)) {
     //   return Promise.reject(new Error(`Your '${strategy}' authentication strategy is not registered with passport.`));
     // }
+    
+    // NOTE (EK): Passport expects an express/connect
+    // like request object. So we need to create on.
+    let request = {
+      query: hook.data,
+      body: hook.data,
+      params: hook.params,
+      headers: hook.params.headers || {},
+      cookies: hook.params.cookies || {},
+      session: {}
+    };
 
-    return app.authenticate(strategy, options)(hook).then((result = {}) => {
+    return app.authenticate(strategy, options)(request).then((result = {}) => {
       if (result.fail) {
         // TODO (EK): Reject with something...
         // You get back result.challenge and result.status
