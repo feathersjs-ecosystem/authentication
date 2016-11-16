@@ -7,3 +7,6 @@
 src/
 test/
 !lib/
+.github/
+coverage
+.istanbul.yml
