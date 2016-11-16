@@ -20,9 +20,85 @@ npm install feathers-authentication --save
 
 ## Documentation
 
-Please refer to the [Authentication documentation](http://docs.feathersjs.com/authentication/readme.html) for more details.
+<!-- Please refer to the [Authentication documentation](http://docs.feathersjs.com/authentication/readme.html) for more details. -->
 
-### Complementary Plugins
+## API
+
+This module contains:
+
+1. The main entry function
+2. An `authenticate` hook
+3. The authentication `service`
+4. Socket listeners
+5. Express middleware
+6. A [Passport](http://passportjs.org/) adapter 
+
+### Hooks
+
+There is just 1 hook now called `authenticate`. This can be used to authenticate a service method with a given strategy.
+
+```js
+app.service('authentication').hooks({
+  before: {
+    create: [
+      // You can chain multiple strategies
+      auth.hooks.authenticate(['jwt', 'local']),
+    ],
+    remove: [
+      auth.hooks.authenticate('jwt')
+    ]
+  }
+});
+```
+
+
+### Express Middleware
+
+Just like hooks there is an `authenticate` middleware. It is used the exact same way you would the regular passport express middleware.
+
+```js
+app.post('/login', auth.express.authenticate('local', { successRedirect: '/app', failureRedirect: '/login' }));
+```
+
+The other middleware are included but typically you don't need to worry about them.
+
+- `emitEvents` - emit `login` and `logout` events
+- `exposeCookies` - expose cookies to Feathers so they are available to hooks and services
+- `exposeHeaders` - expose headers to Feathers so they are available to hooks and services
+- `failureRedirect` - support redirecting on auth failure. Only triggered if `hook.redirect` is set.
+- `successRedirect` - support redirecting on auth success. Only triggered if `hook.redirect` is set.
+- `setCookie` - support setting the JWT access token in a cookie. Only enabled if cookies are enabled.
+
+### Default Options
+
+The following default options will be mixed in with your global `auth` object from your config file. It will set the mixed options back to to the app so that they are available at any time by `app.get('auth')`. They can all be overridden and are depended upon by some of the authentication plugins.
+
+```js
+{
+  path: '/authentication', // the authentication service path
+  header: 'Authorization', // the header to use when using JWT auth
+  entity: 'user', // the entity that will be added to the request, socket, and hook.params. (ie. req.user, socket.user, hook.params.user)
+  service: 'users', // the service to look up the entity
+  passReqToCallback: true, // whether the request object should be passed to the strategies `verify` function
+  session: false, // whether to use sessions
+  cookie: {
+    enabled: false, // whether the cookie should be enabled
+    name: 'feathers-jwt', // the cookie name
+    httpOnly: false, // whether the cookie should not be available to client side JavaScript
+    secure: true // whether cookies should only be available over HTTPS
+  },
+  jwt: {
+    header: { typ: 'access' }, // by default is an access token but can be any type
+    audience: 'https://yourdomain.com', // The resource server where the token is processed
+    subject: 'anonymous', // Typically the entity id associated with the JWT
+    issuer: 'feathers', // The issuing server, application or resource
+    algorithm: 'HS256', // the algorithm to use
+    expiresIn: '1d' // the access token expiry
+  }
+}
+```
+
+## Complementary Plugins
 
 The following plugins are complementary but entirely optional:
 
