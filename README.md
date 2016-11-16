@@ -9,7 +9,7 @@
 
 > Add Authentication to your FeathersJS app.
 
-`feathers-authentication` adds shared [PassportJS](http://passportjs.org/) authentication for Feathers HTTP REST and WebSockets services using [JSON Web Tokens](http://jwt.io/).
+`feathers-authentication` adds shared [PassportJS](http://passportjs.org/) authentication for Feathers HTTP REST and WebSockets transports using [JSON Web Tokens](http://jwt.io/).
 
 
 ## Installation
@@ -20,55 +20,80 @@ npm install feathers-authentication --save
 
 ## Documentation
 
-Please refer to the [Authentication documentation](http://docs.feathersjs.com/authentication/readme.html) for more details:
+Please refer to the [Authentication documentation](http://docs.feathersjs.com/authentication/readme.html) for more details.
 
-- [Local Auth Tutorial](http://docs.feathersjs.com/authentication/local.html) - How to implement a username and password-based authentication.
-- [Use Hooks for Authorization](http://docs.feathersjs.com/authorization/readme.html) - Learn about the bundled hooks.
+### Complementary Plugins
 
+The following plugins are complementary but entirely optional:
+
+- [feathers-authentication-client](https://github.com/feathersjs/feathers-authentication-client)
+- [feathers-authentication-local](https://github.com/feathersjs/feathers-authentication-local)
+- [feathers-authentication-jwt](https://github.com/feathersjs/feathers-authentication-jwt)
+- [feathers-authentication-oauth1](https://github.com/feathersjs/feathers-authentication-oauth1)
+- [feathers-authentication-oauth2](https://github.com/feathersjs/feathers-authentication-oauth2)
+- [feathers-permissions](https://github.com/feathersjs/feathers-permissions)
+
+## Migrating to 1.0
+Refer to [the migration guide](./docs/migrating.md).
 
 ## Complete Example
+Here's an example of a Feathers server that uses `feathers-authentication` for local auth.
 
-Here's an example of a Feathers server that uses `feathers-authentication` for local auth.  It includes a `users` service that uses `feathers-mongoose`.  *Note that it does NOT implement any authorization.*
+**Note:** This does NOT implement any authorization. Use [feathers-permissions](https://github.com/feathersjs/feathers-permissions) for that.
 
 ```js
-import feathers from 'feathers';
-import hooks from 'feathers-hooks';
-import bodyParser from 'body-parser';
-import authentication from 'feathers-authentication';
-import { hooks as authHooks } from 'feathers-authentication';
-import mongoose from 'mongoose';
-import service from 'feathers-mongoose';
+const feathers = require('feathers');
+const rest = require('feathers-rest');
+const socketio = require('feathers-socketio');
+const hooks = require('feathers-hooks');
+const memory = require('feathers-memory');
+const bodyParser = require('body-parser');
+const errors = require('feathers-errors');
+const errorHandler = require('feathers-errors/handler');
+const local = require('feathers-authentication-local');
+const jwt = require('feathers-authentication-jwt');
+const auth = require('feathers-authentication');
 
-const port = 3030;
-const Schema = mongoose.Schema;
-const UserSchema = new Schema({
-  email: {type: String, required: true, unique: true},
-  password: {type: String, required: true },
-  createdAt: {type: Date, 'default': Date.now},
-  updatedAt: {type: Date, 'default': Date.now}
-});
-let UserModel = mongoose.model('User', UserSchema);
-
-mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/feathers');
-
-let app = feathers()
-  .configure(feathers.rest())
-  .configure(feathers.socketio())
+const app = feathers();
+app.configure(rest())
+  .configure(socketio())
   .configure(hooks())
   .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: true }))
-  // Configure feathers-authentication
-  .configure(authentication());
+  .configure(auth({ secret: 'supersecret' }))
+  .configure(local())
+  .configure(jwt())
+  .use('/users', memory())
+  .use('/', feathers.static(__dirname + '/public'))
+  .use(errorHandler());
 
-app.use('/users', new service('user', {Model: UserModel}))
-
-let userService = app.service('users');
-userService.before({
-  create: [authHooks.hashPassword('password')]
+app.service('authentication').hooks({
+  before: {
+    create: [
+      // You can chain multiple strategies
+      auth.hooks.authenticate(['jwt', 'local']),
+      customizeJWTPayload()
+    ],
+    remove: [
+      auth.hooks.authenticate('jwt')
+    ]
+  }
 });
 
-let server = app.listen(port);
+// Add a hook to the user service that automatically replaces
+// the password with a hash of the password before saving it.
+app.service('users').hooks({
+  before: {
+    find: [
+      auth.hooks.authenticate('jwt')
+    ],
+    create: [
+      local.hooks.hashPassword({ passwordField: 'password' })
+    ]
+  }
+});
+
+let server = app.listen(3030);
 server.on('listening', function() {
   console.log(`Feathers application started on localhost:${port}`);
 });
@@ -84,7 +109,7 @@ import feathers from 'feathers/client';
 import hooks from 'feathers-hooks';
 import socketio from 'feathers-socketio/client';
 import localstorage from 'feathers-localstorage';
-import authentication from 'feathers-authentication/client';
+import authentication from 'feathers-authentication-client';
 
 const socket = io('http://localhost:3030/');
 const app = feathers()
@@ -93,7 +118,7 @@ const app = feathers()
   .configure(authentication({ storage: window.localStorage }));
 
 app.authenticate({
-  type: 'local',
+  strategy: 'local',
   'email': 'admin@feathersjs.com',
   'password': 'admin'
 }).then(function(result){
