@@ -50,7 +50,7 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
         });
 
         handleSocketCallback(promise, callback);
-      } else {
+      } else if (typeof callback === 'function') {
         return callback(null, {});
       }
     };
