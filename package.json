@@ -50,7 +50,7 @@
     "lib": "lib"
   },
   "dependencies": {
-    "debug": "^2.2.0",
+    "debug": "^2.5.0",
     "feathers-commons": "^0.8.4",
     "feathers-errors": "^2.4.0",
     "feathers-socket-commons": "^2.3.1",
