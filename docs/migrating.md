@@ -275,7 +275,7 @@ This shouldn't really affect you unless you are testing, modifying or wrapping e
 
 `auth.hooks.authenticate([...strategies])`: This hook takes the place of the `verifyToken` and `populateUser` hooks.
 
-For the JWT strategy, this hook has different behavior from the old hooks: it will return a `401 Unauthorized` error is no JWT is present in the request. Include an anonymous JWT (a JWT with no associated user) to prevent a `401` response. Anonymous JWT's can created through by externally calling the `create` endpoint of the authentication service. Internally, they can be created through `app.service('authentication').create({})`.
+For the JWT strategy, this hook has different behavior from the old hooks: it will return a `401 Unauthorized` error if no JWT is present in the request. Include an anonymous JWT (a JWT with no associated user) to prevent a `401` response. Anonymous JWT's can created through by externally calling the `create` endpoint of the authentication service. Internally, they can be created through `app.service('authentication').create({})`.
 
 ### Removed Hooks
 
