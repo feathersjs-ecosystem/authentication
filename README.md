@@ -1,5 +1,9 @@
 # feathers-authentication
 
+## v1.0.0
+
+> __IMPORTANT:__ To see the feathers-authentication 1.0 documentation go to the [master branch](https://github.com/feathersjs/feathers-authentication/tree/master) and also have a look at the [migration guide](https://github.com/feathersjs/feathers-authentication/blob/master/docs/migrating.md).
+
 [![Build Status](https://travis-ci.org/feathersjs/feathers-authentication.png?branch=master)](https://travis-ci.org/feathersjs/feathers-authentication)
 
 > Add Authentication to your FeathersJS app.
