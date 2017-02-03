@@ -45,6 +45,7 @@ declare namespace auth{
     passwordField: string;
   }
 
+  //TODO: move this for hook project
   interface DefaultHooks {
     /**
      * The `verifyToken` hook will attempt to verify a token.
