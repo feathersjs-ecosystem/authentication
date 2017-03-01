@@ -5,40 +5,40 @@ declare namespace auth{
   export const hooks: DefaultHooks;
 
   interface Options {
-      path: '/authentication';
-      header: 'Authorization';
-      entity: 'user';
-      service: 'users';
-      passReqToCallback: true;
-      session: false;
+      path: string;
+      header: string;
+      entity: string;
+      service: string;
+      passReqToCallback: boolean;
+      session: boolean;
       cookie: {
-        enabled: false;
-        name: 'feathers-jwt';
-        httpOnly: false;
-        secure: true;
+        enabled: boolean;
+        name: string;
+        httpOnly: boolean;
+        secure: boolean;
       };
       jwt: {
         /**
          * By default is an access token but can be any type
          */
-        header: { typ: 'access' };
+        header: Object;
 
         /**
          * The resource server where the token is processed
          */
-        audience: 'https://yourdomain.com';
+        audience: string;
 
         /**
          * Typically the entity id associated with the JWT
          */
-        subject: 'anonymous';
+        subject: string;
 
         /**
          * The issuing server, application or resource
          */
-        issuer: 'feathers';
-        algorithm: 'HS256';
-        expiresIn: '1d'
+        issuer: string;
+        algorithm: string;
+        expiresIn: string;
       }
   }
   interface HashPassOptions{
@@ -47,6 +47,7 @@ declare namespace auth{
 
   //TODO: move this for hook project
   interface DefaultHooks {
+    authenticate(strategies: string[]): Function;
     /**
      * The `verifyToken` hook will attempt to verify a token.
      * If the token is missing or is invalid it returns an error.
