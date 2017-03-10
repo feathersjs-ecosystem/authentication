@@ -27,5 +27,9 @@ node_modules
 # Users Environment Variables
 .lock-wscript
 
+# User files for IDEs (WebStorm, VS2017)
+.idea/
+.vs/
+
 lib/
 data.db
