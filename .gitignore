@@ -28,4 +28,13 @@ node_modules
 .lock-wscript
 
 lib/
+coverage/
 data.db
+_backup/
+
+# Yarn lockfile
+yarn.lock
+
+# local options/storage for JetBrains WebStorm and Visual Studio 2017 IDE folder
+.idea/
+.vs/
