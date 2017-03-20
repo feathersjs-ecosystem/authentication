@@ -58,7 +58,7 @@ export default function authenticate (strategy, options = {}) {
       }
 
       if (result.success || options.allowUnauthenticated === true) {
-        hook.params = Object.assign({ authenticated: result.success?true:false }, hook.params, result.data);
+        hook.params = Object.assign({ authenticated: result.success }, hook.params, result.data);
         if (options.successRedirect) {
           // TODO (EK): Bypass the service?
           // hook.result = true
