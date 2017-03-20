@@ -38,7 +38,7 @@ export default function authenticate (strategy, options = {}) {
     debug(`Attempting to authenticate using ${strategy} strategy with options`, options);
 
     return app.authenticate(strategy, options)(request).then((result = {}) => {
-      if (result.fail && options.allowUnauthenticated!==true ) {
+      if (result.fail && options.allowUnauthenticated !== true) {
         // TODO (EK): Reject with something...
         // You get back result.challenge and result.status
         if (options.failureRedirect) {
@@ -58,7 +58,7 @@ export default function authenticate (strategy, options = {}) {
       }
 
       if (result.success || options.allowUnauthenticated === true) {
-        hook.params = Object.assign({ authenticated: true }, hook.params, result.data);
+        hook.params = Object.assign({ authenticated: result.success?true:false }, hook.params, result.data);
         if (options.successRedirect) {
           // TODO (EK): Bypass the service?
           // hook.result = true
