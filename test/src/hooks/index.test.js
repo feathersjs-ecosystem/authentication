@@ -46,6 +46,10 @@ describe('Auth hooks', () => {
     expect(typeof hooks.verifyOrRestrict).to.equal('function');
   });
 
+  it('exposes ownerOrRestrictChanges hook', () => {
+    expect(typeof hooks.ownerOrRestrictChanges).to.equal('function');
+  });
+
   it('exposes populateOrRestrict hook', () => {
     expect(typeof hooks.populateOrRestrict).to.equal('function');
   });
