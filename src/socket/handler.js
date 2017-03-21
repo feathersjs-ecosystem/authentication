@@ -78,9 +78,9 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
         return callback(normalizeError(error));
       }
 
-      const stategyOptions = app.passport.options(strategy);
+      const strategyOptions = app.passport.options(strategy);
 
-      const promise = app.authenticate(strategy, stategyOptions)(socket._feathers)
+      const promise = app.authenticate(strategy, strategyOptions)(socket._feathers)
         .then(result => {
           if (result.success) {
             // NOTE (EK): I don't think we need to support
@@ -109,7 +109,7 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
             // }
 
             const { challenge } = result;
-            const message = stategyOptions.failureMessage || (challenge && challenge.message);
+            const message = strategyOptions.failureMessage || (challenge && challenge.message);
 
             return Promise.reject(new errors[401](message, challenge));
           }
