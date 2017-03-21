@@ -9,6 +9,7 @@ import verifyToken from './verify-token';
 import verifyOrRestrict from './verify-or-restrict';
 import populateOrRestrict from './populate-or-restrict';
 import hasRoleOrRestrict from './has-role-or-restrict';
+import ownerOrRestrictChanges from './owner-or-restrict-changes';
 
 let hooks = {
   associateCurrentUser,
@@ -21,7 +22,8 @@ let hooks = {
   verifyToken,
   verifyOrRestrict,
   populateOrRestrict,
-  hasRoleOrRestrict
+  hasRoleOrRestrict,
+  ownerOrRestrictChanges
 };
 
 export default hooks;
