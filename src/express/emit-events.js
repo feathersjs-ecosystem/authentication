@@ -14,6 +14,8 @@ export default function emitEvents () {
       event = 'login';
     }
 
+    debugger;
+
     if (res.data && res.data.accessToken && event) {
       const { app } = req;
 

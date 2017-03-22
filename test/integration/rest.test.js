@@ -441,7 +441,7 @@ describe('REST authentication', function () {
     });
 
     describe('when authentication succeeds', () => {
-      it('emits login event', done => {
+      it.only('emits login event', done => {
         app.once('login', function (auth, info) {
           expect(info.provider).to.equal('rest');
           expect(info.req).to.exist;
