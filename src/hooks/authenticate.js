@@ -38,7 +38,7 @@ export default function authenticate (strategy, options = {}) {
     debug(`Attempting to authenticate using ${strategy} strategy with options`, options);
 
     return app.authenticate(strategy, options)(request).then((result = {}) => {
-      if (result.fail) {
+      if (result.fail && !options.optional) {
         // TODO (EK): Reject with something...
         // You get back result.challenge and result.status
         if (options.failureRedirect) {
