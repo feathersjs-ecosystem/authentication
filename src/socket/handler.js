@@ -63,19 +63,8 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
         cookies: {}
       };
 
-      // if (!strategy) {
-      //   const error = new errors.BadRequest(`An authentication 'strategy' must be provided.`);
-      //   return callback(normalizeError(error));
-      // }
-
-      // if (!app.passport._strategy(strategy)) {
-      //   const error = new Error(`Your '${strategy}' authentication strategy is not registered with passport.`);
-      //   return callback(normalizeError(error));
-      // }
-
       const strategyOptions = app.passport.options(strategy);
 
-      // const promise = app.authenticate(strategy, strategyOptions)(socket._feathers)
       const promise = service.create(data, socket._feathers)
         .then(tokens => {
           if (socket._feathers.authenticated) {
