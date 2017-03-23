@@ -21,7 +21,8 @@ export default function authenticate (options = {}) {
         // Allow you to set a location for the success payload.
         // Default is hook.params.user, req.user and socket.user.
         const entity = strategyOptions.entity || strategyOptions.assignProperty || options.entity;
-        let strategyName = request.body && request.body.strategy;
+        request.body = request.body || {};
+        let strategyName = request.body.strategy;
 
         if (!strategyName) {
           if (Array.isArray(strategies)) {
