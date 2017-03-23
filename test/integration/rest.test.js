@@ -435,13 +435,14 @@ describe('REST authentication', function () {
 
     beforeEach(() => {
       data = {
+        strategy: 'local',
         email: 'admin@feathersjs.com',
         password: 'admin'
       };
     });
 
     describe('when authentication succeeds', () => {
-      it.only('emits login event', done => {
+      it('emits login event', done => {
         app.once('login', function (auth, info) {
           expect(info.provider).to.equal('rest');
           expect(info.req).to.exist;

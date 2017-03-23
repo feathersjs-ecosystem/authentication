@@ -11,7 +11,6 @@ export default function authenticate (strategy, options = {}) {
 
   return function (req, res, next) {
     // If we are already authenticated skip
-    debugger;
     if (req.authenticated) {
       return next();
     }
@@ -23,7 +22,6 @@ export default function authenticate (strategy, options = {}) {
     // from express-session for OAuth1?
     // TODO (EK): Handle chaining multiple strategies
     req.app.authenticate(strategy, options)(req).then((result = {}) => {
-
       // TODO (EK): Support passport failureFlash
       // TODO (EK): Support passport successFlash
       if (result.success) {
