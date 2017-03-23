@@ -55,11 +55,9 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
 
     const authenticate = function (data, callback = () => {}) {
       const { strategy } = data;
-      // const body = omit(data, 'strategy');
       socket._feathers = {
         query: {},
         provider: 'socketio',
-        // body: data,
         headers: {},
         session: {},
         cookies: {}
