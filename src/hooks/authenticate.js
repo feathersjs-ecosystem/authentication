@@ -36,7 +36,7 @@ export default function authenticate (strategies, options = {}) {
       return Promise.reject(new errors.GeneralError(`You must provide an authentication 'strategy'`));
     }
 
-    // NOTE (EK): Bring this in when we decide to make the strategy required by the client
+    // The client must send a `strategy` name.
     if (!app.passport._strategy(strategy)) {
       return Promise.reject(new errors.BadRequest(`Authentication strategy '${strategy}' is not registered.`));
     }
