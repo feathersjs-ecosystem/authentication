@@ -61,7 +61,7 @@ export class Service {
           debug(`Updating user: ${id}`);
 
           return app.service(options.userEndpoint).patch(id, data).then(updatedUser => {
-            return done(null, updatedUser);
+            return done(null, updatedUser[0]);
           }).catch(done);
         }
 
