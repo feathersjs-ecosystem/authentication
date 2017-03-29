@@ -19,7 +19,7 @@ class Service {
     // TODO (EK): This should likely be a hook
     // TODO (EK): This service can be datastore backed to support blacklists :)
     return this.passport
-      .createJWT(payload, merge(defaults, params))
+      .createJWT(payload, merge({}, defaults, params))
       .then(accessToken => {
         return { accessToken };
       });
@@ -27,7 +27,10 @@ class Service {
 
   remove (id, params) {
     const defaults = this.app.get('auth');
-    const accessToken = id !== null ? id : params.headers[defaults.header.toLowerCase()];
+    const authHeader = params.headers && params.headers[defaults.header.toLowerCase()];
+    const authParams = authHeader && authHeader.match(/(\S+)\s+(\S+)/);
+    const accessToken = id !== null ? id : authParams && authParams[2] || authHeader;
+
     // TODO (EK): return error if token is missing?
     return this.passport
       .verifyJWT(accessToken, merge(defaults, params))
@@ -56,6 +59,12 @@ export default function init (options) {
       successRedirect(),
       failureRedirect(options)
     );
+
+    const service = app.service(path);
+
+    if (typeof service.filter === 'function') {
+      service.filter(() => false);
+    }
   };
 }
 

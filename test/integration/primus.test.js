@@ -73,7 +73,11 @@ describe('Primus authentication', function () {
       });
 
       describe('when using valid credentials', () => {
-        it('returns a valid access token', done => {
+        it('returns a valid access token, does not send real-time event', done => {
+          socket.once('authentication created', () =>
+            done(new Error('real-time events for authentication should not be emitted'))
+          );
+
           socket.send('authenticate', data, (error, response) => {
             expect(error).to.not.be.ok;
             expect(response.accessToken).to.exist;
@@ -117,19 +121,19 @@ describe('Primus authentication', function () {
       });
 
       describe('when missing credentials', () => {
-        it('returns NotAuthenticated error', done => {
+        it('returns BadRequest error', done => {
           socket.send('authenticate', { strategy: 'local' }, error => {
-            expect(error.code).to.equal(401);
+            expect(error.code).to.equal(400);
             done();
           });
         });
       });
 
-      describe('when missing strategy', () => {
-        it('returns BadRequest error', done => {
+      describe('when missing strategy and server strategy does not match', () => {
+        it('returns NotAuthenticated error', done => {
           delete data.strategy;
           socket.send('authenticate', data, error => {
-            expect(error.code).to.equal(400);
+            expect(error.code).to.equal(401);
             done();
           });
         });
@@ -208,11 +212,12 @@ describe('Primus authentication', function () {
         });
       });
 
-      describe('when missing strategy', () => {
-        it('returns BadRequest error', done => {
+      describe('when missing strategy it uses the auth strategy specified on the server', () => {
+        it('returns an accessToken', done => {
           delete data.strategy;
-          socket.send('authenticate', data, error => {
-            expect(error.code).to.equal(400);
+          socket.send('authenticate', data, (error, response) => {
+            expect(error).to.equal(null);
+            expect(response.accessToken).to.not.equal(undefined);
             done();
           });
         });

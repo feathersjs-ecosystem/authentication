@@ -88,6 +88,26 @@ describe('/authentication service', () => {
         expect(result.accessToken).to.not.equal.undefined;
       });
     });
+
+    it('creates multiple custom tokens without side effect on expiration', () => {
+      const params = {
+        jwt: {
+          header: { typ: 'refresh' },
+          expiresIn: '1y'
+        }
+      };
+
+      return app.service('authentication').create(data, params).then(result => {
+        return app.service('authentication').create(data).then(result => {
+          return app.passport
+            .verifyJWT(result.accessToken, app.get('auth'))
+            .then(payload => {
+              const delta = (payload.exp - payload.iat);
+              expect(delta).to.equal(24 * 60 * 60);
+            });
+        });
+      });
+    });
   });
 
   describe('remove', () => {
@@ -101,6 +121,20 @@ describe('/authentication service', () => {
 
     it('verifies an accessToken and returns it', () => {
       return app.service('authentication').remove(accessToken).then(response => {
+        expect(response).to.deep.equal({ accessToken });
+      });
+    });
+
+    it('verifies an accessToken in the header', () => {
+      const params = { headers: { authorization: accessToken } };
+      return app.service('authentication').remove(null, params).then(response => {
+        expect(response).to.deep.equal({ accessToken });
+      });
+    });
+
+    it('verifies an accessToken in the header with Bearer scheme', () => {
+      const params = { headers: { authorization: `Bearer ${accessToken}` } };
+      return app.service('authentication').remove(null, params).then(response => {
         expect(response).to.deep.equal({ accessToken });
       });
     });
