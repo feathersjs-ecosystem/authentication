@@ -81,7 +81,9 @@ export class Service {
     }
 
     const options = this.options;
-    const data = params.data;
+    const data = {
+      [options.idField]: params.data[options.idField]
+    };
     
     // Our before hook determined that we had a valid token or that this
     // was internally called so let's generate a new token with the user
