@@ -94,7 +94,7 @@ The following default options will be mixed in with your global `auth` object fr
     secure: true // whether cookies should only be available over HTTPS
   },
   jwt: {
-    header: { typ: 'access' }, // by default is an access token but can be any type
+    header: { type: 'access' }, // by default is an access token but can be any type
     audience: 'https://yourdomain.com', // The resource server where the token is processed
     subject: 'anonymous', // Typically the entity id associated with the JWT
     issuer: 'feathers', // The issuing server, application or resource
