@@ -20,6 +20,7 @@ function handleSocketCallback (promise, callback) {
 export default function setupSocketHandler (app, options, { feathersParams, provider, emit, disconnect }) {
   const authSettings = app.get('auth');
   const service = app.service(authSettings.path);
+  const getEventName = ev => options.socketEventPrefix + ev;
 
   return function (socket) {
     let logoutTimer;
@@ -136,8 +137,8 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
       handleSocketCallback(promise, callback);
     };
 
-    socket.on('authenticate', authenticate);
-    socket.on(disconnect, logout);
-    socket.on('logout', logout);
+    socket.on(getEventName('authenticate'), authenticate);
+    socket.on(getEventName(disconnect), logout);
+    socket.on(getEventName('logout'), logout);
   };
 }

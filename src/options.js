@@ -5,6 +5,7 @@ const defaults = {
   header: 'Authorization',
   entity: 'user',
   service: 'users',
+  socketEventPrefix: '',
   passReqToCallback: true,
   session: false,
   cookie: {
