@@ -2,6 +2,7 @@ import Debug from 'debug';
 import ms from 'ms';
 import { normalizeError } from 'feathers-socket-commons/lib/utils';
 import lt from 'long-timeout';
+import updateEntity from './update-entity';
 
 const debug = Debug('feathers-authentication:sockets:handler');
 
@@ -20,6 +21,7 @@ function handleSocketCallback (promise, callback) {
 export default function setupSocketHandler (app, options, { feathersParams, provider, emit, disconnect }) {
   const authSettings = app.get('auth');
   const service = app.service(authSettings.path);
+  const entityService = app.service(authSettings.service);
 
   return function (socket) {
     let logoutTimer;
@@ -139,5 +141,8 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
     socket.on('authenticate', authenticate);
     socket.on(disconnect, logout);
     socket.on('logout', logout);
+
+    entityService.on('updated', updateEntity);
+    entityService.on('patched', updateEntity);
   };
 }
