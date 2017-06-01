@@ -116,10 +116,15 @@ describe('Socket.io authentication', function () {
             serverSocket.feathers.user = socketUser;
 
             const email = 'test@feathersjs.com';
+            const oldEmail = socketUser.email;
 
             app.service('users').patch(socketUser.id, { email })
               .then(user => {
                 expect(socketUser.email).to.equal(email);
+                return app.service('users').patch(socketUser.id, { email: oldEmail });
+              })
+              .then(user => {
+                expect(socketUser.email).to.equal(oldEmail);
                 done();
               });
           });
