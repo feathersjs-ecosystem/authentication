@@ -22,6 +22,7 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
   const authSettings = app.get('auth');
   const service = app.service(authSettings.path);
   const entityService = app.service(authSettings.service);
+  let isUpdateEntitySetup = false;
 
   return function (socket) {
     let logoutTimer;
@@ -142,7 +143,11 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
     socket.on(disconnect, logout);
     socket.on('logout', logout);
 
-    entityService.on('updated', updateEntity);
-    entityService.on('patched', updateEntity);
+    // Only bind the handlers on receiving the first socket connection.
+    if (!isUpdateEntitySetup) {
+      isUpdateEntitySetup = true;
+      entityService.on('updated', updateEntity);
+      entityService.on('patched', updateEntity);
+    }
   };
 }
