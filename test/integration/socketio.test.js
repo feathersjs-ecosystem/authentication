@@ -149,6 +149,30 @@ describe('Socket.io authentication', function () {
             done();
           });
         });
+
+        it('returns NotAuthenticated error when strategy is invalid', done => {
+          delete data.strategy;
+
+          socket.emit('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+
+        it('returns NotAuthenticated error when data is not an object', done => {
+          data.password = 'invalid';
+          socket.emit('authenticate', undefined, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+
+        it('returns NotAuthenticated error when data is not passed', done => {
+          socket.emit('authenticate', error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
       });
 
       describe('when missing credentials', () => {
