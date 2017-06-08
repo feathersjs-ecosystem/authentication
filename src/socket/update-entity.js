@@ -3,7 +3,7 @@
 module.exports = function updateEntity (entity, meta) {
   const { app } = meta;
   const authConfig = app.get('auth');
-  var idField = app.service(authConfig.service).id;
+  let idField = app.service(authConfig.service).id;
 
   if (!idField) {
     console.error(`The adapter for the ${authConfig.service} service does not add an \`id\` property to the service.  It needs to be updated to do so.`);
@@ -11,7 +11,7 @@ module.exports = function updateEntity (entity, meta) {
   }
 
   const entityId = entity[idField];
-  var socketMap;
+  let socketMap;
 
   if (app.io) {
     socketMap = app.io.sockets.sockets;
