@@ -31,6 +31,7 @@ export default function init (config = {}) {
     }
 
     app.set('authentication', options);
+    app.set('auth', options);
 
     debug('Setting up Passport');
     // Set up our framework adapter

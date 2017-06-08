@@ -18,7 +18,7 @@ function handleSocketCallback (promise, callback) {
 }
 
 export default function setupSocketHandler (app, options, { feathersParams, provider, emit, disconnect }) {
-  const authSettings = app.get('authentication');
+  const authSettings = app.get('authentication') || app.get('auth');
   const service = app.service(authSettings.path);
 
   return function (socket) {
