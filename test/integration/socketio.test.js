@@ -160,7 +160,6 @@ describe('Socket.io authentication', function () {
         });
 
         it('returns NotAuthenticated error when data is not an object', done => {
-          data.password = 'invalid';
           socket.emit('authenticate', undefined, error => {
             expect(error.code).to.equal(401);
             done();
