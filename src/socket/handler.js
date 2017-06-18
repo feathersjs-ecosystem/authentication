@@ -21,7 +21,10 @@ function handleSocketCallback (promise, callback) {
 export default function setupSocketHandler (app, options, { feathersParams, provider, emit, disconnect }) {
   const authSettings = app.get('authentication') || app.get('auth');
   const service = app.service(authSettings.path);
-  const entityService = app.service(authSettings.service);
+  let entityService;
+  if (authSettings.service) {
+    entityService = app.service(authSettings.service);
+  }
   let isUpdateEntitySetup = false;
 
   return function (socket) {
@@ -152,7 +155,7 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
     socket.on('logout', logout);
 
     // Only bind the handlers on receiving the first socket connection.
-    if (!isUpdateEntitySetup) {
+    if (!isUpdateEntitySetup && entityService) {
       isUpdateEntitySetup = true;
       entityService.on('updated', updateEntity);
       entityService.on('patched', updateEntity);
