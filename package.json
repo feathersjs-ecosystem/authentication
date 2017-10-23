@@ -47,6 +47,9 @@
   },
   "semistandard": {
     "sourceType": "module",
+    "ignore": [
+      "/lib/"
+    ],
     "env": [
       "mocha"
     ]
