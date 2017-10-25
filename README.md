@@ -1,4 +1,4 @@
-# feathers-authentication
+# @feathersjs/authentication
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/feathersjs/authentication.svg)](https://greenkeeper.io/)
 
@@ -6,18 +6,18 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/65abe50ec85244072ee9/maintainability)](https://codeclimate.com/github/feathersjs/authentication/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/65abe50ec85244072ee9/test_coverage)](https://codeclimate.com/github/feathersjs/authentication/test_coverage)
 [![Dependency Status](https://img.shields.io/david/feathersjs/authentication.svg?style=flat-square)](https://david-dm.org/feathersjs/authentication)
-[![Download Status](https://img.shields.io/npm/dm/feathers-authentication.svg?style=flat-square)](https://www.npmjs.com/package/feathers-authentication)
+[![Download Status](https://img.shields.io/npm/dm/@feathersjs/authentication.svg?style=flat-square)](https://www.npmjs.com/package/@feathersjs/authentication)
 [![Slack Status](http://slack.feathersjs.com/badge.svg)](http://slack.feathersjs.com)
 
 > Add Authentication to your FeathersJS app.
 
-`feathers-authentication` adds shared [PassportJS](http://passportjs.org/) authentication for Feathers HTTP REST and WebSocket transports using [JSON Web Tokens](http://jwt.io/).
+`@feathersjs/authentication` adds shared [PassportJS](http://passportjs.org/) authentication for Feathers HTTP REST and WebSocket transports using [JSON Web Tokens](http://jwt.io/).
 
 
 ## Installation
 
 ```
-npm install feathers-authentication@pre --save
+npm install @feathersjs/authentication@pre --save
 ```
 
 ## Documentation
@@ -37,7 +37,7 @@ This module contains:
 
 ### Hooks
 
-`feathers-authentication` only includes a single hook. This bundled `authenticate` hook is used to register an array of one or more authentication strategies on a service method.
+`@feathersjs/authentication` only includes a single hook. This bundled `authenticate` hook is used to register an array of one or more authentication strategies on a service method.
 
 > **Note:** Most of the time you should be registering this on your `/authentication` service. Without it you can hit the `authentication` service and generate a JWT `accessToken` without authentication (ie. anonymous authentication).
 
@@ -108,19 +108,19 @@ The following default options will be mixed in with your global `auth` object fr
 
 The following plugins are complementary but entirely optional:
 
-- [feathers-authentication-client](https://github.com/feathersjs/feathers-authentication-client)
-- [feathers-authentication-local](https://github.com/feathersjs/feathers-authentication-local)
-- [feathers-authentication-jwt](https://github.com/feathersjs/feathers-authentication-jwt)
-- [feathers-authentication-oauth1](https://github.com/feathersjs/feathers-authentication-oauth1)
-- [feathers-authentication-oauth2](https://github.com/feathersjs/feathers-authentication-oauth2)
-- [feathers-authentication-hooks](https://github.com/feathersjs/feathers-authentication-hooks)
+- [@feathersjs/authentication-client](https://github.com/feathersjs/authentication-client)
+- [@feathersjs/authentication-local](https://github.com/feathersjs/authentication-local)
+- [@feathersjs/authentication-jwt](https://github.com/feathersjs/authentication-jwt)
+- [@feathersjs/authentication-oauth1](https://github.com/feathersjs/authentication-oauth1)
+- [@feathersjs/authentication-oauth2](https://github.com/feathersjs/authentication-oauth2)
+- [@feathersjs/authentication-hooks](https://github.com/feathersjs/authentication-hooks)
 - [feathers-permissions](https://github.com/feathersjs/feathers-permissions)
 
 ## Migrating to 1.x
 Refer to [the migration guide](./docs/migrating.md).
 
 ## Complete Example
-Here's an example of a Feathers server that uses `feathers-authentication` for local auth. You can try it out on your own machine by running the [example](./example/).
+Here's an example of a Feathers server that uses `@feathersjs/authentication` for local auth. You can try it out on your own machine by running the [example](./example/).
 
 **Note:** This does NOT implement any authorization. Use [feathers-permissions](https://github.com/feathersjs/feathers-permissions) for that.
 
@@ -133,9 +133,9 @@ const memory = require('feathers-memory');
 const bodyParser = require('body-parser');
 const errors = require('feathers-errors');
 const errorHandler = require('feathers-errors/handler');
-const local = require('feathers-authentication-local');
-const jwt = require('feathers-authentication-jwt');
-const auth = require('feathers-authentication');
+const local = require('@feathersjs/authentication-local');
+const jwt = require('@feathersjs/authentication-jwt');
+const auth = require('@feathersjs/authentication');
 
 const app = feathers();
 app.configure(rest())
@@ -192,7 +192,7 @@ import feathers from 'feathers/client';
 import hooks from 'feathers-hooks';
 import socketio from 'feathers-socketio/client';
 import localstorage from 'feathers-localstorage';
-import authentication from 'feathers-authentication-client';
+import authentication from '@feathersjs/authentication-client';
 
 const socket = io('http://localhost:3030/');
 const app = feathers()
