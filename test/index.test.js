@@ -130,6 +130,28 @@ describe('Feathers Authentication', () => {
     expect(app.service('authentication')).to.not.equal(undefined);
   });
 
+  it('registers custom authentication service', (done) => {
+    class Service {
+      create () {
+        return Promise.resolve('success');
+      }
+    }
+    config.authenticationService = function (options) {
+      return function () {
+        this.use(options.path, new Service());
+      };
+    };
+    app.configure(authentication(config));
+    expect(app.service('authentication')).to.not.equal(undefined);
+    // Ensure that it's the custom service that has been registered
+    app.service('authentication').create({})
+      .then((result) => {
+        expect(result).to.equal('success');
+        done();
+      })
+      .catch(done);
+  });
+
   describe('when cookies are enabled', () => {
     it('registers the express exposeCookies middleware', () => {
       config = Object.assign(config, { cookie: { enabled: true } });
