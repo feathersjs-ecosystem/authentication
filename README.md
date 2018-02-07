@@ -8,6 +8,7 @@
 [![Greenkeeper badge](https://badges.greenkeeper.io/feathersjs/authentication.svg)](https://greenkeeper.io/)
 [![Download Status](https://img.shields.io/npm/dm/@feathersjs/authentication.svg?style=flat-square)](https://www.npmjs.com/package/@feathersjs/authentication)
 [![Slack Status](http://slack.feathersjs.com/badge.svg)](http://slack.feathersjs.com)
+[![Telegram Status](https://img.shields.io/badge/Telegram_RU_chat:-Feathers-216bc1.svg?style=flat)](https://t.me/featherjs)
 
 > Add Authentication to your FeathersJS app.
 
