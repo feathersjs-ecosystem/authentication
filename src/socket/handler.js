@@ -23,9 +23,10 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
   const service = app.service(authSettings.path);
   const entityService = app.service(authSettings.service);
   let isUpdateEntitySetup = false;
-  let logoutTimer;
 
   return function (socket) {
+    let logoutTimer;
+
     const logout = function (callback = () => {}) {
       const connection = feathersParams(socket);
       const { accessToken } = connection;
@@ -100,6 +101,12 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
               socket,
               connection
             });
+          }
+
+          // Clear any previous timeout if we have logged in again.
+          if (logoutTimer) {
+            debug(`Clearing old timeout.`);
+            lt.clearTimeout(logoutTimer);
           }
 
           logoutTimer = lt.setTimeout(() => {
