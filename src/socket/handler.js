@@ -51,6 +51,9 @@ export default function setupSocketHandler (app, options, { feathersParams, prov
           return tokens;
         });
 
+        // Clear logoutTimer.
+        lt.clearTimeout(logoutTimer);
+
         handleSocketCallback(promise, callback);
       } else if (typeof callback === 'function') {
         return callback(null, {});
