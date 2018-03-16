@@ -322,6 +322,7 @@ describe('Socket.io authentication', function () {
     });
   });
 
+
   describe('reauthenticating will extends jwt expiry', () => {
     const longExpiringApp = createApplication({
       secret: 'supersecret',
