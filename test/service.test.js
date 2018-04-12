@@ -79,6 +79,17 @@ describe('/authentication service', () => {
       });
     });
 
+    it('returns existing accessToken when strategy is JWT', () => {
+      const accessToken = 'something';
+
+      return app.service('authentication').create({
+        strategy: 'jwt',
+        accessToken
+      }).then(result => {
+        expect(result).to.deep.equal({ accessToken });
+      });
+    });
+
     it('creates a custom token', () => {
       const params = {
         jwt: {
