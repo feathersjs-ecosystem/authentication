@@ -43,9 +43,12 @@ describe('hooks:authenticate', () => {
 
   describe('when strategy name is missing', () => {
     it('throws an error', () => {
-      expect(() => {
+      try {
         authenticate()(hook);
-      }).to.throw;
+        throw new Error('Should never get here');
+      } catch (e) {
+        expect(e.message).to.equal('The \'authenticate\' hook requires one of your registered passport strategies.');
+      }
     });
   });
 
