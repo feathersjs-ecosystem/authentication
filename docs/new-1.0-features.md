@@ -25,88 +25,20 @@ app.configure(authentication({
 We've added more helpful warning messages and added debug logs for every hook, service, and middleware. We use the [debug]() module so usage is the same.
 
 #### Turning on all auth logs
-You can turn on all auth debug logs by running your app with `DEBUG=feathers-authentication* npm start`.
+You can turn on all auth debug logs by running your app with `DEBUG=@feathersjs/authentication* npm start`.
 
 #### Turning on logs for a specific type
-If you want to only turn on logs for a `hooks`, `express`, `passport` or `service` you can do `DEBUG=feathers-authentication:<type>* npm start`. For example,
+If you want to only turn on logs for a `hooks`, `express`, `passport` or `service` you can do `DEBUG=@feathersjs/authentication:<type>* npm start`. For example,
 
 ```
-`DEBUG=feathers-authentication:hooks* npm start`
+`DEBUG=@feathersjs/authentication:hooks* npm start`
 ```
 
 #### Turning on logs for a specific entity
-If you want to only turn on logs for a specific hook, middleware or service you can do `DEBUG=feathers-authentication:<type>:<entity> npm start`. For example,
+If you want to only turn on logs for a specific hook, middleware or service you can do `DEBUG=@feathersjs/authentication:<type>:<entity> npm start`. For example,
 
 ```
-`DEBUG=feathers-authentication:hooks:authenticate npm start`
-```
-
-
-## Better Permissions Control
-
-We have introduced 3 new hooks and 2 new middleware as part of [feathers-permissions](https://github.com/feathersjs.com) that give you much more flexibility and control over access permissions than was previously possible. Permissions are stored in the database on the entity record that needs to have access permissions checked (typically a user). They look like this:
-
-```js
-[
-    '*', // all services, all methods, all docs
-    'users:*', // all methods on users service
-    'users:remove:*', // can remove any user
-    '*:remove', // can remove on any service
-    'users:remove:1234', // can only remove user with id 1234
-    'users:*:1234' // can call any service method for user with id 1234
-]
-```
-
-you use your hooks like this:
-
-```js
-const permissions = require('feathers-permissions');
-userService.hooks({
-    before: {
-        all: [
-            permissions.hooks.checkPermissions({service: 'users', on: 'user', field: 'permissions'}),
-            permissions.hooks.isPermitted()
-        ]
-    }
-});
-userService.hooks({
-    after: {
-        create: [
-            permissions.hooks.setPermissions({permissions: ['users:*:[id]'], field: 'permissions'})
-        ]
-    }
-});
-```
-
-and the middleware like this:
-
-```js
-const permissions = require('feathers-permissions');
-const requiredPermissions = ['users:*', 'admin']; // whatever permissions you want
-app.get(
-    '/protected',
-    permissions.express.checkPermissions({
-        on: 'user',
-        field: 'permissions',
-        permissions: requiredPermissions
-    }),
-    permissions.express.isPermitted,
-    (req, res, next) => {
-    // Do your thing
-    }
-);
-```
-
-By default this new hook and new middleware assume you are storing your permissions on a `permissions` field either as an array of strings or a string with comma separated permissions. As always, you can customize the field you are storing your permissions under so you can still use the old role based system by doing this:
-
-```js
-const auth = require('feathers-authentication').hooks;
-userService.before({
-    all: [
-        auth.isAuthenticated(),
-        auth.checkPermissions({roles: ['admin'], on: 'user', field: 'role'})
-    ]
-});
+`DEBUG=@feathersjs/authentication:hooks:authenticate npm start`
 ```
 
 ## More Flexible Tokens

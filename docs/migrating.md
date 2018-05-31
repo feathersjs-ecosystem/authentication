@@ -8,12 +8,13 @@ We've also decoupled the authentication strategies and permissions from the core
 
 They are now located here:
 
-- [feathers-authentication-client](https://github.com/feathersjs/feathers-authentication-client)
-- [feathers-authentication-local](https://github.com/feathersjs/feathers-authentication-local)
-- [feathers-authentication-jwt](https://github.com/feathersjs/feathers-authentication-jwt)
-- [feathers-authentication-oauth1](https://github.com/feathersjs/feathers-authentication-oauth1)
-- [feathers-authentication-oauth2](https://github.com/feathersjs/feathers-authentication-oauth2)
-- [feathers-permissions](https://github.com/feathersjs/feathers-permissions)
+- [feathers-authentication-client](https://github.com/feathersjs/authentication-client)
+- [feathers-authentication-local](https://github.com/feathersjs/authentication-local)
+- [feathers-authentication-jwt](https://github.com/feathersjs/authentication-jwt)
+- [feathers-authentication-oauth1](https://github.com/feathersjs/authentication-oauth1)
+- [feathers-authentication-oauth2](https://github.com/feathersjs/authentication-oauth2)
+- [feathers-authentication-hooks](https://github.com/feathersjs/authentication-hooks)
+- [feathers-permissions](https://github.com/feathersjs/feathers-permissions) **(experimental)**
 
 For most of you, migrating your app should be fairly straight forward as there are only a couple breaking changes to the public interface.
 
@@ -26,7 +27,7 @@ For most of you, migrating your app should be fairly straight forward as there a
 **The Old Way (< v0.8.0)**
 
 ```js
-// feathers-authentication < v0.8.0
+// @feathersjs/authentication < v0.8.0
 
 // In your config files
 {
@@ -46,10 +47,10 @@ For most of you, migrating your app should be fairly straight forward as there a
 }
 
 // In your authentication service
-const authentication = require('feathers-authentication');
+const authentication = require('@feathersjs/authentication');
 const FacebookStrategy = require('passport-facebook').Strategy;
 
-let config = app.get('auth');
+let config = app.get('authentication');
 config.facebook.strategy = FacebookStrategy;
 app.configure(authentication(config))
     .use('/users', memory()) // this use to be okay to be anywhere
@@ -58,7 +59,7 @@ app.configure(authentication(config))
 **The New Way**
 
 ```js
-// feathers-authentication >= v1.0.0
+// @feathersjs/authentication >= v1.0.0
 
 // In your config files
 {
@@ -73,7 +74,7 @@ app.configure(authentication(config))
 }
 
 // In your app or authentication service, wherever you would like
-const auth = require('feathers-authentication');
+const auth = require('@feathersjs/authentication');
 const local = require('feathers-authentication-local');
 const jwt = require('feathers-authentication-jwt');
 const oauth1 = require('feathers-authentication-oauth1');
@@ -81,15 +82,15 @@ const oauth2 = require('feathers-authentication-oauth2');
 const FacebookStrategy = require('passport-facebook').Strategy;
 
 // The services you are setting the `entity` param for need to be registered before authentication
-app.use('/users', memory())
-    .configure(auth(app.get('auth')))
+app.configure(auth(app.get('authentication')))
     .configure(jwt())
     .configure(local())
     .configure(oauth1())
     .configure(oauth2({
       name: 'facebook', // if the name differs from your config key you need to pass your config options explicitly
       Strategy: FacebookStrategy
-    }));
+    }))
+    .use('/users', memory());
 
 // Authenticate the user using the a JWT or
 // email/password strategy and if successful
@@ -154,13 +155,15 @@ Authenticating through the Feathers client is almost exactly the same with just 
 
 - `type` is now `strategy` when calling `authenticate()` and must be an exact name match of one of your strategies registered server side.
 - You must fetch your user explicitly (typically after authentication succeeds)
-- You require `feathers-authentication-client` instead of `feathers-authentication/client`
+- You require `feathers-authentication-client` instead of `@feathersjs/authentication/client`
+
+You can use `feathers-authentication-compatibility` on the server to keep the old client functional, this helps to migrate large scale deployments where you can not update all clients/api consumers before migrating to `>=1.0.0` Check https://www.npmjs.com/package/feathers-authentication-compatibility for more information.
 
 **The Old Way (< v0.8.0)**
 
 ```js
-// feathers-authentication < v0.8.0
-const auth = require('feathers-authentication/client');
+// @feathersjs/authentication < v0.8.0
+const auth = require('@feathersjs/authentication/client');
 app.configure(auth());
 
 app.authenticate({
@@ -198,7 +201,7 @@ app.authenticate({
 })
 .then(user => {
   app.set('user', user);
-  console.log('User', client.get('user'));
+  console.log('User', app.get('user'));
   // Do whatever you want now
 })
 .catch(function(error){
@@ -226,7 +229,7 @@ By default the payload for your JWT is simply your entity id (ie. `{ userId }`).
 function customizeJWTPayload() {
   return function(hook) {
     console.log('Customizing JWT Payload');
-    hook.data.payload = {
+    hook.params.payload = {
       // You need to make sure you have the right id.
       // You can put whatever you want to be encoded in
       // the JWT access token.
@@ -248,7 +251,7 @@ app.service('authentication').hooks({
     ]
   }
 });
-``` 
+```
 
 ## JWT Parsing
 
@@ -263,7 +266,7 @@ app.configure(authentication({
 }));
 ```
 
-If you want to customize things further you can refer to the [`feathers-authentication-jwt`](https://github.com/feathersjs/feathers-authentication-jwt) module or implement your own custom passport JWT strategy.
+If you want to customize things further you can refer to the [`feathers-authentication-jwt`](https://github.com/feathersjs/authentication-jwt) module or implement your own custom passport JWT strategy.
 
 ## Hook Changes
 
@@ -279,32 +282,25 @@ For the JWT strategy, this hook has different behavior from the old hooks: it wi
 
 ### Removed Hooks
 
-We have removed all of the old authentication hooks. If you still need these they have been moved to the [feathers-legacy-authentication-hooks](https://github.com/feathersjs/feathers-legacy-authentication-hooks) repo and are deprecated.
+We have removed all of the old authentication hooks. If you still need these they have been moved to the [feathers-authentication-hooks](https://github.com/feathersjs/authentication-hooks) repo and some of them have been deprecated.
 
 The following hooks have been removed:
 
-- `associateCurrentUser` -> left to developer
-- `queryWithCurrentUser` -> left to developer
-- `restrictToOwner` -> use new `feathers-permissions` plugin
-- `restrictToRoles` -> use new `feathers-permissions` plugin
 - `verifyOrRestrict` -> use new `feathers-permissions` plugin
 - `populateOrRestrict` -> use new `feathers-permissions` plugin
-- `hasRoleOrRestrict` -> use new `feathers-permissions` plugin
-- `restrictToAuthenticated` -> use new `feathers-permissions` plugin
 - `hashPassword` -> has been moved to `feathers-authentication-local` **This is important.**
 - `populateUser` -> use new `populate` hook in `feathers-hooks-common`
 - `verifyToken` -> use new `feathers-authentication-jwt` plugin to easily validate a JWT access token. You can also now call `app.passport.verifyJWT` anywhere in your app to do it explicitly.
 
-**We will no longer be supporting these** but have published them as `feathers-legacy-authentication-hooks` to ease migration. You are highly encouraged to migrate to the much more powerful and flexible [feathers-permissions](https://github.com/feathersjs/feathers-permissions) plugin.
 
 **The Old Way (< v0.8.0)**
 
 Typically you saw a lot of this in your hook definitions for a service:
 
 ```js
-// feathers-authentication < v0.8.0
+// @feathersjs/authentication < v0.8.0
 // Users service
-const auth = require('feathers-authentication').hooks;
+const auth = require('@feathersjs/authentication').hooks;
 exports.before = {
   all: [],
   find: [
@@ -340,44 +336,35 @@ exports.before = {
 **The New Way**
 
 ```js
-// feathers-authentication >= v1.0.0
-const auth = require('feathers-authentication');
+// @feathersjs/authentication >= v1.0.0
+const auth = require('@feathersjs/authentication');
 const local = require('feathers-authentication-local');
-const permissions = require('feathers-permissions');
-
-const myCustomQueryWithCurrentUser = function(options ={}) {
-  return function(hook) {
-    hook.params.query.userId = hook.params.user._id;
-    return Promise.resolve(hook);
-  };
-};
+const {
+  queryWithCurrentUser,
+  restrictToOwner
+} = require('feathers-authentication-hooks');
 
 exports.before = {
   all: [],
   find: [
     auth.hooks.authenticate('jwt'),
-    permissions.hooks.checkPermissions({ service: 'users' }),
-    permissions.hooks.isPermitted(),
-    myCustomQueryWithCurrentUser() // instead of auth.queryWithCurrentUser()
+    queryWithCurrentUser()
   ],
   get: [
     auth.hooks.authenticate('jwt'),
-    permissions.hooks.checkPermissions({ service: 'users' }),
-    permissions.hooks.isPermitted()
+    restrictToOwner({ ownerField: '_id' })
   ],
   create: [
     local.hooks.hashPassword()
   ],
   update: [
     auth.hooks.authenticate('jwt'),
-    permissions.hooks.checkPermissions({ service: 'users' }),
-    permissions.hooks.isPermitted(),
+    restrictToOwner({ ownerField: '_id' }),
     local.hooks.hashPassword()
   ],
   patch: [
     auth.hooks.authenticate('jwt'),
-    permissions.hooks.checkPermissions({ service: 'users' }),
-    permissions.hooks.isPermitted(),
+    restrictToOwner({ ownerField: '_id' }),
     local.hooks.hashPassword()
   ],
 }

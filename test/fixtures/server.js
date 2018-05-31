@@ -1,15 +1,15 @@
-import path from 'path';
-import feathers from 'feathers';
-import rest from 'feathers-rest';
-import socketio from 'feathers-socketio';
-import primus from 'feathers-primus';
-import hooks from 'feathers-hooks';
-import memory from 'feathers-memory';
-import bodyParser from 'body-parser';
-import errorHandler from 'feathers-errors/handler';
-import local from 'feathers-authentication-local';
-import jwt from 'feathers-authentication-jwt';
-import auth from '../../lib/index';
+const path = require('path');
+const feathers = require('@feathersjs/feathers');
+const express = require('@feathersjs/express');
+const rest = require('@feathersjs/express/rest');
+const socketio = require('@feathersjs/socketio');
+const primus = require('@feathersjs/primus');
+const memory = require('feathers-memory');
+const bodyParser = require('body-parser');
+const errorHandler = require('@feathersjs/errors/handler');
+const local = require('@feathersjs/authentication-local');
+const jwt = require('@feathersjs/authentication-jwt');
+const auth = require('../../lib/index');
 
 const User = {
   email: 'admin@feathersjs.com',
@@ -17,14 +17,36 @@ const User = {
   permissions: ['*']
 };
 
-export default function (settings, socketProvider) {
-  const app = feathers();
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise ', p, ' reason: ', reason);
+});
+
+module.exports = function (settings, socketProvider) {
+  const app = express(feathers());
+
+  let _provider;
+  if (socketProvider === 'socketio') {
+    _provider = socketio((io) => {
+      io.use((socket, next) => {
+        socket.feathers.data = 'Hello world';
+        next();
+      });
+    });
+  } else {
+    _provider = primus({
+      transformer: 'websockets'
+    }, function (primus) {
+      // Set up Primus authorization here
+      primus.authorize(function (req, done) {
+        req.feathers.data = 'Hello world';
+
+        done();
+      });
+    });
+  }
 
   app.configure(rest())
-    .configure(socketProvider === 'socketio' ? socketio() : primus({
-      transformer: 'websockets'
-    }))
-    .configure(hooks())
+    .configure(_provider)
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .configure(auth(settings))
@@ -35,7 +57,7 @@ export default function (settings, socketProvider) {
     }))
     .configure(jwt())
     .use('/users', memory())
-    .use('/', feathers.static(path.resolve(__dirname, '/public')));
+    .use('/', express.static(path.resolve(__dirname, '/public')));
 
   app.service('authentication').hooks({
     before: {
@@ -86,5 +108,8 @@ export default function (settings, socketProvider) {
 
   app.use(errorHandler());
 
+  app.on('connection', connection => app.channel('everybody').join(connection));
+  app.publish(() => app.channel('everybody'));
+
   return app;
-}
+};

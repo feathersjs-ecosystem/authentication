@@ -1,12 +1,16 @@
-import feathers from 'feathers';
-import passport from 'passport';
-import socketio from 'feathers-socketio';
-import primus from 'feathers-primus';
-import authentication, { express } from '../src';
-import socket from '../src/socket';
-import chai, { expect } from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
+/* eslint-disable no-unused-expressions */
+const feathers = require('@feathersjs/feathers');
+const expressify = require('@feathersjs/express');
+const passport = require('passport');
+const socketio = require('@feathersjs/socketio');
+const primus = require('@feathersjs/primus');
+const authentication = require('../lib');
+const socket = require('../lib/socket');
+const chai = require('chai');
+const sinon = require('sinon');
+const sinonChai = require('sinon-chai');
+const { expect } = chai;
+const { express } = authentication;
 
 chai.use(sinonChai);
 
@@ -15,7 +19,7 @@ describe('Feathers Authentication', () => {
   let config;
 
   beforeEach(() => {
-    app = feathers();
+    app = expressify(feathers());
     config = { secret: 'supersecret' };
   });
 
@@ -25,6 +29,10 @@ describe('Feathers Authentication', () => {
 
   it('is ES6 compatible', () => {
     expect(typeof authentication).to.equal('function');
+  });
+
+  it('exposes default', () => {
+    expect(typeof authentication.default).to.equal('function');
   });
 
   it('exposes hooks', () => {
@@ -60,7 +68,7 @@ describe('Feathers Authentication', () => {
     it('sets cookie to be insecure', () => {
       app.set('env', 'development');
       app.configure(authentication(config));
-      expect(app.get('auth').cookie.secure).to.equal(false);
+      expect(app.get('authentication').cookie.secure).to.equal(false);
     });
   });
 
@@ -68,7 +76,7 @@ describe('Feathers Authentication', () => {
     it('sets cookie to be insecure', () => {
       app.set('env', 'test');
       app.configure(authentication(config));
-      expect(app.get('auth').cookie.secure).to.equal(false);
+      expect(app.get('authentication').cookie.secure).to.equal(false);
     });
   });
 
@@ -76,14 +84,14 @@ describe('Feathers Authentication', () => {
     it('sets cookie to be secure', () => {
       app.set('env', 'production');
       app.configure(authentication(config));
-      expect(app.get('auth').cookie.secure).to.equal(true);
+      expect(app.get('authentication').cookie.secure).to.equal(true);
     });
   });
 
   it('sets custom config options', () => {
     config.custom = 'custom';
     app.configure(authentication(config));
-    expect(app.get('auth').custom).to.equal('custom');
+    expect(app.get('authentication').custom).to.equal('custom');
   });
 
   it('sets up feathers passport adapter', () => {

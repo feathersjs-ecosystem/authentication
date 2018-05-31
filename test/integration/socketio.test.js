@@ -1,9 +1,12 @@
-import merge from 'lodash.merge';
-import io from 'socket.io-client';
-import createApplication from '../fixtures/server';
-import chai, { expect } from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
+/* eslint-disable no-unused-expressions */
+const merge = require('lodash.merge');
+const io = require('socket.io-client');
+const createApplication = require('../fixtures/server');
+const chai = require('chai');
+const sinon = require('sinon');
+const sinonChai = require('sinon-chai');
+const clone = require('lodash.clone');
+const { expect } = chai;
 
 chai.use(sinonChai);
 
@@ -15,6 +18,12 @@ describe('Socket.io authentication', function () {
     secret: 'supersecret',
     jwt: { expiresIn: '500ms' }
   }, 'socketio');
+  const hook = sinon.spy(function (hook) {});
+  app.service('authentication').hooks({
+    before: {
+      create: [ hook ]
+    }
+  });
 
   let server;
   let socket;
@@ -25,11 +34,11 @@ describe('Socket.io authentication', function () {
   let accessToken;
 
   before(done => {
-    const options = merge({}, app.get('auth'), { jwt: { expiresIn: '1ms' } });
+    const options = merge({}, app.get('authentication'), { jwt: { expiresIn: '1ms' } });
     app.passport.createJWT({}, options)
       .then(token => {
         expiredToken = token;
-        return app.passport.createJWT({ userId: 0 }, app.get('auth'));
+        return app.passport.createJWT({ userId: 0 }, app.get('authentication'));
       })
       .then(token => {
         accessToken = token;
@@ -47,6 +56,10 @@ describe('Socket.io authentication', function () {
   beforeEach(() => {
     expiringSocket = io('http://localhost:1336');
     socket = io(baseURL);
+  });
+
+  afterEach(() => {
+    hook.reset();
   });
 
   after(() => {
@@ -75,10 +88,11 @@ describe('Socket.io authentication', function () {
           socket.emit('authenticate', data, (error, response) => {
             expect(error).to.not.equal(undefined);
             expect(response.accessToken).to.exist;
-            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+            app.passport.verifyJWT(response.accessToken, app.get('authentication')).then(payload => {
               expect(payload).to.exist;
               expect(payload.iss).to.equal('feathers');
               expect(payload.userId).to.equal(0);
+              expect(hook).to.be.calledWith(sinon.match({ params: { data: 'Hello world' } }));
               done();
             });
           });
@@ -90,6 +104,40 @@ describe('Socket.io authentication', function () {
             expect(response.accessToken).to.exist;
             expect(serverSocket.feathers.user).to.not.equal(undefined);
             done();
+          });
+        });
+
+        it('does never publish events from the authentication service', done => {
+          socket.once('authentication created', () => done(new Error('Should not get here')));
+
+          socket.emit('authenticate', data, (error, response) => {
+            expect(error).to.not.equal(undefined);
+            expect(response.accessToken).to.exist;
+            expect(serverSocket.feathers.user).to.not.equal(undefined);
+            done();
+          });
+        });
+
+        it('updates the user on the socket', done => {
+          socket.emit('authenticate', data, (error, response) => {
+            expect(error).to.not.equal(undefined);
+            // Clone the socket user and replace it with the clone so that feathers-memory
+            // doesn't have a reference to the same object.
+            const socketUser = clone(serverSocket.feathers.user);
+            serverSocket.feathers.user = socketUser;
+
+            const email = 'test@feathersjs.com';
+            const oldEmail = socketUser.email;
+
+            app.service('users').patch(socketUser.id, { email })
+              .then(user => {
+                expect(socketUser.email).to.equal(email);
+                return app.service('users').patch(socketUser.id, { email: oldEmail });
+              })
+              .then(user => {
+                expect(socketUser.email).to.equal(oldEmail);
+                done();
+              });
           });
         });
 
@@ -108,6 +156,29 @@ describe('Socket.io authentication', function () {
         it('returns NotAuthenticated error', done => {
           data.password = 'invalid';
           socket.emit('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+
+        it('returns NotAuthenticated error when strategy is invalid', done => {
+          delete data.strategy;
+
+          socket.emit('authenticate', data, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+
+        it('returns NotAuthenticated error when data is not an object', done => {
+          socket.emit('authenticate', undefined, error => {
+            expect(error.code).to.equal(401);
+            done();
+          });
+        });
+
+        it('returns NotAuthenticated error when data is not passed', done => {
+          socket.emit('authenticate', error => {
             expect(error.code).to.equal(401);
             done();
           });
@@ -149,7 +220,7 @@ describe('Socket.io authentication', function () {
           socket.emit('authenticate', data, (error, response) => {
             expect(error).to.not.be.ok;
             expect(response.accessToken).to.exist;
-            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+            app.passport.verifyJWT(response.accessToken, app.get('authentication')).then(payload => {
               expect(payload).to.exist;
               expect(payload.iss).to.equal('feathers');
               expect(payload.userId).to.equal(0);
@@ -166,7 +237,7 @@ describe('Socket.io authentication', function () {
           socket.emit('authenticate', data, (error, response) => {
             expect(error).to.not.be.ok;
             expect(response.accessToken).to.exist;
-            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+            app.passport.verifyJWT(response.accessToken, app.get('authentication')).then(payload => {
               expect(payload).to.exist;
               expect(payload.iss).to.equal('feathers');
               expect(payload.userId).to.equal(0);
@@ -215,6 +286,102 @@ describe('Socket.io authentication', function () {
             done();
           });
         });
+      });
+    });
+  });
+
+  describe('when expiry time is very long', () => {
+    const longExpiringApp = createApplication({
+      secret: 'supersecret',
+      jwt: { expiresIn: '1y' }
+    }, 'socketio');
+
+    let longExpiringServer;
+    let longExpiringSocket;
+
+    before(done => {
+      longExpiringServer = longExpiringApp.listen(1338);
+      longExpiringServer.once('listening', () => {
+        longExpiringSocket = io('http://localhost:1338');
+        done();
+      });
+    });
+
+    after(() => {
+      longExpiringServer.close();
+    });
+
+    it('should not immediately logout', done => {
+      const data = {
+        strategy: 'local',
+        email: 'admin@feathersjs.com',
+        password: 'admin'
+      };
+
+      longExpiringSocket.emit('authenticate', data, (error, response) => {
+        expect(error).to.not.be.ok;
+        expect(response).to.be.ok;
+        // Wait for a little bit
+        setTimeout(function () {
+          longExpiringSocket.emit('users::find', {}, (error, response) => {
+            expect(error).to.not.be.ok;
+            expect(response).to.be.ok;
+            done();
+          });
+        }, 100);
+      });
+    });
+  });
+
+  describe('reauthenticating extends jwt expiry', () => {
+    const longExpiringApp = createApplication({
+      secret: 'supersecret',
+      jwt: { expiresIn: '10s' }
+    }, 'socketio');
+
+    let longExpiringServer;
+    let longExpiringSocket;
+
+    before(done => {
+      longExpiringServer = longExpiringApp.listen(1338);
+      longExpiringServer.once('listening', () => {
+        longExpiringSocket = io('http://localhost:1338');
+        done();
+      });
+    });
+
+    after(() => {
+      longExpiringServer.close();
+    });
+
+    it('should not be logout after reauthenticate', done => {
+      const data = {
+        strategy: 'local',
+        email: 'admin@feathersjs.com',
+        password: 'admin'
+      };
+
+      // token expires in 10 secs
+      longExpiringSocket.emit('authenticate', data, (error, response) => {
+        expect(error).to.not.be.ok;
+        expect(response).to.be.ok;
+
+        // reauth at 5 secs
+        setTimeout(function () {
+          longExpiringSocket.emit('authenticate', response, (error, response) => {
+            expect(error).to.not.be.ok;
+            expect(response).to.be.ok;
+          });
+        }, 5 * 1000);
+
+        // check if token expiry exceeds 10 secs
+        setTimeout(function () {
+          longExpiringSocket.emit('users::find', {}, (error, response) => {
+            expect(error).to.not.be.ok;
+            expect(response).to.be.ok;
+            done();
+          });
+        }, 14 * 1000);
       });
     });
   });

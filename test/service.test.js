@@ -1,9 +1,13 @@
-import feathers from 'feathers';
-import hooks from 'feathers-hooks';
-import authentication, { express } from '../src';
-import chai, { expect } from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
+/* eslint-disable no-unused-expressions */
+const feathers = require('@feathersjs/feathers');
+const expressify = require('@feathersjs/express');
+const authentication = require('../lib');
+const chai = require('chai');
+const sinon = require('sinon');
+const sinonChai = require('sinon-chai');
+
+const { expect } = chai;
+const { express } = authentication;
 
 chai.use(sinonChai);
 
@@ -16,8 +20,7 @@ describe('/authentication service', () => {
     sinon.spy(express, 'successRedirect');
     sinon.spy(express, 'failureRedirect');
 
-    app = feathers()
-      .configure(hooks())
+    app = expressify(feathers())
       .configure(authentication({ secret: 'supersecret' }));
   });
 
@@ -30,7 +33,7 @@ describe('/authentication service', () => {
 
   it('throws an error when path option is missing', () => {
     expect(() => {
-      feathers().configure(authentication({
+      express(feathers()).configure(authentication({
         secret: 'dummy',
         path: null
       }));
@@ -72,7 +75,7 @@ describe('/authentication service', () => {
 
     it('creates an accessToken', () => {
       return app.service('authentication').create(data).then(result => {
-        expect(result.accessToken).to.not.equal.undefined;
+        expect(result.accessToken).to.not.equal(undefined);
       });
     });
 
@@ -85,7 +88,7 @@ describe('/authentication service', () => {
       };
 
       return app.service('authentication').create(data, params).then(result => {
-        expect(result.accessToken).to.not.equal.undefined;
+        expect(result.accessToken).to.not.equal(undefined);
       });
     });
 
@@ -100,7 +103,7 @@ describe('/authentication service', () => {
       return app.service('authentication').create(data, params).then(result => {
         return app.service('authentication').create(data).then(result => {
           return app.passport
-            .verifyJWT(result.accessToken, app.get('auth'))
+            .verifyJWT(result.accessToken, app.get('authentication'))
             .then(payload => {
               const delta = (payload.exp - payload.iat);
               expect(delta).to.equal(24 * 60 * 60);
@@ -115,7 +118,7 @@ describe('/authentication service', () => {
 
     beforeEach(() => {
       return app.passport
-        .createJWT({ id: 1 }, app.get('auth'))
+        .createJWT({ id: 1 }, app.get('authentication'))
         .then(token => { accessToken = token; });
     });
 

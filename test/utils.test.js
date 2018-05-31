@@ -1,7 +1,11 @@
-import jwt from 'jsonwebtoken';
-import { expect } from 'chai';
-import { createJWT, verifyJWT } from '../src/utils';
-import getOptions from '../src/options';
+const jwt = require('jsonwebtoken');
+const chai = require('chai');
+const chaiUuid = require('chai-uuid');
+const { createJWT, verifyJWT } = require('../lib/utils');
+const getOptions = require('../lib/options');
+const { expect } = require('chai');
+
+chai.use(chaiUuid);
 
 describe('utils', () => {
   let options;
@@ -54,6 +58,21 @@ describe('utils', () => {
       it('has the correct issuer', () => {
         expect(decoded.iss).to.equal(options.jwt.issuer);
       });
+
+      it('has a uuidv4 jwtid', () => {
+        expect(decoded.jti).to.be.a.uuid('v4');
+      });
+    });
+
+    it('does not error if payload has jti property', () => {
+      return createJWT({
+        id: 1,
+        jti: 'test'
+      }, options).then(t => {
+        const decoded = jwt.decode(t);
+
+        expect(decoded.jti).to.equal('test');
+      });
     });
 
     describe('when passing custom options', () => {
@@ -66,6 +85,7 @@ describe('utils', () => {
         options.jwt.audience = 'org';
         options.jwt.expiresIn = '1y'; // expires in 1 year
         options.jwt.notBefore = '1h'; // token is valid 1 hour from now
+        options.jwt.jwtid = '1234';
 
         return createJWT(payload, options).then(t => {
           token = t;
@@ -91,6 +111,10 @@ describe('utils', () => {
 
       it('has the correct issuer', () => {
         expect(decoded.iss).to.equal('custom');
+      });
+
+      it('has the correct jwtid', () => {
+        expect(decoded.jti).to.equal('1234');
       });
     });
   });

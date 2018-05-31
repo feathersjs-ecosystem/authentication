@@ -1,8 +1,11 @@
-import merge from 'lodash.merge';
-import createApplication from '../fixtures/server';
-import chai, { expect } from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
+/* eslint-disable no-unused-expressions */
+const merge = require('lodash.merge');
+const clone = require('lodash.clone');
+const createApplication = require('../fixtures/server');
+const chai = require('chai');
+const sinon = require('sinon');
+const sinonChai = require('sinon-chai');
+const { expect } = chai;
 
 chai.use(sinonChai);
 
@@ -14,6 +17,12 @@ describe('Primus authentication', function () {
     secret: 'supersecret',
     jwt: { expiresIn: '500ms' }
   }, 'primus');
+  const hook = sinon.spy(function (hook) {});
+  app.service('authentication').hooks({
+    before: {
+      create: [ hook ]
+    }
+  });
 
   let server;
   let socket;
@@ -26,11 +35,11 @@ describe('Primus authentication', function () {
   let accessToken;
 
   before(done => {
-    const options = merge({}, app.get('auth'), { jwt: { expiresIn: '1ms' } });
+    const options = merge({}, app.get('authentication'), { jwt: { expiresIn: '1ms' } });
     app.passport.createJWT({}, options)
       .then(token => {
         expiredToken = token;
-        return app.passport.createJWT({ userId: 0 }, app.get('auth'));
+        return app.passport.createJWT({ userId: 0 }, app.get('authentication'));
       })
       .then(token => {
         accessToken = token;
@@ -53,6 +62,10 @@ describe('Primus authentication', function () {
       socket = new Socket(baseURL);
       socket.on('open', () => done());
     });
+  });
+
+  afterEach(() => {
+    hook.reset();
   });
 
   after(() => {
@@ -81,10 +94,11 @@ describe('Primus authentication', function () {
           socket.send('authenticate', data, (error, response) => {
             expect(error).to.not.be.ok;
             expect(response.accessToken).to.exist;
-            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+            app.passport.verifyJWT(response.accessToken, app.get('authentication')).then(payload => {
               expect(payload).to.exist;
               expect(payload.iss).to.equal('feathers');
               expect(payload.userId).to.equal(0);
+              expect(hook).to.be.calledWith(sinon.match({ params: { data: 'Hello world' } }));
               done();
             });
           });
@@ -96,6 +110,29 @@ describe('Primus authentication', function () {
             expect(response.accessToken).to.exist;
             expect(serverSocket.request.feathers.user).to.not.equal(undefined);
             done();
+          });
+        });
+
+        it('updates the user on the socket', done => {
+          socket.send('authenticate', data, (error, response) => {
+            expect(error).to.not.be.ok;
+            // Clone the socket user and replace it with the clone so that feathers-memory
+            // doesn't have a reference to the same object.
+            const socketUser = clone(serverSocket.request.feathers.user);
+            serverSocket.request.feathers.user = socketUser;
+
+            const email = 'test@feathersjs.com';
+            const oldEmail = socketUser.email;
+
+            app.service('users').patch(socketUser.id, { email })
+              .then(user => {
+                expect(socketUser.email).to.equal(email);
+                return app.service('users').patch(socketUser.id, { email: oldEmail });
+              })
+              .then(user => {
+                expect(socketUser.email).to.equal(oldEmail);
+                done();
+              });
           });
         });
 
@@ -155,7 +192,7 @@ describe('Primus authentication', function () {
           socket.send('authenticate', data, (error, response) => {
             expect(error).to.not.be.ok;
             expect(response.accessToken).to.exist;
-            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+            app.passport.verifyJWT(response.accessToken, app.get('authentication')).then(payload => {
               expect(payload).to.exist;
               expect(payload.iss).to.equal('feathers');
               expect(payload.userId).to.equal(0);
@@ -172,7 +209,7 @@ describe('Primus authentication', function () {
           socket.send('authenticate', data, (error, response) => {
             expect(error).to.not.be.ok;
             expect(response.accessToken).to.exist;
-            app.passport.verifyJWT(response.accessToken, app.get('auth')).then(payload => {
+            app.passport.verifyJWT(response.accessToken, app.get('authentication')).then(payload => {
               expect(payload).to.exist;
               expect(payload.iss).to.equal('feathers');
               expect(payload.userId).to.equal(0);

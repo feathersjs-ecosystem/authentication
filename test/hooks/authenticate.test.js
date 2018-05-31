@@ -1,9 +1,11 @@
-import passport from 'passport';
-import MockStrategy from '../fixtures/strategy';
-import chai, { expect } from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import { authenticate } from '../../src/hooks';
+/* eslint-disable no-unused-expressions */
+const passport = require('passport');
+const MockStrategy = require('../fixtures/strategy');
+const chai = require('chai');
+const sinon = require('sinon');
+const sinonChai = require('sinon-chai');
+const { authenticate } = require('../../lib/hooks');
+const { expect } = chai;
 
 chai.use(sinonChai);
 
@@ -93,6 +95,16 @@ describe('hooks:authenticate', () => {
         cookies: hook.params.cookies,
         session: {}
       });
+    });
+  });
+
+  it('throws error when strategy is not allowed', () => {
+    hook.data.strategy = 'something';
+
+    return authenticate('mock')(hook).then(() => {
+      throw new Error('Should never get here');
+    }).catch(error => {
+      expect(error.message).to.equal('Strategy something is not permitted');
     });
   });
 

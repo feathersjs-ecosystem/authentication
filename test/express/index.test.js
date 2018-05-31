@@ -1,5 +1,6 @@
-import { expect } from 'chai';
-import express from '../../src/express';
+const { expect } = require('chai');
+
+const express = require('../../lib/express');
 
 describe('express middleware', () => {
   it('is CommonJS compatible', () => {
