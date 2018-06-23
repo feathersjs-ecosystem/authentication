@@ -73,7 +73,7 @@ describe('options', () => {
       });
 
       it('sets the subject', () => {
-        expect(options.jwt.subject).to.equal('anonymous');
+        expect(options.jwt.subject).to.equal(undefined);
       });
 
       it('sets the issuer', () => {
