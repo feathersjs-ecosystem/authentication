@@ -10,7 +10,7 @@ const { expect } = chai;
 
 chai.use(sinonChai);
 
-describe('Socket.io authentication', function () {
+describe.skip('Socket.io authentication', function () {
   const port = 8997;
   const baseURL = `http://localhost:${port}`;
   const app = createApplication({ secret: 'supersecret' }, 'socketio');

@@ -9,7 +9,7 @@ const { expect } = chai;
 
 chai.use(sinonChai);
 
-describe('REST authentication', function () {
+describe.skip('REST authentication', function () {
   const port = 8996;
   const baseURL = `http://localhost:${port}`;
   const app = createApplication({ secret: 'supersecret' });
