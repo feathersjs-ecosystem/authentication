@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-const merge = require('lodash.merge');
+const { merge } = require('lodash');
 const request = require('superagent');
 const createApplication = require('../fixtures/server');
 const chai = require('chai');

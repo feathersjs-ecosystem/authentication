@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-expressions */
-const merge = require('lodash.merge');
-const clone = require('lodash.clone');
+const { merge, clone } = require('lodash');
 const createApplication = require('../fixtures/server');
 const chai = require('chai');
 const sinon = require('sinon');

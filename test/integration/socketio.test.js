@@ -1,11 +1,10 @@
 /* eslint-disable no-unused-expressions */
-const merge = require('lodash.merge');
+const { merge, clone } = require('lodash');
 const io = require('socket.io-client');
 const createApplication = require('../fixtures/server');
 const chai = require('chai');
 const sinon = require('sinon');
 const sinonChai = require('sinon-chai');
-const clone = require('lodash.clone');
 const { expect } = chai;
 
 chai.use(sinonChai);
