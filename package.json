@@ -75,7 +75,7 @@
     "istanbul": "^1.1.0-alpha.1",
     "jshint": "^2.9.3",
     "localstorage-memory": "^1.0.2",
-    "mocha": "^5.0.0",
+    "mocha": "^6.1.1",
     "mongodb": "^3.0.0",
     "passport-strategy": "^1.0.0",
     "primus": "^7.0.0",
