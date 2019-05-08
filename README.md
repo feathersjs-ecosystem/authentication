@@ -1,12 +1,8 @@
 # @feathersjs/authentication
 
-[![Build Status](https://travis-ci.org/feathersjs/authentication.png?branch=master)](https://travis-ci.org/feathersjs/authentication)
-[![Dependency Status](https://img.shields.io/david/feathersjs/authentication.svg?style=flat-square)](https://david-dm.org/feathersjs/authentication)
-[![Maintainability](https://api.codeclimate.com/v1/badges/65abe50ec85244072ee9/maintainability)](https://codeclimate.com/github/feathersjs/authentication/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/65abe50ec85244072ee9/test_coverage)](https://codeclimate.com/github/feathersjs/authentication/test_coverage)
+> __Important:__ The code for this module has been moved into the main Feathers repository at [feathersjs/feathers](https://github.com/feathersjs/feathers) ([package direct link](https://github.com/feathersjs/feathers/tree/master/packages/authentication)). Please open issues and pull requests there.
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/feathersjs/authentication.svg)](https://greenkeeper.io/)
-[![Download Status](https://img.shields.io/npm/dm/@feathersjs/authentication.svg?style=flat-square)](https://www.npmjs.com/package/@feathersjs/authentication)
+[![Build Status](https://travis-ci.org/feathersjs/authentication.png?branch=master)](https://travis-ci.org/feathersjs/authentication)
 
 > Add Authentication to your FeathersJS app.
 
